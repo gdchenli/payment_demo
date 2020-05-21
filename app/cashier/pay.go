@@ -1,6 +1,7 @@
 package cashier
 
 import (
+	"azoya/nova/binding"
 	"fmt"
 	"net/http"
 	"payment_demo/internal/common/defs"
@@ -39,13 +40,14 @@ func (pay *Pay) submit(ctx *gin.Context) {
 			OrderId:  order.OrderId,
 			TotalFee: order.TotalFee,
 			Currency: order.Currency,
-			UserId:   order.UserId}
+			UserId:   order.UserId,
+		}
 		form, errCode, err = new(method.Jd).Submit(jdPayArg)
 	}
 
 	if err != nil {
 		fmt.Println(errCode)
-		ctx.Data(http.StatusOK, "text/html", []byte(err.Error()))
+		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(err.Error()))
 		return
 	}
 

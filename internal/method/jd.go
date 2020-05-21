@@ -3,6 +3,10 @@ package method
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
 	"payment_demo/pkg/jd/payment"
 	"strconv"
@@ -24,25 +28,44 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 	//金额字段类型转换
 	amount, err := strconv.ParseInt(fmt.Sprintf("%.f", totalFee), 10, 64)
 	if err != nil {
-		return form, 10101, errors.New("金额转换异常")
+		return form, code.AmountFormatErrCode, errors.New(code.AmountFormatErrMessage)
 	}
+
+	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString("jd.private_key"))
+	fmt.Println("privateKeyPath", privateKeyPath)
+	file, err := os.Open(privateKeyPath)
+	if err != nil {
+		return form, code.PrivateKeyNotExitsErrCode, errors.New(code.PrivateKeyNotExitsErrMessage)
+	}
+	privateKeyBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return form, code.PrivateKeyContentErrCode, errors.New(code.PrivateKeyContentErrMessage)
+	}
+	privateKey := string(privateKeyBytes)
+	fmt.Println("privateKey", privateKey)
 
 	date := time.Now().Format(payment.TimeLayout)
 	goodsInfos := []payment.GoodsInfo{{Id: "test" + date, Name: "test" + date, Price: amount, Num: 1}}
 	kjInfo := payment.KjInfo{GoodsSubmittedCustoms: "N", GoodsUnderBonded: "N"}
 	payArg := payment.PayArg{
-		Merchant:       config.GetInstance().GetString("jd.merchant"),
-		TradeNum:       arg.OrderId,
-		Amount:         amount,
-		Currency:       arg.Currency,
-		CallbackUrl:    config.GetInstance().GetString("jd.callback_url"),
-		NotifyUrl:      config.GetInstance().GetString("jd.notify_url"),
-		UserId:         arg.UserId,
-		ExpireTime:     config.GetInstance().GetString("jd.expire_time"),
-		SettleCurrency: config.GetInstance().GetString("jd.settle_currency"),
-		GoodsInfo:      goodsInfos,
-		KjInfo:         kjInfo,
+		Merchant:      config.GetInstance().GetString("jd.merchant"),
+		TradeNum:      arg.OrderId,
+		Amount:        amount,
+		Currency:      arg.Currency,
+		CallbackUrl:   config.GetInstance().GetString("jd.callback_url"),
+		NotifyUrl:     config.GetInstance().GetString("jd.notify_url"),
+		UserId:        arg.UserId,
+		ExpireTime:    config.GetInstance().GetString("jd.expire_time"),
+		TransCurrency: config.GetInstance().GetString("jd.settle_currency"),
+		GoodsInfo:     goodsInfos,
+		KjInfo:        kjInfo,
+		DesKey:        config.GetInstance().GetString("jd.des_key"),
+		PrivateKey:    privateKey,
+		PayWay:        config.GetInstance().GetString("jd.pc_way"),
+		BizTp:         "100006",
+		TradeName:     arg.OrderId,
 	}
+	fmt.Printf("payArg %+v\n", payArg)
 	form, errCode, err = new(payment.Payment).CreatePaymentForm(payArg)
 	if err != nil {
 		return form, errCode, err
