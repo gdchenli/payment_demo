@@ -28,6 +28,11 @@ func (pay *Pay) submit(ctx *gin.Context) {
 	order := new(defs.Order)
 	ctx.ShouldBind(order)
 
+	if errCode, err = order.Validate(); err != nil {
+		ctx.Data(http.StatusOK, "text/html", []byte(err.Error()))
+		return
+	}
+
 	switch order.OrgCode {
 	case "Jd":
 		jdPayArg := method.JdPayArg{
@@ -45,7 +50,6 @@ func (pay *Pay) submit(ctx *gin.Context) {
 	}
 
 	ctx.Data(http.StatusOK, "text/html", []byte(form))
-
 }
 
 func (pay *Pay) notify(ctx *gin.Context) {
