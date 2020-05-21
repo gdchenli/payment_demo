@@ -77,7 +77,6 @@ func (payment *Payment) CreatePaymentForm(arg PayArg) (form string, errCode int,
 		"bizTp":          BusinessServiceConsumeCode,
 		"settleCurrency": arg.TransCurrency,
 	}
-	fmt.Printf("paramMap:%+v\n", paramMap)
 
 	//签名
 	paramMap["sign"], err = payment.getSign(paramMap, arg.PrivateKey)
@@ -93,7 +92,6 @@ func (payment *Payment) CreatePaymentForm(arg PayArg) (form string, errCode int,
 
 	//生成form表单
 	form = payment.getForm(paramMap, arg.PayWay)
-	fmt.Print("form", form)
 
 	return form, 0, nil
 }

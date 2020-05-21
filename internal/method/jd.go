@@ -32,7 +32,6 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 	}
 
 	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString("jd.private_key"))
-	fmt.Println("privateKeyPath", privateKeyPath)
 	file, err := os.Open(privateKeyPath)
 	if err != nil {
 		return form, code.PrivateKeyNotExitsErrCode, errors.New(code.PrivateKeyNotExitsErrMessage)
@@ -42,7 +41,6 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 		return form, code.PrivateKeyContentErrCode, errors.New(code.PrivateKeyContentErrMessage)
 	}
 	privateKey := string(privateKeyBytes)
-	fmt.Println("privateKey", privateKey)
 
 	date := time.Now().Format(payment.TimeLayout)
 	goodsInfos := []payment.GoodsInfo{{Id: "test" + date, Name: "test" + date, Price: amount, Num: 1}}
@@ -65,7 +63,6 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 		BizTp:         "100006",
 		TradeName:     arg.OrderId,
 	}
-	fmt.Printf("payArg %+v\n", payArg)
 	form, errCode, err = new(payment.Payment).CreatePaymentForm(payArg)
 	if err != nil {
 		return form, errCode, err
