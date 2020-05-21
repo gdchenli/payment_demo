@@ -5,15 +5,27 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"payment_demo/internal/common/code"
 	"payment_demo/pkg/jd/util"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
 	Practicality               = "0" //实物
 	BusinessServiceConsumeCode = "100006"
 	TimeLayout                 = "20060102150405"
+)
+
+const (
+	PayGoodsInfoFormatErrCode    = 10101
+	PayGoodsInfoFormatErrMessage = "发起支付，商品数据转换失败"
+	PayKjInfoFormatErrCode       = 10102
+	PayKjInfoFormatErrMessage    = "发起支付，跨境数据转换失败"
+	PaySignErrCode               = 10103
+	PaySignErrMessage            = "发起支付，签名计算错误"
+	PayEncryptErrCode            = 10104
+	PayEncryptErrMessage         = "发起支付，数据加密错误"
 )
 
 type Payment struct{}
@@ -52,11 +64,13 @@ type KjInfo struct {
 func (payment *Payment) CreatePaymentForm(arg PayArg) (form string, errCode int, err error) {
 	goodsInfoBytes, err := json.Marshal(arg.GoodsInfo)
 	if err != nil {
-		return form, code.PaymentGoodsInfoFormatErrCode, errors.New(code.PaymentGoodsInfoFormatErrMessage)
+		logrus.Errorf(PayGoodsInfoFormatErrMessage+",errCode:%v,err:%v", PayGoodsInfoFormatErrCode, err.Error())
+		return form, PayGoodsInfoFormatErrCode, errors.New(PayGoodsInfoFormatErrMessage)
 	}
 	kjInfoBytes, err := json.Marshal(arg.KjInfo)
 	if err != nil {
-		return form, code.PaymentKjInfoFormatErrCode, errors.New(code.PaymentKjInfoFormatErrMessage)
+		logrus.Errorf(PayKjInfoFormatErrMessage+",errCode:%v,err:%v", PayKjInfoFormatErrCode, err.Error())
+		return form, PayKjInfoFormatErrCode, errors.New(PayKjInfoFormatErrMessage)
 	}
 
 	paramMap := map[string]string{
@@ -81,13 +95,15 @@ func (payment *Payment) CreatePaymentForm(arg PayArg) (form string, errCode int,
 	//签名
 	paramMap["sign"], err = payment.getSign(paramMap, arg.PrivateKey)
 	if err != nil {
-		return form, code.PaymentSignErrCode, errors.New(code.PaymentSignErrMessage)
+		logrus.Errorf(PaySignErrMessage+",errCode:%v,err:%v", PaySignErrCode, err.Error())
+		return form, PaySignErrCode, errors.New(PaySignErrMessage)
 	}
 
 	//加密
 	paramMap, err = payment.encrypt3DES(paramMap, arg.DesKey)
 	if err != nil {
-		return form, 10153, errors.New("发起支付，数据加密错误")
+		logrus.Errorf(PayEncryptErrMessage+",errCode:%v,err:%v", PayEncryptErrCode, err.Error())
+		return form, PayEncryptErrCode, errors.New(PayEncryptErrMessage)
 	}
 
 	//生成form表单

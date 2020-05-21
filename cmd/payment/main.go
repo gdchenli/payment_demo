@@ -6,6 +6,7 @@ import (
 	"payment_demo/app/cart"
 	"payment_demo/app/cashier"
 	"payment_demo/internal/common/config"
+	"payment_demo/internal/common/log"
 	"payment_demo/tools/ginprometheus"
 	"payment_demo/tools/grace"
 	"payment_demo/tools/recovery"
@@ -24,6 +25,10 @@ const (
 	MetricsAuthUser     = "metrics.auth_user"
 	MetricsAuthPassword = "metrics.auth_password"
 )
+
+func init() {
+	log.Init()
+}
 
 func main() {
 	gin.SetMode(config.GetInstance().GetString(Mode))

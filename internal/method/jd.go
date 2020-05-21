@@ -8,9 +8,12 @@ import (
 	"path"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
+	"payment_demo/internal/common/defs"
 	"payment_demo/pkg/jd/payment"
 	"strconv"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Jd struct{}
@@ -22,22 +25,26 @@ type JdPayArg struct {
 	UserId   string  `json:"user_id"`
 }
 
+//发起支付
 func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 	//金额转为分
 	totalFee := arg.TotalFee * 100
 	//金额字段类型转换
 	amount, err := strconv.ParseInt(fmt.Sprintf("%.f", totalFee), 10, 64)
 	if err != nil {
+		logrus.Errorf(code.AmountFormatErrMessage+",errCode:%v,err:%v", code.AmountFormatErrCode, err.Error())
 		return form, code.AmountFormatErrCode, errors.New(code.AmountFormatErrMessage)
 	}
 
 	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString("jd.private_key"))
 	file, err := os.Open(privateKeyPath)
 	if err != nil {
+		logrus.Errorf(code.PrivateKeyNotExitsErrMessage+",errCode:%v,err:%v", code.PrivateKeyNotExitsErrCode, err.Error())
 		return form, code.PrivateKeyNotExitsErrCode, errors.New(code.PrivateKeyNotExitsErrMessage)
 	}
 	privateKeyBytes, err := ioutil.ReadAll(file)
 	if err != nil {
+		logrus.Errorf(code.PrivateKeyContentErrMessage+",errCode:%v,err:%v", code.PrivateKeyContentErrCode, err.Error())
 		return form, code.PrivateKeyContentErrCode, errors.New(code.PrivateKeyContentErrMessage)
 	}
 	privateKey := string(privateKeyBytes)
@@ -69,4 +76,34 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 	}
 
 	return form, 0, nil
+}
+
+//异步通知
+func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString("jd.public_key"))
+	file, err := os.Open(publicKeyPath)
+	if err != nil {
+		logrus.Errorf(code.PublicKeyNotExitsErrMessage+",errCode:%v,err:%v", code.PublicKeyNotExitsErrCode, err.Error())
+		return notifyRsp, code.PublicKeyNotExitsErrCode, errors.New(code.PublicKeyNotExitsErrMessage)
+	}
+	publicKeyBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		logrus.Errorf(code.PublicKeyContentErrMessage+",errCode:%v,err:%v", code.PublicKeyContentErrCode, err.Error())
+		return notifyRsp, code.PublicKeyContentErrCode, errors.New(code.PublicKeyContentErrMessage)
+	}
+	publicKey := string(publicKeyBytes)
+	notifyArg := payment.NotifyArg{
+		PublicKey: publicKey,
+		DesKey:    config.GetInstance().GetString("jd.des_key"),
+	}
+
+	jdNotifyRsp, errCode, err := new(payment.Notify).Validate(query, notifyArg)
+	if err != nil {
+		return notifyRsp, errCode, err
+	}
+
+	notifyRsp.OrderId = jdNotifyRsp.OrderId
+	notifyRsp.Status = jdNotifyRsp.Status
+
+	return notifyRsp, 0, nil
 }

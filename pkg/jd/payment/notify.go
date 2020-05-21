@@ -13,6 +13,19 @@ const (
 	NotifySuccessCode   = "000000"
 )
 
+const (
+	NotifyQueryFormatErrCode      = 10201
+	NotifyQueryFormatErrMessage   = "异步通知，加密数据格式错误"
+	NotifyDecryptFailedErrCode    = 10202
+	NotifyDecryptFailedErrMessage = "异步通知，解密失败"
+	NotifyDecryptFormatErrCode    = 10203
+	NotifyDecryptFormatErrMessage = "异步通知，解密后数据格式错误"
+	NotifyStatusErrCode           = 10204
+	NotifyStatusErrMessage        = "交易状态不正确"
+	NotifySignErrCode             = 10205
+	NotifySignErrMessage          = "签名校验失败"
+)
+
 type Notify struct{}
 
 type NotifyArg struct {
@@ -72,13 +85,13 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 	var notifyQuery NotifyQuery
 	err = xml.Unmarshal([]byte(query), &notifyQuery)
 	if err != nil {
-		return notifyRsp, 10201, errors.New("异步通知，加密数据格式错误")
+		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
 	//解密支付机构参数
 	decryptBytes, err := notify.decryptArg(notifyQuery, arg.DesKey)
 	if err != nil {
-		return notifyRsp, 10202, errors.New("异步通知，解密失败")
+		return notifyRsp, NotifyDecryptFailedErrCode, errors.New(NotifyDecryptFailedErrMessage)
 	}
 	notifyRsp.DecryptRsp = string(decryptBytes)
 
@@ -86,23 +99,23 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 	var notifyDecrypt NotifyDecrypt
 	err = xml.Unmarshal(decryptBytes, &notifyDecrypt)
 	if err != nil {
-		return notifyRsp, 10203, errors.New("异步通知，解密后数据格式错误")
+		return notifyRsp, NotifyDecryptFormatErrCode, errors.New(NotifyDecryptFormatErrMessage)
 	}
 
 	//判断请求结果
 	if notifyDecrypt.Result.Code != NotifySuccessCode {
-		return notifyRsp, 10104, errors.New("网络请求错误")
+		return notifyRsp, NotifyStatusErrCode, errors.New(NotifyStatusErrMessage)
 	}
 	notifyRsp.OrderId = notifyDecrypt.TradeNum
 
 	//校验签名
 	if !notify.checkSign(decryptBytes, notifyDecrypt.Sign, arg.PublicKey) {
-		return notifyRsp, 10105, errors.New("签名校验失败")
+		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
 	//交易状态
 	if notifyDecrypt.Status != NotifySuccessStatus {
-		return notifyRsp, 10106, errors.New("交易状态不正确")
+		return notifyRsp, NotifyStatusErrCode, errors.New(NotifyStatusErrMessage)
 	}
 	notifyRsp.Status = true
 
