@@ -1,6 +1,13 @@
 package cashier
 
-import "github.com/gin-gonic/gin"
+import (
+	"fmt"
+	"net/http"
+	"payment_demo/internal/common/defs"
+	"payment_demo/internal/method"
+
+	"github.com/gin-gonic/gin"
+)
 
 type Pay struct{}
 
@@ -8,13 +15,36 @@ func (pay *Pay) Router(router *gin.Engine) {
 	r := router.Group("/payment")
 	{
 		r.POST("/submit", pay.submit)
-		r.Group("/notify", pay.notify)
-		r.Group("/verify", pay.verify)
+		r.Group("/notify/:org/:code", pay.notify)
+		r.Group("/verify/:org/:code", pay.verify)
 		r.GET("/status", pay.status)
 	}
 }
 
 func (pay *Pay) submit(ctx *gin.Context) {
+	var errCode int
+	var err error
+	var form string
+	order := new(defs.Order)
+	ctx.ShouldBind(order)
+
+	switch order.OrgCode {
+	case "Jd":
+		jdPayArg := method.JdPayArg{
+			OrderId:  order.OrderId,
+			TotalFee: order.TotalFee,
+			Currency: order.Currency,
+			UserId:   order.UserId}
+		form, errCode, err = new(method.Jd).Submit(jdPayArg)
+	}
+
+	if err != nil {
+		fmt.Println(errCode)
+		ctx.Data(http.StatusOK, "text/html", []byte(err.Error()))
+		return
+	}
+
+	ctx.Data(http.StatusOK, "text/html", []byte(form))
 
 }
 

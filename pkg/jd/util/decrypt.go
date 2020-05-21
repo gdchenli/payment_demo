@@ -1,8 +1,12 @@
 package util
 
 import (
+	"crypto"
 	"crypto/des"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
+	"encoding/pem"
 	"errors"
 )
 
@@ -61,4 +65,18 @@ func TripleEcbDesDecrypt(crypted, key []byte) ([]byte, error) {
 	}
 	out = JDUnPadding(out)
 	return out, nil
+}
+
+func VerifyPKCS1v15(msg, sign []byte, publicKey []byte) bool {
+	block, _ := pem.Decode(publicKey)
+	if block == nil {
+		return false
+	}
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		panic(err)
+	}
+
+	err = rsa.VerifyPKCS1v15(pub.(*rsa.PublicKey), crypto.Hash(0), msg, sign)
+	return err == nil
 }

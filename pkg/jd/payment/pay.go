@@ -3,6 +3,7 @@ package payment
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"payment_demo/pkg/jd/util"
 	"time"
@@ -16,24 +17,24 @@ const (
 
 type Payment struct{}
 
-type Arg struct {
-	Merchant       string    `json:"merchant"`       //商户号
-	TradeNum       string    `json:"tradeNum"`       //订单编号
-	TradeName      string    `json:"tradeName"`      //交易名称
-	Amount         int64     `json:"amount"`         //交易金额，单位分，大于0
-	Currency       string    `json:"currency"`       //货币种类
-	CallbackUrl    string    `json:"callbackUrl"`    //支付成功后跳转路径
-	NotifyUrl      string    `json:"notifyUrl"`      //异步通知页面地址
-	UserId         string    `json:"userId"`         //用户账号
-	ExpireTime     string    `json:"expireTime"`     //订单失效时长，单位：秒，失效后则不能再支付，默认失效时间为604800秒(7天)，最大失效时间为7776000秒（90天），超过则按90天计算
-	GoodsInfo      GoodsInfo `json:"goodsInfo"`      //商品信息
-	SettleCurrency string    `json:"settleCurrency"` //结算币种
-	KjInfo         KjInfo    `json:"kInfo"`          //业务信息
-	BizTp          string    `json:"bizTp"`          //通道业务类型
-	PrivateKey     string    `json:"privateKey"`     //商户私钥
-	DesKey         string    `json:"desKey"`         //des key
-	TransCurrency  string    `json:"transCurrency"`  //结算币种
-	PayWay         string    `json:"pay_way"`
+type PayArg struct {
+	Merchant       string      `json:"merchant"`       //商户号
+	TradeNum       string      `json:"tradeNum"`       //订单编号
+	TradeName      string      `json:"tradeName"`      //交易名称
+	Amount         int64       `json:"amount"`         //交易金额，单位分，大于0
+	Currency       string      `json:"currency"`       //货币种类
+	CallbackUrl    string      `json:"callbackUrl"`    //支付成功后跳转路径
+	NotifyUrl      string      `json:"notifyUrl"`      //异步通知页面地址
+	UserId         string      `json:"userId"`         //用户账号
+	ExpireTime     string      `json:"expireTime"`     //订单失效时长，单位：秒，失效后则不能再支付，默认失效时间为604800秒(7天)，最大失效时间为7776000秒（90天），超过则按90天计算
+	GoodsInfo      []GoodsInfo `json:"goodsInfo"`      //商品信息
+	SettleCurrency string      `json:"settleCurrency"` //结算币种
+	KjInfo         KjInfo      `json:"kInfo"`          //业务信息
+	BizTp          string      `json:"bizTp"`          //通道业务类型
+	PrivateKey     string      `json:"privateKey"`     //商户私钥
+	DesKey         string      `json:"desKey"`         //des key
+	TransCurrency  string      `json:"transCurrency"`  //结算币种
+	PayWay         string      `json:"pay_way"`
 }
 
 type GoodsInfo struct {
@@ -48,14 +49,14 @@ type KjInfo struct {
 	GoodsUnderBonded      string `json:"goodsUnderBonded"`      //是否保税货物项下付款Y/N
 }
 
-func (payment *Payment) CreatePaymentForm(arg Arg) (form string, err error) {
+func (payment *Payment) CreatePaymentForm(arg PayArg) (form string, errCode int, err error) {
 	goodsInfoBytes, err := json.Marshal(arg.GoodsInfo)
 	if err != nil {
-		return form, err
+		return form, 10150, errors.New("发起支付，商品数据转换失败")
 	}
 	kjInfoBytes, err := json.Marshal(arg.KjInfo)
 	if err != nil {
-		return form, err
+		return form, 10151, errors.New("发起支付，跨境数据转换失败")
 	}
 
 	paramMap := map[string]string{
@@ -80,20 +81,20 @@ func (payment *Payment) CreatePaymentForm(arg Arg) (form string, err error) {
 	//签名
 	paramMap["sign"], err = payment.getSign(paramMap, arg.PrivateKey)
 	if err != nil {
-		return form, err
+		return form, 10152, errors.New("发起支付，签名计算错误")
 	}
 
 	//加密
 	paramMap, err = payment.encrypt3DES(paramMap, arg.DesKey)
 	if err != nil {
-		return form, err
+		return form, 10153, errors.New("发起支付，数据加密错误")
 	}
 
 	//生成form表单
 	form = payment.getForm(paramMap, arg.PayWay)
 	fmt.Print("form", form)
 
-	return form, nil
+	return form, 0, nil
 }
 
 func (payment *Payment) getForm(paramMap map[string]string, payWay string) string {
