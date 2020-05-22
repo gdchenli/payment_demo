@@ -13,14 +13,17 @@ import (
 )
 
 const (
-	NotSupportPaymentOrg = "不支持该支付机构"
-	JdOrg                = "jd"
-	AllpayOrg            = "allpay"
-	WechatOrg            = "wechat"
-	EpaymentsOrg         = "epayments"
-	AlipayOrg            = "alipay"
-	NotifySuccessMsg     = "success"
-	NotifyFailMsg        = "fail"
+	JdOrg        = "jd"
+	AllpayOrg    = "allpay"
+	WechatOrg    = "wechat"
+	EpaymentsOrg = "epayments"
+	AlipayOrg    = "alipay"
+)
+
+const (
+	NotSupportPaymentOrgMsg = "不支持该支付机构"
+	NotifySuccessMsg        = "success"
+	NotifyFailMsg           = "fail"
 )
 
 type Pay struct{}
@@ -53,15 +56,15 @@ func (pay *Pay) submit(ctx *gin.Context) {
 	case JdOrg:
 		form, errCode, err = pay.jdSubmit(*order)
 	case AllpayOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case AlipayOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case WechatOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case EpaymentsOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	default:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	}
 
 	if err != nil {
@@ -93,15 +96,15 @@ func (pay *Pay) notify(ctx *gin.Context) {
 	case JdOrg:
 		notifyRsp, errCode, err = pay.jdNotify(ctx)
 	case AllpayOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case AlipayOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case WechatOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case EpaymentsOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	default:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	}
 
 	msg := NotifySuccessMsg
@@ -136,15 +139,15 @@ func (pay *Pay) callback(ctx *gin.Context) {
 	case JdOrg:
 		callBackRsp, errCode, err = pay.jdCallback(ctx)
 	case AllpayOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case AlipayOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case WechatOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case EpaymentsOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	default:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	}
 
 	if err != nil {
@@ -180,15 +183,15 @@ func (pay *Pay) trade(ctx *gin.Context) {
 	case JdOrg:
 		tradeRsp, errCode, err = pay.jdTrade(trade)
 	case AllpayOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case AlipayOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case WechatOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case EpaymentsOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	default:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	}
 
 	if err != nil {
@@ -221,15 +224,15 @@ func (pay *Pay) closed(ctx *gin.Context) {
 	case JdOrg:
 		closedRsp, errCode, err = pay.jdClosed(closed)
 	case AllpayOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case AlipayOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case WechatOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	case EpaymentsOrg:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	default:
-		err = errors.New(NotSupportPaymentOrg)
+		err = errors.New(NotSupportPaymentOrgMsg)
 	}
 
 	if err != nil {
