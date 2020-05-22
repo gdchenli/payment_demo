@@ -9,10 +9,31 @@ import (
 	"payment_demo/tools/curl"
 	"regexp"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
 	JdClosedTradeSuccessStatus = 1
+)
+
+const (
+	CloseTradeBuildSignErrCode                    = 10401
+	CloseTradeBuildSignErrMessage                 = "查询交易流水，签名生成失败"
+	CloseTradeDesKeyFormatErrCode                 = 10402
+	CloseTradeDesKeyFormatErrMessage              = "查询交易流水，desKey格式错误"
+	CloseTradeRequestDataEncryptFailedErrCode     = 10403
+	CloseTradeRequestDataEncryptFailedErrMessage  = "查询交易流水，请求数据加密失败"
+	CloseTradeNetErrCode                          = 10404
+	CloseTradeNetErrMessage                       = "关闭交易流水,网络错误"
+	CloseTradeResponseDataEncryptFormatErrCode    = 10405
+	CloseTradeResponseDataEncryptFormatErrMessage = "关闭交易流水,返回加密数据格式错误"
+	CloseTradeResponseDataDecryptFailedErrCode    = 10406
+	CloseTradeResponseDataDecryptFailedErrMessage = "关闭交易流水,解密返回数据失败"
+	CloseTradeResponseDataDecryptFormatErrCode    = 10407
+	CloseTradeResponseDataDecryptFormatErrMessage = "关闭交易流水,解密数据格式错误"
+	CloseTradeResponseDataSignErrCode             = 10408
+	CloseTradeResponseDataSignErrMessage          = "关闭交易流水,返回数据签名校验错误"
 )
 
 type Closed struct{}
@@ -123,7 +144,8 @@ func (closed *Closed) Trade(arg ClosedArg) (closedRsp ClosedRsp, errCode int, er
 	sha256 := util.HaSha256(xmlStr)
 	signBytes, err := util.SignPKCS1v15([]byte(sha256), []byte(arg.PrivateKey))
 	if err != nil {
-		return closedRsp, 10401, errors.New("关闭交易，签名生成失败")
+		logrus.Errorf(CloseTradeBuildSignErrMessage+",request:%+v,errCode:%v,err:%v", arg, CloseTradeBuildSignErrCode, err.Error())
+		return closedRsp, CloseTradeBuildSignErrCode, errors.New(CloseTradeBuildSignErrMessage)
 	}
 	sign := base64.StdEncoding.EncodeToString(signBytes)
 	closedWithSignRequest := ClosedWithSignRequest{
@@ -141,11 +163,13 @@ func (closed *Closed) Trade(arg ClosedArg) (closedRsp ClosedRsp, errCode int, er
 
 	desKeyBytes, err := base64.StdEncoding.DecodeString(arg.DesKey)
 	if err != nil {
-		return closedRsp, 10402, errors.New("关闭交易，请求数据加密失败")
+		logrus.Errorf(CloseTradeDesKeyFormatErrMessage+",request:%+v,errCode:%v,err:%v", arg, CloseTradeDesKeyFormatErrCode, err.Error())
+		return closedRsp, CloseTradeDesKeyFormatErrCode, errors.New(CloseTradeDesKeyFormatErrMessage)
 	}
 	encryptBytes, err := util.TripleEcbDesEncrypt([]byte(xmlStr), desKeyBytes)
 	if err != nil {
-		return closedRsp, 10403, errors.New("关闭交易，请求数据加密失败")
+		logrus.Errorf(CloseTradeRequestDataEncryptFailedErrMessage+",request:%+v,errCode:%v,err:%v", arg, CloseTradeRequestDataEncryptFailedErrCode, err.Error())
+		return closedRsp, CloseTradeRequestDataEncryptFailedErrCode, errors.New(CloseTradeRequestDataEncryptFailedErrMessage)
 	}
 	reqEncrypt := util.DecimalByteSlice2HexString(encryptBytes)
 	reqEncrypt = base64.StdEncoding.EncodeToString([]byte(reqEncrypt))
@@ -163,24 +187,28 @@ func (closed *Closed) Trade(arg ClosedArg) (closedRsp ClosedRsp, errCode int, er
 	playLoad := strings.NewReader(xmlStr)
 	err = curl.PostXML(arg.GateWay, &closedResult, playLoad)
 	if err != nil {
-		return closedRsp, 10404, errors.New("关闭交易，网络错误")
+		logrus.Errorf(CloseTradeNetErrMessage+",request:%+v,errCode:%v,err:%v", arg, CloseTradeNetErrCode, err.Error())
+		return closedRsp, CloseTradeNetErrCode, errors.New(CloseTradeNetErrMessage)
 	}
 	//fmt.Printf("closedResult:%+v\n", closedResult)
 	closedResultBytes, err := xml.Marshal(closedResult)
 	if err != nil {
-		return closedRsp, 10404, errors.New("关闭交易，返回数据格式错误")
+		logrus.Errorf(CloseTradeResponseDataEncryptFormatErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", arg, closedResult, CloseTradeResponseDataEncryptFormatErrCode, err.Error())
+		return closedRsp, CloseTradeResponseDataEncryptFormatErrCode, errors.New(CloseTradeResponseDataEncryptFormatErrMessage)
 	}
 	closedRsp.EncryptRsp = string(closedResultBytes)
 
 	//解密数据
 	rspEncryptBytes, err := base64.StdEncoding.DecodeString(closedResult.Encrypt)
 	if err != nil {
-		return closedRsp, 10405, errors.New("关闭交易，返回数据格解密失败")
+		logrus.Errorf(CloseTradeResponseDataDecryptFailedErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", arg, closedResult, CloseTradeResponseDataDecryptFailedErrCode, err.Error())
+		return closedRsp, CloseTradeResponseDataDecryptFailedErrCode, errors.New(CloseTradeResponseDataDecryptFailedErrMessage)
 	}
 	rspEncryptBytes, err = util.HexString2Bytes(string(rspEncryptBytes))
 	rspDecryptBytes, err := util.TripleEcbDesDecrypt(rspEncryptBytes, desKeyBytes)
 	if err != nil {
-		return closedRsp, 10405, errors.New("关闭交易，返回数据格解密失败")
+		logrus.Errorf(CloseTradeResponseDataDecryptFailedErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", arg, closedResult, CloseTradeResponseDataDecryptFailedErrCode, err.Error())
+		return closedRsp, CloseTradeResponseDataDecryptFailedErrCode, errors.New(CloseTradeResponseDataDecryptFailedErrMessage)
 	}
 	//fmt.Println("search rsp", string(rspDecrypt))
 	closedRsp.DecryptRsp = string(rspDecryptBytes)
@@ -188,13 +216,15 @@ func (closed *Closed) Trade(arg ClosedArg) (closedRsp ClosedRsp, errCode int, er
 	var closedDecryptRsp ClosedDecryptRsp
 	err = xml.Unmarshal(rspDecryptBytes, &closedDecryptRsp)
 	if err != nil {
-		return closedRsp, 10407, errors.New("关闭交易，解密数据格式错误")
+		logrus.Errorf(CloseTradeResponseDataDecryptFormatErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", arg, closedResult, CloseTradeResponseDataDecryptFormatErrCode, err.Error())
+		return closedRsp, CloseTradeResponseDataDecryptFormatErrCode, errors.New(CloseTradeResponseDataDecryptFormatErrMessage)
 	}
 	closedRsp.OrderId = closedDecryptRsp.TradeNum
 
 	//签名校验
 	if !closed.checkSignature(closedDecryptRsp.Sign, closedRsp.DecryptRsp, arg.PublicKey) {
-		return closedRsp, 10408, errors.New("关闭交易,签名校验错误")
+		logrus.Errorf(CloseTradeResponseDataSignErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", arg, closedResult, CloseTradeResponseDataSignErrCode)
+		return closedRsp, CloseTradeResponseDataSignErrCode, errors.New(CloseTradeResponseDataSignErrMessage)
 	}
 
 	if closedDecryptRsp.Status == JdClosedTradeSuccessStatus {

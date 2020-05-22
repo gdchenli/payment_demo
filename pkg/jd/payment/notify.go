@@ -6,6 +6,8 @@ import (
 	"errors"
 	"payment_demo/pkg/jd/util"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -21,9 +23,9 @@ const (
 	NotifyDecryptFormatErrCode    = 10203
 	NotifyDecryptFormatErrMessage = "异步通知，解密后数据格式错误"
 	NotifyStatusErrCode           = 10204
-	NotifyStatusErrMessage        = "交易状态不正确"
+	NotifyStatusErrMessage        = "异步通知，交易状态不正确"
 	NotifySignErrCode             = 10205
-	NotifySignErrMessage          = "签名校验失败"
+	NotifySignErrMessage          = "异步通知，签名校验失败"
 )
 
 type Notify struct{}
@@ -86,12 +88,14 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 	var notifyQuery NotifyQuery
 	err = xml.Unmarshal([]byte(query), &notifyQuery)
 	if err != nil {
+		logrus.Errorf(NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
 	//解密支付机构参数
 	decryptBytes, err := notify.decryptArg(notifyQuery, arg.DesKey)
 	if err != nil {
+		logrus.Errorf(NotifyDecryptFailedErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyDecryptFailedErrCode, err.Error())
 		return notifyRsp, NotifyDecryptFailedErrCode, errors.New(NotifyDecryptFailedErrMessage)
 	}
 	notifyRsp.DecryptRsp = string(decryptBytes)
@@ -100,22 +104,26 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 	var notifyDecrypt NotifyDecrypt
 	err = xml.Unmarshal(decryptBytes, &notifyDecrypt)
 	if err != nil {
+		logrus.Errorf(NotifyDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyDecryptFormatErrCode, err.Error())
 		return notifyRsp, NotifyDecryptFormatErrCode, errors.New(NotifyDecryptFormatErrMessage)
 	}
 
 	//判断请求结果
 	if notifyDecrypt.Result.Code != NotifySuccessCode {
+		logrus.Errorf(NotifyStatusErrMessage+",query:%v,errCode:%v", query, NotifyStatusErrCode)
 		return notifyRsp, NotifyStatusErrCode, errors.New(NotifyStatusErrMessage)
 	}
 	notifyRsp.OrderId = notifyDecrypt.TradeNum
 
 	//校验签名
 	if !notify.checkSign(decryptBytes, notifyDecrypt.Sign, arg.PublicKey) {
+		logrus.Errorf(NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
 	//交易状态
 	if notifyDecrypt.Status != NotifySuccessStatus {
+		logrus.Errorf(NotifyStatusErrMessage+",query:%v,errCode:%v", query, NotifyStatusErrCode)
 		return notifyRsp, NotifyStatusErrCode, errors.New(NotifyStatusErrMessage)
 	}
 	notifyRsp.Status = true

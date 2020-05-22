@@ -6,10 +6,25 @@ import (
 	"errors"
 	"net/url"
 	"payment_demo/pkg/jd/util"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
 	CallbackSuccessCode = "0" //支付成功
+)
+
+const (
+	CallbackEncryptFormatErrCode    = 10301
+	CallbackEncryptFormatErrMessage = "同步通知，加密数据格式错误"
+	CallbackDecryptFailedErrCode    = 10302
+	CallbackDecryptFailedErrMessage = "同步通知，解密失败"
+	CallbackDecryptFormatErrCode    = 10303
+	CallbackDecryptFormatErrMessage = "同步通知，解密据格式错误"
+	CallbackSignErrCode             = 10304
+	CallbackSignErrMessage          = "同步通知，签名校验失败"
+	CallbackStatusErrCode           = 10305
+	CallbackStatusErrMessage        = "同步通知，交易状态不正确"
 )
 
 type Callback struct{}
@@ -41,7 +56,8 @@ func (callback *Callback) Validate(query string, arg CallbackArg) (callbackRsp C
 	//解析参数
 	urlValuesMap, err := url.ParseQuery(query)
 	if err != nil {
-		return callbackRsp, 10301, errors.New("同步通知，加密数据格式错误")
+		logrus.Errorf(CallbackEncryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackEncryptFormatErrCode, err.Error())
+		return callbackRsp, CallbackEncryptFormatErrCode, errors.New(CallbackEncryptFormatErrMessage)
 	}
 	queryMap := make(map[string]string)
 	for k, v := range urlValuesMap {
@@ -51,11 +67,13 @@ func (callback *Callback) Validate(query string, arg CallbackArg) (callbackRsp C
 	//解密
 	decryptMap, err := callback.decryptArg(queryMap, arg.DesKey)
 	if err != nil {
-		return callbackRsp, 10202, errors.New("同步通知，解密失败")
+		logrus.Errorf(CallbackDecryptFailedErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFailedErrCode, err.Error())
+		return callbackRsp, CallbackDecryptFailedErrCode, errors.New(CallbackDecryptFailedErrMessage)
 	}
 	decryptBytes, err := json.Marshal(decryptMap)
 	if err != nil {
-		return callbackRsp, 10303, errors.New("同步通知，解密数据格式错误")
+		logrus.Errorf(CallbackDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFormatErrCode, err.Error())
+		return callbackRsp, CallbackDecryptFormatErrCode, errors.New(CallbackDecryptFormatErrMessage)
 	}
 	callbackRsp.DecryptRsp = string(decryptBytes)
 
@@ -63,18 +81,20 @@ func (callback *Callback) Validate(query string, arg CallbackArg) (callbackRsp C
 	var callbackQuery CallbackQuery
 	err = json.Unmarshal(decryptBytes, &callbackQuery)
 	if err != nil {
-		return callbackRsp, 10304, errors.New("同步通知，解密后数据格式错误")
+		logrus.Errorf(CallbackDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFormatErrCode, err.Error())
+		return callbackRsp, CallbackDecryptFormatErrCode, errors.New(CallbackDecryptFormatErrMessage)
 	}
 	callbackRsp.OrderId = callbackQuery.TradeNum
 
 	//校验签名
 	if !callback.checkSign(decryptMap, arg.PublicKey) {
-		return callbackRsp, 10205, errors.New("同步通知，签名校验失败")
+		return callbackRsp, CallbackSignErrCode, errors.New(CallbackSignErrMessage)
 	}
 
 	//交易状态
 	if callbackQuery.Status != CallbackSuccessCode {
-		return callbackRsp, 10306, errors.New("同步通知，交易状态不正确")
+		logrus.Errorf(CallbackStatusErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackStatusErrCode)
+		return callbackRsp, CallbackStatusErrCode, errors.New(CallbackStatusErrMessage)
 	}
 	callbackRsp.Status = true
 

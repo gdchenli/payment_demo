@@ -2,6 +2,37 @@ package defs
 
 import "errors"
 
+const (
+	RequiredPayOrderIdErrCode            = 10150
+	RequiredPayOrderIdErrMessage         = "请输入发起支付的订单编号"
+	RequiredPayTotalFeeErrCode           = 10151
+	RequiredPayTotalFeeErrMessage        = "请输入发起支付的订单金额"
+	RequiredPayCurrencyErrCode           = 10152
+	RequiredPayCurrencyErrMessage        = "请输入发起支付的订单币种"
+	RequiredPayMethodErrCode             = 10153
+	RequiredPayMethodMessage             = "请选择发起支付的支付方式"
+	RequiredPayOrgErrCode                = 10154
+	RequiredPayOrgErrMessage             = "请选择发起支付的支付机构"
+	RequiredUserIdErrCode                = 10155
+	RequiredUserIdErrMessage             = "请输入发起支付的用户Id"
+	RequiredSearchTradeOrderIdErrCode    = 10550
+	RequiredSearchTradeOrderIdErrMessage = "请输入需要查询交易的订单编号"
+	RequiredSearchTradeMethodErrCode     = 10551
+	RequiredSearchTradeMethodMessage     = "请选择需要查询交易的支付方式"
+	RequiredSearchTradeOrgErrCode        = 10552
+	RequiredSearchTradeOrgErrMessage     = "请选择需要查询交易的支付机构"
+	RequiredCloseTradeOrderIdErrCode     = 10450
+	RequiredCloseTradeOrderIdErrMessage  = "请输入需要关闭交易的订单编号"
+	RequiredCloseTradeTotalFeeErrCode    = 10451
+	RequiredCloseTradeTotalFeeErrMessage = "请输入需要关闭交易的订单金额"
+	RequiredCloseTradeCurrencyErrCode    = 10453
+	RequiredCloseTradeCurrencyErrMessage = "请输入需要关闭交易的订单币种"
+	RequiredCloseTradeMethodErrCode      = 10453
+	RequiredCloseTradeMethodErrMessage   = "请选择需要关闭交易的支付方式"
+	RequiredCloseTradeOrgErrCode         = 10454
+	RequiredCloseTradeOrgErrMessage      = "请选择需要关闭交易的支付机构"
+)
+
 type Order struct {
 	OrderId    string  `form:"order_id" json:"order_id"`       //订单编号
 	TotalFee   float64 `form:"total_fee" json:"total_fee"`     //金额
@@ -13,26 +44,26 @@ type Order struct {
 
 func (order *Order) Validate() (errCode int, err error) {
 	if order.OrderId == "" {
-		return 10150, errors.New("请输入订单编号")
+		return RequiredPayOrderIdErrCode, errors.New(RequiredPayOrderIdErrMessage)
 	}
 
 	if order.TotalFee == 0 {
-		return 10151, errors.New("请输入订单金额")
+		return RequiredPayTotalFeeErrCode, errors.New(RequiredPayTotalFeeErrMessage)
 	}
 	if order.Currency == "" {
-		return 10152, errors.New("请输入订单币种")
+		return RequiredPayCurrencyErrCode, errors.New(RequiredPayCurrencyErrMessage)
 	}
 
 	if order.MethodCode == "" {
-		return 10153, errors.New("请选择支付方式")
+		return RequiredPayMethodErrCode, errors.New(RequiredPayMethodMessage)
 	}
 
 	if order.OrgCode == "" {
-		return 10154, errors.New("请选择支付机构")
+		return RequiredPayOrgErrCode, errors.New(RequiredPayOrgErrMessage)
 	}
 
-	if order.OrgCode == "Jd" && order.UserId == "" {
-		return 10155, errors.New("请输入用户Id")
+	if order.OrgCode == "jd" && order.UserId == "" {
+		return RequiredUserIdErrCode, errors.New(RequiredUserIdErrMessage)
 	}
 
 	return 0, nil
@@ -63,15 +94,15 @@ type Trade struct {
 
 func (trade *Trade) Validate() (errCode int, err error) {
 	if trade.OrderId == "" {
-		return 10550, errors.New("请输入订单编号")
+		return RequiredSearchTradeOrderIdErrCode, errors.New(RequiredSearchTradeOrderIdErrMessage)
 	}
 
 	if trade.MethodCode == "" {
-		return 10551, errors.New("请选择支付方式")
+		return RequiredSearchTradeMethodErrCode, errors.New(RequiredSearchTradeMethodMessage)
 	}
 
 	if trade.OrgCode == "" {
-		return 10552, errors.New("请选择支付机构")
+		return RequiredSearchTradeOrgErrCode, errors.New(RequiredSearchTradeOrgErrMessage)
 	}
 
 	return 0, nil
@@ -92,23 +123,23 @@ type Closed struct {
 
 func (closed *Closed) Validate() (errCode int, err error) {
 	if closed.OrderId == "" {
-		return 10450, errors.New("请输入订单编号")
+		return RequiredCloseTradeOrderIdErrCode, errors.New(RequiredCloseTradeOrderIdErrMessage)
 	}
 
-	if closed.TotalFee == 0 {
-		return 10451, errors.New("请输入订单金额")
+	if closed.OrgCode == "jd" && closed.TotalFee == 0 {
+		return RequiredCloseTradeTotalFeeErrCode, errors.New(RequiredCloseTradeTotalFeeErrMessage)
 	}
 
-	if closed.Currency == "" {
-		return 10452, errors.New("请输入币种")
+	if closed.OrgCode == "jd" && closed.Currency == "" {
+		return RequiredCloseTradeCurrencyErrCode, errors.New(RequiredCloseTradeCurrencyErrMessage)
 	}
 
 	if closed.MethodCode == "" {
-		return 10453, errors.New("请选择支付方式")
+		return RequiredCloseTradeMethodErrCode, errors.New(RequiredCloseTradeMethodErrMessage)
 	}
 
 	if closed.OrgCode == "" {
-		return 10454, errors.New("请选择支付机构")
+		return RequiredCloseTradeOrgErrCode, errors.New(RequiredCloseTradeOrgErrMessage)
 	}
 
 	return 0, nil
