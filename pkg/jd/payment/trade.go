@@ -12,12 +12,15 @@ import (
 )
 
 const (
-	CustomTradeType = "0"
-	TradeCreate     = "0" //交易创建
-	TradePending    = "1" //交易处理中
-	TradeProcess    = "2" //交易成功
-	TradeClosed     = "3" //交易关闭
-	TradeFailed     = "4" //交易失败
+	CustomTradeType = "0" //交易类型
+)
+
+const (
+	TradeCreate  = "0" //交易创建
+	TradePending = "1" //交易处理中
+	TradeProcess = "2" //交易成功
+	TradeClosed  = "3" //交易关闭
+	TradeFailed  = "4" //交易失败
 )
 
 type Trade struct{}
@@ -26,7 +29,6 @@ type TradeArg struct {
 	Merchant   string `json:"merchant"`   //商户号
 	TradeNum   string `json:"tradeNum"`   //订单编号
 	OTradeNum  string `json:"oTradeNum"`  //原交易流水号
-	TradeType  string `json:"tradeType"`  //交易类型
 	DesKey     string `json:"signKey"`    //desKey
 	PrivateKey string `json:"privateKey"` //私钥
 	PublicKey  string `json:"publicKey"`  //公钥
@@ -193,15 +195,20 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	if err != nil {
 		return tradeRsp, 10506, errors.New("查询交易流水,解密数据格式错误")
 	}
-
 	tradeRsp.OrderId = searchDecryptRsp.TradeNum
+
+	//签名校验
+	if !trade.checkSignature(searchDecryptRsp.Sign, tradeRsp.DecryptRsp, arg.PublicKey) {
+		return tradeRsp, 10507, errors.New("查询交易流水,签名校验错误")
+	}
+
 	tradeRsp.Status = searchDecryptRsp.Status
 
 	return tradeRsp, 0, err
 }
 
 //验证查询交易结果
-func (trade *Trade) CheckSignature(sign, decryptRsp, publicKey string) bool {
+func (trade *Trade) checkSignature(sign, decryptRsp, publicKey string) bool {
 	//签名字符串截取
 	clipStartIndex := strings.Index(decryptRsp, "<sign>")
 	clipEndIndex := strings.Index(decryptRsp, "</sign>")

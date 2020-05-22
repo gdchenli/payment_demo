@@ -1,6 +1,7 @@
 package method
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -26,6 +27,7 @@ const (
 	JdPcPayWay       = "jd.pc_pay_way"
 	JdPrivateKey     = "jd.private_key"
 	JdPublicKey      = "jd.public_key"
+	JdTradeWay       = "jd.trade_way"
 )
 
 type Jd struct{}
@@ -49,12 +51,12 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 	}
 
 	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPrivateKey))
-	file, err := os.Open(privateKeyPath)
+	privateFile, err := os.Open(privateKeyPath)
 	if err != nil {
 		logrus.Errorf(code.PrivateKeyNotExitsErrMessage+",errCode:%v,err:%v", code.PrivateKeyNotExitsErrCode, err.Error())
 		return form, code.PrivateKeyNotExitsErrCode, errors.New(code.PrivateKeyNotExitsErrMessage)
 	}
-	privateKeyBytes, err := ioutil.ReadAll(file)
+	privateKeyBytes, err := ioutil.ReadAll(privateFile)
 	if err != nil {
 		logrus.Errorf(code.PrivateKeyContentErrMessage+",errCode:%v,err:%v", code.PrivateKeyContentErrCode, err.Error())
 		return form, code.PrivateKeyContentErrCode, errors.New(code.PrivateKeyContentErrMessage)
@@ -93,12 +95,12 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 //异步通知
 func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
 	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
-	file, err := os.Open(publicKeyPath)
+	publicKeyFile, err := os.Open(publicKeyPath)
 	if err != nil {
 		logrus.Errorf(code.PublicKeyNotExitsErrMessage+",errCode:%v,err:%v", code.PublicKeyNotExitsErrCode, err.Error())
 		return notifyRsp, code.PublicKeyNotExitsErrCode, errors.New(code.PublicKeyNotExitsErrMessage)
 	}
-	publicKeyBytes, err := ioutil.ReadAll(file)
+	publicKeyBytes, err := ioutil.ReadAll(publicKeyFile)
 	if err != nil {
 		logrus.Errorf(code.PublicKeyContentErrMessage+",errCode:%v,err:%v", code.PublicKeyContentErrCode, err.Error())
 		return notifyRsp, code.PublicKeyContentErrCode, errors.New(code.PublicKeyContentErrMessage)
@@ -114,6 +116,12 @@ func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err e
 		return notifyRsp, errCode, err
 	}
 
+	//记录日志
+	encryptRsp, _ := json.Marshal(jdNotifyRsp.EncryptRsp)
+	decryptRsp, _ := json.Marshal(jdNotifyRsp.DecryptRsp)
+	logrus.Info("order id:%v,org:%v,method:%v,notify encrypt data:%+v,notify decrypt data:%v",
+		jdNotifyRsp.OrderId, "jd", "jd_payment", encryptRsp, decryptRsp)
+
 	notifyRsp.OrderId = jdNotifyRsp.OrderId
 	notifyRsp.Status = jdNotifyRsp.Status
 
@@ -121,7 +129,93 @@ func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err e
 }
 
 //同步通知
-func (jd *Jd) Callback(query string) (callbackRsp defs.CallbackRsp, err error) {
+func (jd *Jd) Callback(query string) (callbackRsp defs.CallbackRsp, errCode int, err error) {
+	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
+	file, err := os.Open(publicKeyPath)
+	if err != nil {
+		logrus.Errorf(code.PublicKeyNotExitsErrMessage+",errCode:%v,err:%v", code.PublicKeyNotExitsErrCode, err.Error())
+		return callbackRsp, code.PublicKeyNotExitsErrCode, errors.New(code.PublicKeyNotExitsErrMessage)
+	}
+	publicKeyBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		logrus.Errorf(code.PublicKeyContentErrMessage+",errCode:%v,err:%v", code.PublicKeyContentErrCode, err.Error())
+		return callbackRsp, code.PublicKeyContentErrCode, errors.New(code.PublicKeyContentErrMessage)
+	}
+	publicKey := string(publicKeyBytes)
 
-	return callbackRsp, err
+	callbackArg := payment.CallbackArg{
+		PublicKey: publicKey,
+		DesKey:    config.GetInstance().GetString(JdDesKey),
+	}
+	jdCallbackArg, errCode, err := new(payment.Callback).Validate(query, callbackArg)
+	if err != nil {
+		return callbackRsp, errCode, err
+	}
+
+	//记录日志
+	encryptRsp, _ := json.Marshal(jdCallbackArg.EncryptRsp)
+	decryptRsp, _ := json.Marshal(jdCallbackArg.DecryptRsp)
+	logrus.Info("order id:%v,org:%v,method:%v,callback encrypt data:%+v,callback decrypt data:%v",
+		jdCallbackArg.OrderId, "jd", "jd_payment", encryptRsp, decryptRsp)
+
+	callbackRsp.Status = jdCallbackArg.Status
+	callbackRsp.OrderId = jdCallbackArg.OrderId
+
+	return callbackRsp, 0, err
+}
+
+//查询交易
+func (jd *Jd) Trade(orderId string) (tradeRsp defs.TradeRsp, errCode int, err error) {
+	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPrivateKey))
+	privateFile, err := os.Open(privateKeyPath)
+	if err != nil {
+		logrus.Errorf(code.PrivateKeyNotExitsErrMessage+",errCode:%v,err:%v", code.PrivateKeyNotExitsErrCode, err.Error())
+		return tradeRsp, code.PrivateKeyNotExitsErrCode, errors.New(code.PrivateKeyNotExitsErrMessage)
+	}
+	privateKeyBytes, err := ioutil.ReadAll(privateFile)
+	if err != nil {
+		logrus.Errorf(code.PrivateKeyContentErrMessage+",errCode:%v,err:%v", code.PrivateKeyContentErrCode, err.Error())
+		return tradeRsp, code.PrivateKeyContentErrCode, errors.New(code.PrivateKeyContentErrMessage)
+	}
+	privateKey := string(privateKeyBytes)
+
+	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
+	file, err := os.Open(publicKeyPath)
+	if err != nil {
+		logrus.Errorf(code.PublicKeyNotExitsErrMessage+",errCode:%v,err:%v", code.PublicKeyNotExitsErrCode, err.Error())
+		return tradeRsp, code.PublicKeyNotExitsErrCode, errors.New(code.PublicKeyNotExitsErrMessage)
+	}
+	publicKeyBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		logrus.Errorf(code.PublicKeyContentErrMessage+",errCode:%v,err:%v", code.PublicKeyContentErrCode, err.Error())
+		return tradeRsp, code.PublicKeyContentErrCode, errors.New(code.PublicKeyContentErrMessage)
+	}
+	publicKey := string(publicKeyBytes)
+
+	tradeArg := payment.TradeArg{
+		Merchant:   config.GetInstance().GetString(JdMerchant),
+		TradeNum:   orderId,
+		DesKey:     config.GetInstance().GetString(JdDesKey),
+		PublicKey:  publicKey,
+		PrivateKey: privateKey,
+		GateWay:    config.GetInstance().GetString(JdTradeWay),
+	}
+	jdTradeRsp, errCode, err := new(payment.Trade).Search(tradeArg)
+	if err != nil {
+		return tradeRsp, errCode, err
+	}
+
+	//记录日志
+	encryptRes, _ := json.Marshal(jdTradeRsp.EncryptRes)
+	decryptRes, _ := json.Marshal(jdTradeRsp.DecryptRes)
+	encryptRsp, _ := json.Marshal(jdTradeRsp.EncryptRsp)
+	decryptRsp, _ := json.Marshal(jdTradeRsp.DecryptRsp)
+	logrus.Info("order id:%v,org:%v,method:%v,trade search request encrypt data:%+v,trade search request decrypt data:%v"+
+		",trade response search encrypt data:%v,trade response search decrypt data:%v",
+		jdTradeRsp.OrderId, "jd", "jd_payment", encryptRes, decryptRes, encryptRsp, decryptRsp)
+
+	tradeRsp.OrderId = jdTradeRsp.OrderId
+	tradeRsp.Status = jdTradeRsp.Status
+
+	return tradeRsp, 0, nil
 }

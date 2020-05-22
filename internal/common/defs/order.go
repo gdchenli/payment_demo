@@ -47,3 +47,30 @@ type CallbackRsp struct {
 	OrderId string `json:"order_id"` //订单号
 	Status  bool   `json:"status"`   //交易状态，true交易成功 false交易失败
 }
+
+type TradeRsp struct {
+	Status  string `json:"status"`   //交易状态
+	OrderId string `json:"order_id"` //订单号
+}
+
+type Trade struct {
+	OrderId    string `form:"order_id" json:"order_id"`       //订单号
+	MethodCode string `form:"method_code" json:"method_code"` //支付方式
+	OrgCode    string `form:"org_code" json:"org_code"`       //支付机构
+}
+
+func (trade *Trade) Validate() (errCode int, err error) {
+	if trade.OrderId == "" {
+		return 10101, errors.New("请输入订单编号")
+	}
+
+	if trade.MethodCode == "" {
+		return 10104, errors.New("请选择支付方式")
+	}
+
+	if trade.OrgCode == "" {
+		return 10105, errors.New("请选择支付机构")
+	}
+
+	return 0, nil
+}

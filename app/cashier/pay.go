@@ -30,8 +30,8 @@ func (pay *Pay) Router(router *gin.Engine) {
 	{
 		r.POST("/submit", pay.submit)
 		r.POST("/notify/:org/:method", pay.notify)
-		r.POST("/verify/:org/:method", pay.verify)
-		r.GET("/status", pay.status)
+		r.POST("/callback/:org/:method", pay.callback)
+		r.GET("/trade", pay.trade)
 	}
 }
 
@@ -125,10 +125,79 @@ func (pay *Pay) jdNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errCode in
 	return new(method.Jd).Notify(query)
 }
 
-func (pay *Pay) verify(ctx *gin.Context) {
+func (pay *Pay) callback(ctx *gin.Context) {
+	var errCode int
+	var err error
+	var callBackRsp defs.CallbackRsp
 
+	org := ctx.Param("org")
+	switch org {
+	case JdOrg:
+		callBackRsp, errCode, err = pay.jdCallback(ctx)
+	case AllpayOrg:
+		err = errors.New(NotSupportPaymentOrg)
+	case AlipayOrg:
+		err = errors.New(NotSupportPaymentOrg)
+	case WechatOrg:
+		err = errors.New(NotSupportPaymentOrg)
+	case EpaymentsOrg:
+		err = errors.New(NotSupportPaymentOrg)
+	default:
+		err = errors.New(NotSupportPaymentOrg)
+	}
+
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, callBackRsp)
 }
 
-func (pay *Pay) status(ctx *gin.Context) {
+func (pay *Pay) jdCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errCode int, err error) {
+	ctx.Request.ParseForm()
+	query := ctx.Request.Form.Encode()
 
+	return new(method.Jd).Callback(query)
+}
+
+func (pay *Pay) trade(ctx *gin.Context) {
+	var errCode int
+	var err error
+	var trade defs.Trade
+	var tradeRsp defs.TradeRsp
+
+	ctx.ShouldBind(trade)
+
+	if errCode, err = trade.Validate(); err != nil {
+		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(err.Error()))
+		return
+	}
+
+	org := ctx.Param("org")
+	switch org {
+	case JdOrg:
+		tradeRsp, errCode, err = pay.jdTrade(trade)
+	case AllpayOrg:
+		err = errors.New(NotSupportPaymentOrg)
+	case AlipayOrg:
+		err = errors.New(NotSupportPaymentOrg)
+	case WechatOrg:
+		err = errors.New(NotSupportPaymentOrg)
+	case EpaymentsOrg:
+		err = errors.New(NotSupportPaymentOrg)
+	default:
+		err = errors.New(NotSupportPaymentOrg)
+	}
+
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, tradeRsp)
+}
+
+func (pay *Pay) jdTrade(trade defs.Trade) (tradeBackRsp defs.TradeRsp, errCode int, err error) {
+	return new(method.Jd).Trade(trade.OrderId)
 }
