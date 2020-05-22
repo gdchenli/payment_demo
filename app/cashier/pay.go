@@ -160,8 +160,6 @@ func (pay *Pay) callback(ctx *gin.Context) {
 
 func (pay *Pay) jdCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errCode int, err error) {
 	ctx.Request.ParseForm()
-	//sign := base64.StdEncoding.EncodeToString([]byte(ctx.Request.PostForm.Get("sign")))
-	//ctx.Request.PostForm.Set("sign", sign)
 	query := ctx.Request.PostForm.Encode()
 
 	return new(method.Jd).Callback(query)
@@ -170,20 +168,20 @@ func (pay *Pay) jdCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errC
 func (pay *Pay) trade(ctx *gin.Context) {
 	var errCode int
 	var err error
-	var trade defs.Trade
 	var tradeRsp defs.TradeRsp
 
+	trade := new(defs.Trade)
 	ctx.ShouldBind(trade)
 
 	if errCode, err = trade.Validate(); err != nil {
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(err.Error()))
+		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	org := ctx.Param("org")
+	org := ctx.Query("org_code")
 	switch org {
 	case JdOrg:
-		tradeRsp, errCode, err = pay.jdTrade(trade)
+		tradeRsp, errCode, err = pay.jdTrade(*trade)
 	case AllpayOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	case AlipayOrg:
@@ -211,20 +209,20 @@ func (pay *Pay) jdTrade(trade defs.Trade) (tradeRsp defs.TradeRsp, errCode int, 
 func (pay *Pay) closed(ctx *gin.Context) {
 	var errCode int
 	var err error
-	var closed defs.Closed
 	var closedRsp defs.ClosedRsp
 
+	closed := new(defs.Closed)
 	ctx.ShouldBind(closed)
 
 	if errCode, err = closed.Validate(); err != nil {
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(err.Error()))
+		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	org := ctx.Param("org")
+	org := ctx.Query("org_code")
 	switch org {
 	case JdOrg:
-		closedRsp, errCode, err = pay.jdClosed(closed)
+		closedRsp, errCode, err = pay.jdClosed(*closed)
 	case AllpayOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	case AlipayOrg:

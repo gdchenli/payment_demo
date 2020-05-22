@@ -146,10 +146,6 @@ func (callback *Callback) checkSign(urlValuesMap map[string]string, publicKey st
 	if err != nil {
 		return false
 	}
-	//signBytes, err = base64.StdEncoding.DecodeString(string(signBytes))
-	//if err != nil {
-	//	return false
-	//}
 
 	sha256 := util.HaSha256(encodePayString)
 

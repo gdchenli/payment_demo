@@ -138,7 +138,7 @@ func (closed *Closed) Trade(arg ClosedArg) (closedRsp ClosedRsp, errCode int, er
 	xmlStr = reg.ReplaceAllString(xmlStr, "><")
 	reg, _ = regexp.Compile("\\s+\\/>")
 	xmlStr = reg.ReplaceAllString(xmlStr, "/>")
-	//fmt.Println("without sign xml", xmlStr)
+	fmt.Println("without sign xml", xmlStr)
 
 	//生成签名
 	sha256 := util.HaSha256(xmlStr)

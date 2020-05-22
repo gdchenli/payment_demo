@@ -63,24 +63,66 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 	}
 	privateKey := string(privateKeyBytes)
 
+	gateWay := config.GetInstance().GetString(JdPcPayWay)
+	if gateWay == "" {
+		logrus.Errorf(code.GateWayNotExitsErrMessage+",errCode:%v,err:%v", code.GateWayNotExitsErrCode)
+		return form, code.GateWayNotExitsErrCode, errors.New(code.GateWayNotExitsErrMessage)
+	}
+
+	merchant := config.GetInstance().GetString(JdMerchant)
+	if merchant == "" {
+		logrus.Errorf(code.MerchantNotExitsErrMessage+",errCode:%v,err:%v", code.MerchantNotExitsErrCode)
+		return form, code.MerchantNotExitsErrCode, errors.New(code.MerchantNotExitsErrMessage)
+	}
+
+	desKey := config.GetInstance().GetString(JdDesKey)
+	if desKey == "" {
+		logrus.Errorf(code.DesKeyNotExitsErrMessage+",errCode:%v,err:%v", code.DesKeyNotExitsErrCode)
+		return form, code.DesKeyNotExitsErrCode, errors.New(code.DesKeyNotExitsErrMessage)
+	}
+
+	expireTime := config.GetInstance().GetString(JdExpireTime)
+	if expireTime == "" {
+		logrus.Errorf(code.ExpireTimeNotExitsErrMessage+",errCode:%v,err:%v", code.ExpireTimeNotExitsErrCode)
+		return form, code.ExpireTimeNotExitsErrCode, errors.New(code.ExpireTimeNotExitsErrMessage)
+	}
+
+	transCurrency := config.GetInstance().GetString(JdSettleCurrency)
+	if transCurrency == "" {
+		logrus.Errorf(code.TransCurrencyNotExitsErrMessage+",errCode:%v,err:%v", code.TransCurrencyNotExitsErrCode)
+		return form, code.TransCurrencyNotExitsErrCode, errors.New(code.TransCurrencyNotExitsErrMessage)
+	}
+
+	notifyUrl := config.GetInstance().GetString(JdNotifyUrl)
+	if notifyUrl == "" {
+		logrus.Errorf(code.NotifyUrlNotExitsErrMessage+",errCode:%v,err:%v", code.NotifyUrlNotExitsErrCode)
+		return form, code.NotifyUrlNotExitsErrCode, errors.New(code.NotifyUrlNotExitsErrMessage)
+	}
+
+	callbackUrl := config.GetInstance().GetString(JdCallBackUrl)
+	if callbackUrl == "" {
+		logrus.Errorf(code.CallbackUrlNotExitsErrMessage+",errCode:%v,err:%v", code.CallbackUrlNotExitsErrCode)
+		return form, code.CallbackUrlNotExitsErrCode, errors.New(code.CallbackUrlNotExitsErrMessage)
+	}
+
 	date := time.Now().Format(payment.TimeLayout)
 	goodsInfos := []payment.GoodsInfo{{Id: "test" + date, Name: "test" + date, Price: amount, Num: 1}}
 	kjInfo := payment.KjInfo{GoodsSubmittedCustoms: "N", GoodsUnderBonded: "N"}
 	payArg := payment.PayArg{
-		Merchant:      config.GetInstance().GetString(JdMerchant),
+		Merchant:      merchant,
 		TradeNum:      arg.OrderId,
 		Amount:        amount,
 		Currency:      arg.Currency,
-		CallbackUrl:   config.GetInstance().GetString(JdCallBackUrl),
-		NotifyUrl:     config.GetInstance().GetString(JdNotifyUrl),
+		CallbackUrl:   callbackUrl,
+		NotifyUrl:     notifyUrl,
 		UserId:        arg.UserId,
-		ExpireTime:    config.GetInstance().GetString(JdExpireTime),
-		TransCurrency: config.GetInstance().GetString(JdSettleCurrency),
+		ExpireTime:    expireTime,
+		TransCurrency: transCurrency,
 		GoodsInfo:     goodsInfos,
 		KjInfo:        kjInfo,
-		DesKey:        config.GetInstance().GetString(JdDesKey),
+		DesKey:        desKey,
 		PrivateKey:    privateKey,
-		PayWay:        config.GetInstance().GetString(JdPcPayWay),
+		PayWay:        gateWay,
 		BizTp:         "100006",
 		TradeName:     arg.OrderId,
 	}
@@ -204,13 +246,31 @@ func (jd *Jd) Trade(orderId string) (tradeRsp defs.TradeRsp, errCode int, err er
 	}
 	publicKey := string(publicKeyBytes)
 
+	merchant := config.GetInstance().GetString(JdMerchant)
+	if merchant == "" {
+		logrus.Errorf(code.MerchantNotExitsErrMessage+",errCode:%v,err:%v", code.MerchantNotExitsErrCode)
+		return tradeRsp, code.MerchantNotExitsErrCode, errors.New(code.MerchantNotExitsErrMessage)
+	}
+
+	desKey := config.GetInstance().GetString(JdDesKey)
+	if desKey == "" {
+		logrus.Errorf(code.DesKeyNotExitsErrMessage+",errCode:%v,err:%v", code.DesKeyNotExitsErrCode)
+		return tradeRsp, code.DesKeyNotExitsErrCode, errors.New(code.DesKeyNotExitsErrMessage)
+	}
+
+	gateWay := config.GetInstance().GetString(JdTradeWay)
+	if gateWay == "" {
+		logrus.Errorf(code.GateWayNotExitsErrMessage+",errCode:%v,err:%v", code.GateWayNotExitsErrCode)
+		return tradeRsp, code.GateWayNotExitsErrCode, errors.New(code.GateWayNotExitsErrMessage)
+	}
+
 	tradeArg := payment.TradeArg{
-		Merchant:   config.GetInstance().GetString(JdMerchant),
+		Merchant:   merchant,
 		TradeNum:   orderId,
-		DesKey:     config.GetInstance().GetString(JdDesKey),
+		DesKey:     desKey,
 		PublicKey:  publicKey,
 		PrivateKey: privateKey,
-		GateWay:    config.GetInstance().GetString(JdTradeWay),
+		GateWay:    gateWay,
 	}
 	jdTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
 	if err != nil {
@@ -275,16 +335,34 @@ func (jd *Jd) Closed(arg JdClosedArg) (closedRsp defs.ClosedRsp, errCode int, er
 	}
 	publicKey := string(publicKeyBytes)
 
+	merchant := config.GetInstance().GetString(JdMerchant)
+	if merchant == "" {
+		logrus.Errorf(code.MerchantNotExitsErrMessage+",errCode:%v,err:%v", code.MerchantNotExitsErrCode)
+		return closedRsp, code.MerchantNotExitsErrCode, errors.New(code.MerchantNotExitsErrMessage)
+	}
+
+	desKey := config.GetInstance().GetString(JdDesKey)
+	if desKey == "" {
+		logrus.Errorf(code.DesKeyNotExitsErrMessage+",errCode:%v,err:%v", code.DesKeyNotExitsErrCode)
+		return closedRsp, code.DesKeyNotExitsErrCode, errors.New(code.DesKeyNotExitsErrMessage)
+	}
+
+	gateWay := config.GetInstance().GetString(JdClosedWay)
+	if gateWay == "" {
+		logrus.Errorf(code.GateWayNotExitsErrMessage+",errCode:%v,err:%v", code.GateWayNotExitsErrCode)
+		return closedRsp, code.GateWayNotExitsErrCode, errors.New(code.GateWayNotExitsErrMessage)
+	}
+
 	closedArg := payment.ClosedArg{
-		Merchant:   config.GetInstance().GetString(JdMerchant),
+		Merchant:   merchant,
 		TradeNum:   arg.OrderId + "jd",
 		OTradeNum:  arg.OrderId,
 		Amount:     amount,
 		Currency:   arg.Currency,
-		DesKey:     config.GetInstance().GetString(JdDesKey),
+		DesKey:     desKey,
 		PublicKey:  publicKey,
 		PrivateKey: privateKey,
-		GateWay:    config.GetInstance().GetString(JdClosedWay),
+		GateWay:    gateWay,
 	}
 	jdClosedRsp, errCode, err = new(payment.Closed).Trade(closedArg)
 	if err != nil {
