@@ -123,7 +123,6 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 		DesKey:        desKey,
 		PrivateKey:    privateKey,
 		PayWay:        gateWay,
-		BizTp:         "100006",
 		TradeName:     arg.OrderId,
 	}
 	form, errCode, err = new(payment.Payment).CreatePaymentForm(payArg)
