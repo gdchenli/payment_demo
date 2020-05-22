@@ -100,6 +100,7 @@ type SearchPayRsp struct {
 type TradeRsp struct {
 	Status     string `json:"status"`      //交易状态
 	OrderId    string `json:"order_id"`    //订单号
+	TradeNo    string `json:"trade_no"`    //支付机构交易流水号
 	EncryptRsp string `json:"encrypt_rsp"` //返回的加密数据
 	DecryptRsp string `json:"decrypt_rsp"` //返回的解密数据
 	EncryptRes string `json:"encrypt_res"` //请求的加密数据
@@ -203,6 +204,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	}
 
 	tradeRsp.Status = searchDecryptRsp.Status
+	tradeRsp.TradeNo = searchDecryptRsp.TradeNum //该接口不会返回交易流水号，使用请求交易时的订单号
 
 	return tradeRsp, 0, err
 }

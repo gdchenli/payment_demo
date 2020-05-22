@@ -74,6 +74,7 @@ type NotifyPay struct {
 type NotifyRsp struct {
 	OrderId    string `json:"order_id"`    //订单号
 	Status     bool   `json:"status"`      //交易状态，true交易成功 false交易失败
+	TradeNo    string `json:"trade_no"`    //支付机构交易流水号
 	EncryptRsp string `json:"encrypt_rsp"` //返回的加密数据
 	DecryptRsp string `json:"decrypt_rsp"` //返回的解密数据
 }
@@ -118,6 +119,11 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 		return notifyRsp, NotifyStatusErrCode, errors.New(NotifyStatusErrMessage)
 	}
 	notifyRsp.Status = true
+	notifyRsp.TradeNo = notifyDecrypt.OrderId
+	if notifyRsp.TradeNo == "" {
+		//若未返回交易流水号，使用请求交易时的订单号
+		notifyRsp.TradeNo = notifyDecrypt.TradeNum
+	}
 
 	return notifyRsp, 0, nil
 }

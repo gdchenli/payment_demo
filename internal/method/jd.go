@@ -28,6 +28,7 @@ const (
 	JdPrivateKey     = "jd.private_key"
 	JdPublicKey      = "jd.public_key"
 	JdTradeWay       = "jd.trade_way"
+	JdClosedWay      = "jd.closed_way"
 )
 
 type Jd struct{}
@@ -124,6 +125,7 @@ func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err e
 
 	notifyRsp.OrderId = jdNotifyRsp.OrderId
 	notifyRsp.Status = jdNotifyRsp.Status
+	notifyRsp.TradeNo = jdNotifyRsp.TradeNo
 
 	return notifyRsp, 0, nil
 }
@@ -211,11 +213,86 @@ func (jd *Jd) Trade(orderId string) (tradeRsp defs.TradeRsp, errCode int, err er
 	encryptRsp, _ := json.Marshal(jdTradeRsp.EncryptRsp)
 	decryptRsp, _ := json.Marshal(jdTradeRsp.DecryptRsp)
 	logrus.Info("order id:%v,org:%v,method:%v,trade search request encrypt data:%+v,trade search request decrypt data:%v"+
-		",trade response search encrypt data:%v,trade response search decrypt data:%v",
+		",trade search response search encrypt data:%v,trade search response search decrypt data:%v",
 		jdTradeRsp.OrderId, "jd", "jd_payment", encryptRes, decryptRes, encryptRsp, decryptRsp)
 
 	tradeRsp.OrderId = jdTradeRsp.OrderId
 	tradeRsp.Status = jdTradeRsp.Status
+	tradeRsp.TradeNo = jdTradeRsp.TradeNo
 
 	return tradeRsp, 0, nil
+}
+
+type JdClosedArg struct {
+	OrderId  string
+	Currency string
+	TotalFee float64
+}
+
+//关闭交易
+func (jd *Jd) Closed(arg JdClosedArg) (closedRsp defs.ClosedRsp, errCode int, err error) {
+	//金额转为分
+	totalFee := arg.TotalFee * 100
+	//金额字段类型转换
+	amount, err := strconv.ParseInt(fmt.Sprintf("%.f", totalFee), 10, 64)
+	if err != nil {
+		logrus.Errorf(code.AmountFormatErrMessage+",errCode:%v,err:%v", code.AmountFormatErrCode, err.Error())
+		return closedRsp, code.AmountFormatErrCode, errors.New(code.AmountFormatErrMessage)
+	}
+
+	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPrivateKey))
+	privateFile, err := os.Open(privateKeyPath)
+	if err != nil {
+		logrus.Errorf(code.PrivateKeyNotExitsErrMessage+",errCode:%v,err:%v", code.PrivateKeyNotExitsErrCode, err.Error())
+		return closedRsp, code.PrivateKeyNotExitsErrCode, errors.New(code.PrivateKeyNotExitsErrMessage)
+	}
+	privateKeyBytes, err := ioutil.ReadAll(privateFile)
+	if err != nil {
+		logrus.Errorf(code.PrivateKeyContentErrMessage+",errCode:%v,err:%v", code.PrivateKeyContentErrCode, err.Error())
+		return closedRsp, code.PrivateKeyContentErrCode, errors.New(code.PrivateKeyContentErrMessage)
+	}
+	privateKey := string(privateKeyBytes)
+
+	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
+	file, err := os.Open(publicKeyPath)
+	if err != nil {
+		logrus.Errorf(code.PublicKeyNotExitsErrMessage+",errCode:%v,err:%v", code.PublicKeyNotExitsErrCode, err.Error())
+		return closedRsp, code.PublicKeyNotExitsErrCode, errors.New(code.PublicKeyNotExitsErrMessage)
+	}
+	publicKeyBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		logrus.Errorf(code.PublicKeyContentErrMessage+",errCode:%v,err:%v", code.PublicKeyContentErrCode, err.Error())
+		return closedRsp, code.PublicKeyContentErrCode, errors.New(code.PublicKeyContentErrMessage)
+	}
+	publicKey := string(publicKeyBytes)
+
+	closedArg := payment.ClosedArg{
+		Merchant:   config.GetInstance().GetString(JdMerchant),
+		TradeNum:   arg.OrderId + "jd",
+		OTradeNum:  arg.OrderId,
+		Amount:     amount,
+		Currency:   arg.Currency,
+		DesKey:     config.GetInstance().GetString(JdDesKey),
+		PublicKey:  publicKey,
+		PrivateKey: privateKey,
+		GateWay:    config.GetInstance().GetString(JdClosedWay),
+	}
+	jdTradeRsp, errCode, err := new(payment.Closed).Trade(closedArg)
+	if err != nil {
+		return closedRsp, errCode, err
+	}
+
+	//记录日志
+	encryptRes, _ := json.Marshal(jdTradeRsp.EncryptRes)
+	decryptRes, _ := json.Marshal(jdTradeRsp.DecryptRes)
+	encryptRsp, _ := json.Marshal(jdTradeRsp.EncryptRsp)
+	decryptRsp, _ := json.Marshal(jdTradeRsp.DecryptRsp)
+	logrus.Info("order id:%v,org:%v,method:%v,closed trade request encrypt data:%+v,closed trade request decrypt data:%v"+
+		",closed trade response encrypt data:%v,closed trade response decrypt data:%v",
+		jdTradeRsp.OrderId, "jd", "jd_payment", encryptRes, decryptRes, encryptRsp, decryptRsp)
+
+	closedRsp.OrderId = jdTradeRsp.OrderId
+	closedRsp.Status = jdTradeRsp.Status
+
+	return closedRsp, 0, nil
 }
