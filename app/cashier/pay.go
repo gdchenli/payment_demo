@@ -160,7 +160,9 @@ func (pay *Pay) callback(ctx *gin.Context) {
 
 func (pay *Pay) jdCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errCode int, err error) {
 	ctx.Request.ParseForm()
-	query := ctx.Request.Form.Encode()
+	//sign := base64.StdEncoding.EncodeToString([]byte(ctx.Request.PostForm.Get("sign")))
+	//ctx.Request.PostForm.Set("sign", sign)
+	query := ctx.Request.PostForm.Encode()
 
 	return new(method.Jd).Callback(query)
 }

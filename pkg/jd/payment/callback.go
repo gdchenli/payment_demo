@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"payment_demo/pkg/jd/util"
 
@@ -76,6 +77,7 @@ func (callback *Callback) Validate(query string, arg CallbackArg) (callbackRsp C
 		return callbackRsp, CallbackDecryptFormatErrCode, errors.New(CallbackDecryptFormatErrMessage)
 	}
 	callbackRsp.DecryptRsp = string(decryptBytes)
+	fmt.Println("decryptBytes", string(decryptBytes))
 
 	//解析为结构体
 	var callbackQuery CallbackQuery
@@ -88,6 +90,7 @@ func (callback *Callback) Validate(query string, arg CallbackArg) (callbackRsp C
 
 	//校验签名
 	if !callback.checkSign(decryptMap, arg.PublicKey) {
+		logrus.Errorf(CallbackSignErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackSignErrCode)
 		return callbackRsp, CallbackSignErrCode, errors.New(CallbackSignErrMessage)
 	}
 
@@ -113,18 +116,18 @@ func (callback *Callback) decryptArg(encryptMap map[string]string, desKey string
 	decryptMap = make(map[string]string)
 	for k, v := range encryptMap {
 		if k == "sign" || v == "" {
+			decryptMap[k] = v
 			continue
 		}
 		encryptBytes, err := util.HexString2Bytes(v)
-		decrypt, err := util.TripleEcbDesDecrypt(encryptBytes, desKeyBytes)
+		decryptBytes, err := util.TripleEcbDesDecrypt(encryptBytes, desKeyBytes)
 		if err != nil {
 			return nil, err
 		}
-		decryptMap[k] = string(decrypt)
+		decryptMap[k] = string(decryptBytes)
 	}
-	//fmt.Printf("urlValuesMap%+v\n", urlValuesMap)
 
-	return encryptMap, nil
+	return decryptMap, nil
 }
 
 //校验签名
@@ -143,6 +146,10 @@ func (callback *Callback) checkSign(urlValuesMap map[string]string, publicKey st
 	if err != nil {
 		return false
 	}
+	//signBytes, err = base64.StdEncoding.DecodeString(string(signBytes))
+	//if err != nil {
+	//	return false
+	//}
 
 	sha256 := util.HaSha256(encodePayString)
 

@@ -1,7 +1,6 @@
 package method
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -95,6 +94,13 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 
 //异步通知
 func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+	var jdNotifyRsp payment.NotifyRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,notify encrypt data:%+v,notify decrypt data:%v",
+			jdNotifyRsp.OrderId, "jd", "jd_payment", jdNotifyRsp.EncryptRsp, jdNotifyRsp.DecryptRsp)
+	}()
+
 	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
 	publicKeyFile, err := os.Open(publicKeyPath)
 	if err != nil {
@@ -112,16 +118,10 @@ func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err e
 		DesKey:    config.GetInstance().GetString(JdDesKey),
 	}
 
-	jdNotifyRsp, errCode, err := new(payment.Notify).Validate(query, notifyArg)
+	jdNotifyRsp, errCode, err = new(payment.Notify).Validate(query, notifyArg)
 	if err != nil {
 		return notifyRsp, errCode, err
 	}
-
-	//记录日志
-	encryptRsp, _ := json.Marshal(jdNotifyRsp.EncryptRsp)
-	decryptRsp, _ := json.Marshal(jdNotifyRsp.DecryptRsp)
-	logrus.Info("order id:%v,org:%v,method:%v,notify encrypt data:%+v,notify decrypt data:%v",
-		jdNotifyRsp.OrderId, "jd", "jd_payment", encryptRsp, decryptRsp)
 
 	notifyRsp.OrderId = jdNotifyRsp.OrderId
 	notifyRsp.Status = jdNotifyRsp.Status
@@ -132,6 +132,13 @@ func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err e
 
 //同步通知
 func (jd *Jd) Callback(query string) (callbackRsp defs.CallbackRsp, errCode int, err error) {
+	var jdCallbackRsp payment.CallbackRsp
+	defer func() {
+		//记录日志
+		logrus.Infof("order id:%v,org:%v,method:%v,callback encrypt data:%+v,callback decrypt data:%v",
+			jdCallbackRsp.OrderId, "jd", "jd_payment", jdCallbackRsp.EncryptRsp, jdCallbackRsp.DecryptRsp)
+	}()
+
 	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
 	file, err := os.Open(publicKeyPath)
 	if err != nil {
@@ -149,25 +156,28 @@ func (jd *Jd) Callback(query string) (callbackRsp defs.CallbackRsp, errCode int,
 		PublicKey: publicKey,
 		DesKey:    config.GetInstance().GetString(JdDesKey),
 	}
-	jdCallbackArg, errCode, err := new(payment.Callback).Validate(query, callbackArg)
+	jdCallbackRsp, errCode, err = new(payment.Callback).Validate(query, callbackArg)
 	if err != nil {
 		return callbackRsp, errCode, err
 	}
 
-	//记录日志
-	encryptRsp, _ := json.Marshal(jdCallbackArg.EncryptRsp)
-	decryptRsp, _ := json.Marshal(jdCallbackArg.DecryptRsp)
-	logrus.Info("order id:%v,org:%v,method:%v,callback encrypt data:%+v,callback decrypt data:%v",
-		jdCallbackArg.OrderId, "jd", "jd_payment", encryptRsp, decryptRsp)
-
-	callbackRsp.Status = jdCallbackArg.Status
-	callbackRsp.OrderId = jdCallbackArg.OrderId
+	callbackRsp.Status = jdCallbackRsp.Status
+	callbackRsp.OrderId = jdCallbackRsp.OrderId
 
 	return callbackRsp, 0, err
 }
 
 //查询交易
 func (jd *Jd) Trade(orderId string) (tradeRsp defs.TradeRsp, errCode int, err error) {
+	var jdTradeRsp payment.TradeRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,trade search request encrypt data:%+v,trade search request decrypt data:%v"+
+			",trade search response search encrypt data:%v,trade search response search decrypt data:%v",
+			jdTradeRsp.OrderId, "jd", "jd_payment", jdTradeRsp.EncryptRes, jdTradeRsp.DecryptRes, jdTradeRsp.EncryptRsp, jdTradeRsp.DecryptRsp)
+
+	}()
+
 	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPrivateKey))
 	privateFile, err := os.Open(privateKeyPath)
 	if err != nil {
@@ -202,19 +212,10 @@ func (jd *Jd) Trade(orderId string) (tradeRsp defs.TradeRsp, errCode int, err er
 		PrivateKey: privateKey,
 		GateWay:    config.GetInstance().GetString(JdTradeWay),
 	}
-	jdTradeRsp, errCode, err := new(payment.Trade).Search(tradeArg)
+	jdTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
 	if err != nil {
 		return tradeRsp, errCode, err
 	}
-
-	//记录日志
-	encryptRes, _ := json.Marshal(jdTradeRsp.EncryptRes)
-	decryptRes, _ := json.Marshal(jdTradeRsp.DecryptRes)
-	encryptRsp, _ := json.Marshal(jdTradeRsp.EncryptRsp)
-	decryptRsp, _ := json.Marshal(jdTradeRsp.DecryptRsp)
-	logrus.Info("order id:%v,org:%v,method:%v,trade search request encrypt data:%+v,trade search request decrypt data:%v"+
-		",trade search response search encrypt data:%v,trade search response search decrypt data:%v",
-		jdTradeRsp.OrderId, "jd", "jd_payment", encryptRes, decryptRes, encryptRsp, decryptRsp)
 
 	tradeRsp.OrderId = jdTradeRsp.OrderId
 	tradeRsp.Status = jdTradeRsp.Status
@@ -231,6 +232,14 @@ type JdClosedArg struct {
 
 //关闭交易
 func (jd *Jd) Closed(arg JdClosedArg) (closedRsp defs.ClosedRsp, errCode int, err error) {
+	var jdClosedRsp payment.ClosedRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,closed trade request encrypt data:%+v,closed trade request decrypt data:%v"+
+			",closed trade response encrypt data:%v,closed trade response decrypt data:%v",
+			jdClosedRsp.OrderId, "jd", "jd_payment", jdClosedRsp.EncryptRes, jdClosedRsp.DecryptRes, jdClosedRsp.EncryptRsp, jdClosedRsp.DecryptRsp)
+	}()
+
 	//金额转为分
 	totalFee := arg.TotalFee * 100
 	//金额字段类型转换
@@ -277,22 +286,13 @@ func (jd *Jd) Closed(arg JdClosedArg) (closedRsp defs.ClosedRsp, errCode int, er
 		PrivateKey: privateKey,
 		GateWay:    config.GetInstance().GetString(JdClosedWay),
 	}
-	jdTradeRsp, errCode, err := new(payment.Closed).Trade(closedArg)
+	jdClosedRsp, errCode, err = new(payment.Closed).Trade(closedArg)
 	if err != nil {
 		return closedRsp, errCode, err
 	}
 
-	//记录日志
-	encryptRes, _ := json.Marshal(jdTradeRsp.EncryptRes)
-	decryptRes, _ := json.Marshal(jdTradeRsp.DecryptRes)
-	encryptRsp, _ := json.Marshal(jdTradeRsp.EncryptRsp)
-	decryptRsp, _ := json.Marshal(jdTradeRsp.DecryptRsp)
-	logrus.Info("order id:%v,org:%v,method:%v,closed trade request encrypt data:%+v,closed trade request decrypt data:%v"+
-		",closed trade response encrypt data:%v,closed trade response decrypt data:%v",
-		jdTradeRsp.OrderId, "jd", "jd_payment", encryptRes, decryptRes, encryptRsp, decryptRsp)
-
-	closedRsp.OrderId = jdTradeRsp.OrderId
-	closedRsp.Status = jdTradeRsp.Status
+	closedRsp.OrderId = jdClosedRsp.OrderId
+	closedRsp.Status = jdClosedRsp.Status
 
 	return closedRsp, 0, nil
 }
