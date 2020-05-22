@@ -1,0 +1,47 @@
+[service]
+name="payment_demo"
+
+[server]
+# 运行模式 debug:调试 ,release:正式 ,test:测试
+run_mod = "debug"
+Read_timeout = 60
+write_timeout = 60
+http_port=8090
+
+[monitor]
+# 监控模块是否开启,默认为开启(enable),禁用为(disable)，如果禁用jaeger和prometheus不开启
+# 这里还可以拆为更小粒度的控制，就是分别控制prometheus是否启用
+status = true
+
+[metrics]
+# 指标开关,status = true 启动，false关闭
+auth_status = false
+# 需要user和pwd验证才能请求成功
+auth_user = ""
+auth_password = ""
+
+[jd]
+# 京东支付商户id
+merchant="22294531"
+# 同步通知地址
+callback_url="http://localhost:8090/payment/notify/jd/jd_payment"
+# 异步通知地址
+notify_url="http://localhost:8090/payment/callback/jd/jd_payment"
+# 订单交易过期时间，单位：秒
+expire_time="3000"
+# 订单结算币种
+settle_currency="CNY"
+# 商户des key
+des_key=""
+# 商户私钥文件名称，私钥格式：PKCS#1
+private_key="jd_private_key.pem"
+# 京东公钥文件名称
+public_key="jd_public_key.pem"
+# pc端发起支付网关地址
+pc_pay_way="https://wepay.jd.com/jdpay/saveOrder"
+# h5端发起支付网关地址
+h5_pay_way="https://h5pay.jd.com/jdpay/saveOrder"
+# 订单查询网关地址
+trade_way="https://paygate.jd.com/service/query"
+# 关闭订单交易网关地址
+closed_way="https://paygate.jd.com/service/revoke"
