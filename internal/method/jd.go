@@ -142,6 +142,7 @@ func (jd *Jd) getPayWay(userAgentType int) string {
 	case code.MobileUserAgentType:
 		return config.GetInstance().GetString(JdH5PayWay)
 	}
+
 	return config.GetInstance().GetString(JdPcPayWay)
 }
 
