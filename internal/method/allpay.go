@@ -132,7 +132,7 @@ func (allpay *Allpay) getPaymentSchema(methodCode string) (string, int, error) {
 }
 
 func (allpay *Allpay) getTradeFrom(methodCode string, userAgentType int) string {
-	if methodCode == "alipay_payment" {
+	if methodCode == code.AliapayMethod {
 		switch userAgentType {
 		case code.WebUserAgentType:
 			return AlipayWebTradeFrom
@@ -145,7 +145,7 @@ func (allpay *Allpay) getTradeFrom(methodCode string, userAgentType int) string 
 		}
 	}
 
-	if methodCode == "vtpayment_payment" {
+	if methodCode == code.UnionpayMethod {
 		return UpTradeFrom
 	}
 
