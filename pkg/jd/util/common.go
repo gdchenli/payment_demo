@@ -24,7 +24,7 @@ func GetRandomString(length int) string {
 }
 
 //支付字符串拼接
-func GetPayString(m map[string]string) string {
+func GetSortString(m map[string]string) string {
 	var buf bytes.Buffer
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -46,7 +46,7 @@ func GetPayString(m map[string]string) string {
 }
 
 //支付字符串拼接
-func GetNotEmptyPayString(m map[string]string) string {
+func GetNotEmptySortString(m map[string]string) string {
 	var buf bytes.Buffer
 	keys := make([]string, 0, len(m))
 	for k := range m {

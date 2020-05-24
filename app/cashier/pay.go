@@ -56,7 +56,7 @@ func (pay *Pay) submit(ctx *gin.Context) {
 	case JdOrg:
 		form, errCode, err = pay.jdSubmit(*order)
 	case AllpayOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		form, errCode, err = pay.allpaySubmit(*order)
 	case AlipayOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	case WechatOrg:
@@ -77,13 +77,28 @@ func (pay *Pay) submit(ctx *gin.Context) {
 }
 
 func (pay *Pay) jdSubmit(order defs.Order) (form string, errCode int, err error) {
-	jdPayArg := method.JdPayArg{
-		OrderId:  order.OrderId,
-		TotalFee: order.TotalFee,
-		Currency: order.Currency,
-		UserId:   order.UserId,
+	jdpayArg := method.JdpayArg{
+		OrderId:       order.OrderId,
+		TotalFee:      order.TotalFee,
+		Currency:      order.Currency,
+		UserId:        order.UserId,
+		UserAgentType: order.UserAgentType,
 	}
-	return new(method.Jd).Submit(jdPayArg)
+
+	return new(method.Jd).Submit(jdpayArg)
+}
+
+func (pay *Pay) allpaySubmit(order defs.Order) (form string, errCode int, err error) {
+	allpayArg := method.AllpayArg{
+		OrderId:       order.OrderId,
+		TotalFee:      order.TotalFee,
+		Currency:      order.Currency,
+		UserId:        order.UserId,
+		UserAgentType: order.UserAgentType,
+		MethodCode:    order.MethodCode,
+	}
+
+	return new(method.Allpay).Submit(allpayArg)
 }
 
 func (pay *Pay) notify(ctx *gin.Context) {

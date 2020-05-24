@@ -140,7 +140,7 @@ func (callback *Callback) checkSign(urlValuesMap map[string]string, publicKey st
 		return false
 	}
 	delete(urlValuesMap, "sign")
-	encodePayString := util.GetNotEmptyPayString(urlValuesMap)
+	encodePayString := util.GetNotEmptySortString(urlValuesMap)
 
 	signBytes, err := base64.StdEncoding.DecodeString(sign)
 	if err != nil {

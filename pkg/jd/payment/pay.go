@@ -61,7 +61,7 @@ type KjInfo struct {
 	GoodsUnderBonded      string `json:"goodsUnderBonded"`      //是否保税货物项下付款Y/N
 }
 
-func (payment *Payment) CreatePaymentForm(arg PayArg) (form string, errCode int, err error) {
+func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
 	goodsInfoBytes, err := json.Marshal(arg.GoodsInfo)
 	if err != nil {
 		logrus.Errorf(PayGoodsInfoFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.TradeNum, PayGoodsInfoFormatErrCode, err.Error())
@@ -107,12 +107,12 @@ func (payment *Payment) CreatePaymentForm(arg PayArg) (form string, errCode int,
 	}
 
 	//生成form表单
-	form = payment.getForm(paramMap, arg.PayWay)
+	form = payment.buildForm(paramMap, arg.PayWay)
 
 	return form, 0, nil
 }
 
-func (payment *Payment) getForm(paramMap map[string]string, payWay string) string {
+func (payment *Payment) buildForm(paramMap map[string]string, payWay string) string {
 	payUrl := "<form action='" + payWay + "' method='post' id='pay_form'>"
 	for k, v := range paramMap {
 		payUrl += "<input value='" + v + "' name='" + k + "' type='hidden'/>"
@@ -138,7 +138,7 @@ func (payment *Payment) encrypt3DES(paramMap map[string]string, desKey string) (
 }
 
 func (payment *Payment) getSign(paramMap map[string]string, privateKey string) (string, error) {
-	payString := util.GetPayString(paramMap)
+	payString := util.GetSortString(paramMap)
 	sha256 := util.HaSha256(payString)
 	sign, err := util.SignPKCS1v15([]byte(sha256), []byte(privateKey))
 	if err != nil {

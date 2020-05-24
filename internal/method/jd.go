@@ -24,6 +24,7 @@ const (
 	JdSettleCurrency = "jd.settle_currency"
 	JdDesKey         = "jd.des_key"
 	JdPcPayWay       = "jd.pc_pay_way"
+	JdH5PayWay       = "jd.h5_pay_way"
 	JdPrivateKey     = "jd.private_key"
 	JdPublicKey      = "jd.public_key"
 	JdTradeWay       = "jd.trade_way"
@@ -32,15 +33,16 @@ const (
 
 type Jd struct{}
 
-type JdPayArg struct {
-	OrderId  string  `json:"order_id"`
-	TotalFee float64 `json:"total_fee"`
-	Currency string  `json:"currency"`
-	UserId   string  `json:"user_id"`
+type JdpayArg struct {
+	OrderId       string  `json:"order_id"`
+	TotalFee      float64 `json:"total_fee"`
+	Currency      string  `json:"currency"`
+	UserId        string  `json:"user_id"`
+	UserAgentType int     `json:"user_agent_type"`
 }
 
 //发起支付
-func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
+func (jd *Jd) Submit(arg JdpayArg) (form string, errCode int, err error) {
 	//金额转为分
 	totalFee := arg.TotalFee * 100
 	//金额字段类型转换
@@ -63,7 +65,7 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 	}
 	privateKey := string(privateKeyBytes)
 
-	gateWay := config.GetInstance().GetString(JdPcPayWay)
+	gateWay := jd.getPayWay(arg.UserAgentType)
 	if gateWay == "" {
 		logrus.Errorf(code.GateWayNotExitsErrMessage+",errCode:%v,err:%v", code.GateWayNotExitsErrCode)
 		return form, code.GateWayNotExitsErrCode, errors.New(code.GateWayNotExitsErrMessage)
@@ -125,12 +127,22 @@ func (jd *Jd) Submit(arg JdPayArg) (form string, errCode int, err error) {
 		PayWay:        gateWay,
 		TradeName:     arg.OrderId,
 	}
-	form, errCode, err = new(payment.Payment).CreatePaymentForm(payArg)
+	form, errCode, err = new(payment.Payment).CreateForm(payArg)
 	if err != nil {
 		return form, errCode, err
 	}
 
 	return form, 0, nil
+}
+
+func (jd *Jd) getPayWay(userAgentType int) string {
+	switch userAgentType {
+	case 1:
+		return config.GetInstance().GetString(JdPcPayWay)
+	case 2:
+		return config.GetInstance().GetString(JdH5PayWay)
+	}
+	return config.GetInstance().GetString(JdPcPayWay)
 }
 
 //异步通知
