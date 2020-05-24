@@ -6,6 +6,7 @@ import (
 	"payment_demo/internal/common/config"
 	"payment_demo/pkg/allpay/payment"
 	"payment_demo/pkg/allpay/util"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -21,6 +22,16 @@ const (
 	AllpayTimeout  = "allpay.timeout"
 )
 
+const (
+	AlipayWebTradeFrom         = "WEB"
+	AlipayMobileTradeFrom      = "JSAPI"
+	AlipayMiniProgramTradeFrom = "APPLET"
+	UpTradeFrom                = "H5"
+	AppTradeFrom               = "APP"
+	AlipayPaymentSchema        = "AP"
+	UpPaymentSchema            = "UP"
+)
+
 type Allpay struct{}
 
 type AllpayArg struct {
@@ -33,9 +44,45 @@ type AllpayArg struct {
 }
 
 func (allpay *Allpay) Submit(arg AllpayArg) (form string, errCode int, err error) {
+	merchant := config.GetInstance().GetString(AllpayMerchant)
+	if merchant == "" {
+		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		return form, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+	}
+
+	notifyUrl := config.GetInstance().GetString(AllpayBackUrl)
+	if notifyUrl == "" {
+		logrus.Errorf(code.NotifyUrlNotExistsErrMessage+",errCode:%v,err:%v", code.NotifyUrlNotExistsErrCode)
+		return form, code.NotifyUrlNotExistsErrCode, errors.New(code.NotifyUrlNotExistsErrMessage)
+	}
+
+	callbackUrl := config.GetInstance().GetString(AllpayFrontUrl)
+	if callbackUrl == "" {
+		logrus.Errorf(code.CallbackUrlNotExistsErrMessage+",errCode:%v,err:%v", code.CallbackUrlNotExistsErrCode)
+		return form, code.CallbackUrlNotExistsErrCode, errors.New(code.CallbackUrlNotExistsErrMessage)
+	}
+
+	expireTime := config.GetInstance().GetString(AllpayTimeout)
+	if expireTime == "" {
+		logrus.Errorf(code.ExpireTimeNotExistsErrMessage+",errCode:%v,err:%v", code.ExpireTimeNotExistsErrCode)
+		return form, code.ExpireTimeNotExistsErrCode, errors.New(code.ExpireTimeNotExistsErrMessage)
+	}
+
+	md5key := config.GetInstance().GetString(AllpayMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return form, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	acqId := config.GetInstance().GetString(AllpayAcqId)
+	if acqId == "" {
+		logrus.Errorf(code.AcqIdNotExistsErrMessage+",errCode:%v,err:%v", code.AcqIdNotExistsErrCode)
+		return form, code.AcqIdNotExistsErrCode, errors.New(code.AcqIdNotExistsErrMessage)
+	}
+
 	detailInfo := []payment.DetailInfo{
 		{
-			GoodsName: util.SpecialReplace("test goods name"),
+			GoodsName: util.SpecialReplace("test goods name" + time.Now().Format(payment.TimeLayout)),
 			Quantity:  1,
 		},
 	}
@@ -46,26 +93,26 @@ func (allpay *Allpay) Submit(arg AllpayArg) (form string, errCode int, err error
 
 	gateWay := allpay.getPayWay(arg.UserAgentType)
 	if gateWay == "" {
-		logrus.Errorf(code.GateWayNotExitsErrMessage+",errCode:%v,err:%v", code.GateWayNotExitsErrCode)
-		return form, code.GateWayNotExitsErrCode, errors.New(code.GateWayNotExitsErrMessage)
+		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		return form, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 	tradeFrom := allpay.getTradeFrom(arg.MethodCode, arg.UserAgentType)
 
 	payArg := payment.PayArg{
 		OrderNum:      arg.OrderId,
 		OrderAmount:   arg.TotalFee,
-		FrontUrl:      config.GetInstance().GetString(AllpayFrontUrl),
-		BackUrl:       config.GetInstance().GetString(AllpayBackUrl),
-		MerId:         config.GetInstance().GetString(AllpayMerchant),
-		AcqId:         config.GetInstance().GetString(AllpayAcqId),
+		FrontUrl:      callbackUrl,
+		BackUrl:       notifyUrl,
+		MerId:         merchant,
+		AcqId:         acqId,
 		PaymentSchema: paymentSchema,
 		GoodsInfo:     arg.OrderId,
 		DetailInfo:    detailInfo,
 		PayWay:        gateWay,
-		Md5Key:        config.GetInstance().GetString(AllpayMd5Key),
+		Md5Key:        md5key,
 		TradeFrom:     tradeFrom,
 		OrderCurrency: arg.Currency,
-		Timeout:       config.GetInstance().GetString(AllpayTimeout),
+		Timeout:       expireTime,
 	}
 	form, errCode, err = new(payment.Payment).CreateForm(payArg)
 	if err != nil {
@@ -76,12 +123,10 @@ func (allpay *Allpay) Submit(arg AllpayArg) (form string, errCode int, err error
 
 func (allpay *Allpay) getPaymentSchema(methodCode string) (string, int, error) {
 	switch methodCode {
-	case "alipay_payment":
-		//支付宝
-		return "AP", 0, nil
-	case "vtpayment_payment":
-		//银联
-		return "UP", 0, nil
+	case code.AliapayMethod:
+		return AlipayPaymentSchema, 0, nil
+	case code.UnionpayMethod:
+		return UpPaymentSchema, 0, nil
 	}
 	return "", code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
 }
@@ -89,15 +134,19 @@ func (allpay *Allpay) getPaymentSchema(methodCode string) (string, int, error) {
 func (allpay *Allpay) getTradeFrom(methodCode string, userAgentType int) string {
 	if methodCode == "alipay_payment" {
 		switch userAgentType {
-		case 1:
-			return "WEB"
-		case 2:
-			return "JSAPI"
+		case code.WebUserAgentType:
+			return AlipayWebTradeFrom
+		case code.MobileUserAgentType:
+			return AlipayMobileTradeFrom
+		case code.AlipayMiniProgramUserAgentType:
+			return AlipayMiniProgramTradeFrom
+		case code.AndroidAppUserAgentType, code.IOSAppUserAgentType:
+			return AppTradeFrom
 		}
 	}
 
 	if methodCode == "vtpayment_payment" {
-		return "H5"
+		return UpTradeFrom
 	}
 
 	return ""

@@ -65,7 +65,7 @@ func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err er
 		"goodsInfo":     arg.OrderNum,
 		"detailInfo":    detailInfo,
 		"transTime":     transTime,
-		"signType":      "MD5",
+		"signType":      PayMD5SignType,
 		"tradeFrom":     arg.TradeFrom,
 		"timeout":       arg.Timeout,
 		"merReserve":    "",
