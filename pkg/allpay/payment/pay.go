@@ -79,7 +79,6 @@ func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err er
 
 func (payment *Payment) getSign(paramMap map[string]string, signKey string) string {
 	sortString := util.GetSortString(paramMap)
-	fmt.Println("sortString", sortString)
 	return util.Md5(sortString + signKey)
 }
 

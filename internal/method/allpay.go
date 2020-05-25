@@ -4,6 +4,7 @@ import (
 	"errors"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
+	"payment_demo/internal/common/defs"
 	"payment_demo/pkg/allpay/payment"
 	"payment_demo/pkg/allpay/util"
 	"time"
@@ -19,6 +20,7 @@ const (
 	AllpayMd5Key   = "allpay.md5_key"
 	AllpayPcPayWay = "allpay.pc_pay_way"
 	AllpayH5PayWay = "allpay.h5_pay_way"
+	AllpayTradeWay = "allpay.trade_way"
 	AllpayTimeout  = "allpay.timeout"
 )
 
@@ -96,6 +98,7 @@ func (allpay *Allpay) Submit(arg AllpayArg) (form string, errCode int, err error
 		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
 		return form, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
+
 	tradeFrom := allpay.getTradeFrom(arg.MethodCode, arg.UserAgentType)
 
 	payArg := payment.PayArg{
@@ -160,4 +163,111 @@ func (allpay *Allpay) getPayWay(userAgentType int) string {
 		return config.GetInstance().GetString(AllpayH5PayWay)
 	}
 	return config.GetInstance().GetString(AllpayPcPayWay)
+}
+
+func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+	var allpayNotifyRsp payment.NotifyRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,notify data:%+v",
+			allpayNotifyRsp.OrderId, code.AllpayOrg, methodCode, allpayNotifyRsp.Rsp)
+	}()
+
+	md5key := config.GetInstance().GetString(AllpayMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return notifyRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	allpayNotifyRsp, errCode, err = new(payment.Notify).Validate(query, md5key)
+	if err != nil {
+		return notifyRsp, errCode, err
+	}
+	notifyRsp.TradeNo = allpayNotifyRsp.TradeNo
+	notifyRsp.Status = allpayNotifyRsp.Status
+	notifyRsp.OrderId = allpayNotifyRsp.OrderId
+	notifyRsp.Message = "OK"
+
+	return notifyRsp, 0, nil
+}
+
+func (allpay *Allpay) Callback(query, methodCode string) (callbackRsp defs.CallbackRsp, errCode int, err error) {
+	var allpayCallbackRsp payment.CallbackRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
+			allpayCallbackRsp.OrderId, code.AllpayOrg, methodCode, allpayCallbackRsp.Rsp)
+	}()
+
+	md5key := config.GetInstance().GetString(AllpayMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return callbackRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	allpayCallbackRsp, errCode, err = new(payment.Callback).Validate(query, md5key)
+	if err != nil {
+		return callbackRsp, errCode, err
+	}
+
+	callbackRsp.Status = allpayCallbackRsp.Status
+	callbackRsp.OrderId = allpayCallbackRsp.OrderId
+
+	return callbackRsp, 0, nil
+}
+
+func (allpay *Allpay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode int, err error) {
+	var allpayTradeRsp payment.TradeRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,trade data:%+v",
+			allpayTradeRsp.OrderId, code.AllpayOrg, methodCode, allpayTradeRsp.Rsp)
+	}()
+
+	merchant := config.GetInstance().GetString(AllpayMerchant)
+	if merchant == "" {
+		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		return tradeRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+	}
+
+	acqId := config.GetInstance().GetString(AllpayAcqId)
+	if acqId == "" {
+		logrus.Errorf(code.AcqIdNotExistsErrMessage+",errCode:%v,err:%v", code.AcqIdNotExistsErrCode)
+		return tradeRsp, code.AcqIdNotExistsErrCode, errors.New(code.AcqIdNotExistsErrMessage)
+	}
+
+	md5key := config.GetInstance().GetString(AllpayMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return tradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	gateWay := config.GetInstance().GetString(AllpayTradeWay)
+	if gateWay == "" {
+		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+	}
+
+	paymentSchema, errCode, err := allpay.getPaymentSchema(methodCode)
+	if err != nil {
+		return tradeRsp, errCode, err
+	}
+
+	tradeArg := payment.TradeArg{
+		OrderNum:      orderId,
+		MerId:         merchant,
+		AcqId:         acqId,
+		Md5Key:        md5key,
+		PayWay:        gateWay,
+		PaymentSchema: paymentSchema,
+	}
+	allpayTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
+	if err != nil {
+		return tradeRsp, errCode, err
+	}
+	tradeRsp.OrderId = allpayTradeRsp.OrderId
+	tradeRsp.TradeNo = allpayTradeRsp.TradeNo
+	tradeRsp.Status = allpayTradeRsp.Status
+
+	return tradeRsp, 0, nil
 }

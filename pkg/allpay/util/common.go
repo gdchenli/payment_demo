@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"net/url"
 	"sort"
 	"strings"
 )
@@ -34,4 +35,17 @@ func SpecialReplace(str string) string {
 		str = strings.Replace(str, spc, "", -1)
 	}
 	return str
+}
+
+func ParseQueryString(str string) (map[string]string, error) {
+	queryMap := make(map[string]string)
+	values, err := url.ParseQuery(str)
+	if err != nil {
+		return queryMap, err
+	}
+	for k, v := range values {
+		queryMap[k] = v[0]
+	}
+
+	return queryMap, nil
 }

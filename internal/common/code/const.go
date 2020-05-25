@@ -2,8 +2,11 @@ package code
 
 //支付方式code
 const (
+	JdMethod       = "jd_payment"
 	AliapayMethod  = "alipay_payment"    //支付宝
 	UnionpayMethod = "vtpayment_payment" //银联
+	JdOrg          = "jd"
+	AllpayOrg      = "allpay"
 )
 
 //支付环境

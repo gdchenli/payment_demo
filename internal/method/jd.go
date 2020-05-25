@@ -152,7 +152,7 @@ func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err e
 	defer func() {
 		//记录日志
 		logrus.Info("order id:%v,org:%v,method:%v,notify encrypt data:%+v,notify decrypt data:%v",
-			jdNotifyRsp.OrderId, "jd", "jd_payment", jdNotifyRsp.EncryptRsp, jdNotifyRsp.DecryptRsp)
+			jdNotifyRsp.OrderId, code.JdOrg, code.JdMethod, jdNotifyRsp.EncryptRsp, jdNotifyRsp.DecryptRsp)
 	}()
 
 	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
@@ -180,6 +180,7 @@ func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err e
 	notifyRsp.OrderId = jdNotifyRsp.OrderId
 	notifyRsp.Status = jdNotifyRsp.Status
 	notifyRsp.TradeNo = jdNotifyRsp.TradeNo
+	notifyRsp.Message = "success"
 
 	return notifyRsp, 0, nil
 }
@@ -190,7 +191,7 @@ func (jd *Jd) Callback(query string) (callbackRsp defs.CallbackRsp, errCode int,
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,callback encrypt data:%+v,callback decrypt data:%v",
-			jdCallbackRsp.OrderId, "jd", "jd_payment", jdCallbackRsp.EncryptRsp, jdCallbackRsp.DecryptRsp)
+			jdCallbackRsp.OrderId, code.JdOrg, code.JdMethod, jdCallbackRsp.EncryptRsp, jdCallbackRsp.DecryptRsp)
 	}()
 
 	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
@@ -228,7 +229,7 @@ func (jd *Jd) Trade(orderId string) (tradeRsp defs.TradeRsp, errCode int, err er
 		//记录日志
 		logrus.Info("order id:%v,org:%v,method:%v,trade search request encrypt data:%+v,trade search request decrypt data:%v"+
 			",trade search response search encrypt data:%v,trade search response search decrypt data:%v",
-			jdTradeRsp.OrderId, "jd", "jd_payment", jdTradeRsp.EncryptRes, jdTradeRsp.DecryptRes, jdTradeRsp.EncryptRsp, jdTradeRsp.DecryptRsp)
+			jdTradeRsp.OrderId, code.JdOrg, code.JdMethod, jdTradeRsp.EncryptRes, jdTradeRsp.DecryptRes, jdTradeRsp.EncryptRsp, jdTradeRsp.DecryptRsp)
 
 	}()
 
@@ -309,7 +310,7 @@ func (jd *Jd) Closed(arg JdClosedArg) (closedRsp defs.ClosedRsp, errCode int, er
 		//记录日志
 		logrus.Info("order id:%v,org:%v,method:%v,closed trade request encrypt data:%+v,closed trade request decrypt data:%v"+
 			",closed trade response encrypt data:%v,closed trade response decrypt data:%v",
-			jdClosedRsp.OrderId, "jd", "jd_payment", jdClosedRsp.EncryptRes, jdClosedRsp.DecryptRes, jdClosedRsp.EncryptRsp, jdClosedRsp.DecryptRsp)
+			jdClosedRsp.OrderId, code.JdOrg, code.JdMethod, jdClosedRsp.EncryptRes, jdClosedRsp.DecryptRes, jdClosedRsp.EncryptRsp, jdClosedRsp.DecryptRsp)
 	}()
 
 	//金额转为分

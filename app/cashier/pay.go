@@ -22,7 +22,6 @@ const (
 
 const (
 	NotSupportPaymentOrgMsg = "不支持该支付机构"
-	NotifySuccessMsg        = "success"
 	NotifyFailMsg           = "fail"
 )
 
@@ -111,7 +110,7 @@ func (pay *Pay) notify(ctx *gin.Context) {
 	case JdOrg:
 		notifyRsp, errCode, err = pay.jdNotify(ctx)
 	case AllpayOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		notifyRsp, errCode, err = pay.allpayNotify(ctx)
 	case AlipayOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	case WechatOrg:
@@ -122,12 +121,16 @@ func (pay *Pay) notify(ctx *gin.Context) {
 		err = errors.New(NotSupportPaymentOrgMsg)
 	}
 
-	msg := NotifySuccessMsg
-	if err != nil || !notifyRsp.Status {
+	msg := NotifyFailMsg
+	if err != nil {
 		fmt.Println(errCode)
-		msg = NotifyFailMsg
+		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(msg))
+		return
 	}
 
+	if notifyRsp.Status {
+		msg = notifyRsp.Message
+	}
 	ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(msg))
 }
 
@@ -144,6 +147,20 @@ func (pay *Pay) jdNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errCode in
 	return new(method.Jd).Notify(query)
 }
 
+func (pay *Pay) allpayNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+	var notifyBytes []byte
+	notifyBytes, err = ioutil.ReadAll(ctx.Request.Body)
+	if err != nil {
+		return notifyRsp, errCode, err
+	}
+	defer func() {
+		ctx.Request.Body.Close()
+	}()
+	query := string(notifyBytes)
+
+	return new(method.Allpay).Notify(query, ctx.Param("method"))
+}
+
 func (pay *Pay) callback(ctx *gin.Context) {
 	var errCode int
 	var err error
@@ -154,7 +171,7 @@ func (pay *Pay) callback(ctx *gin.Context) {
 	case JdOrg:
 		callBackRsp, errCode, err = pay.jdCallback(ctx)
 	case AllpayOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		callBackRsp, errCode, err = pay.allpayCallback(ctx)
 	case AlipayOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	case WechatOrg:
@@ -180,6 +197,13 @@ func (pay *Pay) jdCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errC
 	return new(method.Jd).Callback(query)
 }
 
+func (pay *Pay) allpayCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errCode int, err error) {
+	ctx.Request.ParseForm()
+	query := ctx.Request.PostForm.Encode()
+
+	return new(method.Allpay).Callback(query, ctx.Param("method"))
+}
+
 func (pay *Pay) trade(ctx *gin.Context) {
 	var errCode int
 	var err error
@@ -198,7 +222,7 @@ func (pay *Pay) trade(ctx *gin.Context) {
 	case JdOrg:
 		tradeRsp, errCode, err = pay.jdTrade(*trade)
 	case AllpayOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		tradeRsp, errCode, err = pay.allpayTrade(*trade)
 	case AlipayOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	case WechatOrg:
@@ -219,6 +243,10 @@ func (pay *Pay) trade(ctx *gin.Context) {
 
 func (pay *Pay) jdTrade(trade defs.Trade) (tradeRsp defs.TradeRsp, errCode int, err error) {
 	return new(method.Jd).Trade(trade.OrderId)
+}
+
+func (pay *Pay) allpayTrade(trade defs.Trade) (tradeRsp defs.TradeRsp, errCode int, err error) {
+	return new(method.Allpay).Trade(trade.OrderId, trade.MethodCode)
 }
 
 func (pay *Pay) closed(ctx *gin.Context) {

@@ -2,7 +2,6 @@ package curl
 
 import (
 	"azoya/nova"
-	"bytes"
 	"compress/gzip"
 	"encoding/json"
 	"encoding/xml"
@@ -14,8 +13,9 @@ import (
 	"time"
 
 	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
 )
+
+var requestTimeout = 15 * time.Second
 
 // GetJSON executes HTTP GET against specified url and tried to parse
 // the response into out object.
@@ -23,7 +23,7 @@ func GetJSON(c *nova.Context, operation, url string, out interface{}) error {
 	span, _ := opentracing.StartSpanFromContext(c.Context(), "HTTP GET: "+operation)
 	defer span.Finish()
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: requestTimeout}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func GetJSONWithHeader(c *nova.Context, params map[string]string, operation, url
 	span, _ := opentracing.StartSpanFromContext(c.Context(), "HTTP GET: "+operation)
 	defer span.Finish()
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: requestTimeout}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
@@ -102,9 +102,9 @@ func GetJSONWithHeader(c *nova.Context, params map[string]string, operation, url
 
 // PostJSON executes HTTP GET against specified url and tried to parse
 // the response into out object.
-func PostJSON(c *nova.Context, url string, out interface{}, body io.Reader) error {
+func PostJSON(url string, out interface{}, body io.Reader) error {
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: requestTimeout}
 
 	req, err := http.NewRequest("POST", url, body)
 	req.Header.Add("content-type", "application/x-www-form-urlencoded")
@@ -135,7 +135,7 @@ func PostJSON(c *nova.Context, url string, out interface{}, body io.Reader) erro
 // the response into out object.
 func PostXML(url string, out interface{}, body io.Reader) error {
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: requestTimeout}
 
 	req, err := http.NewRequest("POST", url, body)
 	req.Header.Add("content-type", "application/xml; charset=utf-8")
@@ -152,7 +152,7 @@ func PostXML(url string, out interface{}, body io.Reader) error {
 	//状态码异常
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("resp.StatusCode", resp.StatusCode)
-		return errors.New(CurlErrorMsg)
+		return errors.New("状态码异常")
 	}
 
 	//读取内容
@@ -166,59 +166,36 @@ func PostXML(url string, out interface{}, body io.Reader) error {
 
 }
 
-const CurlErrorMsg = "状态码异常"
-
-type Curl struct {
-	RequestUrl    string
-	RequestMethod string
-	RequestData   string
-	HeaderMap     map[string]string
-}
-
-//Get请求
-func (curl *Curl) RequestGet() (curlResult string, e error) {
-	defer func() {
-		if r := recover(); r != nil {
-			logrus.Infof("CURL 异常错误 %v\n", r)
-		}
-	}()
-
-	timeout := time.Duration(30 * time.Second) //超时时间30s
-
-	//发起请求
-	buf := new(bytes.Buffer)
-	client := &http.Client{
-		Timeout: timeout,
-	}
-	req, err := http.NewRequest(curl.RequestMethod, curl.RequestUrl, buf)
-	if len(curl.HeaderMap) > 0 {
-		for key, val := range curl.HeaderMap {
-			req.Header.Set(key, val)
-		}
-	}
+func GetJSONReturnByte(url string) (out []byte, err error) {
+	client := &http.Client{Timeout: requestTimeout}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return "", err
+		return out, err
 	}
 
-	req.Header.Set("Content-Type", "utf-8")
-	resp, err := client.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return out, err
 	}
-	defer resp.Body.Close()
+	defer res.Body.Close()
 
-	//状态码异常
-	if resp.StatusCode != http.StatusOK {
-		return "", errors.New(CurlErrorMsg)
+	var reader io.ReadCloser
+	switch res.Header.Get("Content-Encoding") {
+	case "gzip":
+		reader, _ = gzip.NewReader(res.Body)
+		defer reader.Close()
+	default:
+		reader = res.Body
 	}
 
-	//读取内容
-	responseBytes, err := ioutil.ReadAll(resp.Body)
+	out, err = ioutil.ReadAll(reader)
 	if err != nil {
-		return "", err
+		return out, err
 	}
 
-	//返回结果
-	return string(responseBytes), nil
+	if res.StatusCode >= http.StatusBadRequest {
+		return []byte{}, errors.New(string(out))
+	}
 
+	return out, nil
 }
