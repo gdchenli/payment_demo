@@ -45,41 +45,41 @@ type AllpayArg struct {
 	UserAgentType int     `json:"user_agent_type"`
 }
 
-func (allpay *Allpay) Submit(arg AllpayArg) (form string, errCode int, err error) {
+func (allpay *Allpay) getPayArg(arg AllpayArg) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AllpayMerchant)
 	if merchant == "" {
 		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
-		return form, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+		return payArg, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 
 	notifyUrl := config.GetInstance().GetString(AllpayBackUrl)
 	if notifyUrl == "" {
 		logrus.Errorf(code.NotifyUrlNotExistsErrMessage+",errCode:%v,err:%v", code.NotifyUrlNotExistsErrCode)
-		return form, code.NotifyUrlNotExistsErrCode, errors.New(code.NotifyUrlNotExistsErrMessage)
+		return payArg, code.NotifyUrlNotExistsErrCode, errors.New(code.NotifyUrlNotExistsErrMessage)
 	}
 
 	callbackUrl := config.GetInstance().GetString(AllpayFrontUrl)
 	if callbackUrl == "" {
 		logrus.Errorf(code.CallbackUrlNotExistsErrMessage+",errCode:%v,err:%v", code.CallbackUrlNotExistsErrCode)
-		return form, code.CallbackUrlNotExistsErrCode, errors.New(code.CallbackUrlNotExistsErrMessage)
+		return payArg, code.CallbackUrlNotExistsErrCode, errors.New(code.CallbackUrlNotExistsErrMessage)
 	}
 
 	expireTime := config.GetInstance().GetString(AllpayTimeout)
 	if expireTime == "" {
 		logrus.Errorf(code.ExpireTimeNotExistsErrMessage+",errCode:%v,err:%v", code.ExpireTimeNotExistsErrCode)
-		return form, code.ExpireTimeNotExistsErrCode, errors.New(code.ExpireTimeNotExistsErrMessage)
+		return payArg, code.ExpireTimeNotExistsErrCode, errors.New(code.ExpireTimeNotExistsErrMessage)
 	}
 
 	md5key := config.GetInstance().GetString(AllpayMd5Key)
 	if md5key == "" {
 		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
-		return form, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+		return payArg, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	acqId := config.GetInstance().GetString(AllpayAcqId)
 	if acqId == "" {
 		logrus.Errorf(code.AcqIdNotExistsErrMessage+",errCode:%v,err:%v", code.AcqIdNotExistsErrCode)
-		return form, code.AcqIdNotExistsErrCode, errors.New(code.AcqIdNotExistsErrMessage)
+		return payArg, code.AcqIdNotExistsErrCode, errors.New(code.AcqIdNotExistsErrMessage)
 	}
 
 	detailInfo := []payment.DetailInfo{
@@ -90,18 +90,18 @@ func (allpay *Allpay) Submit(arg AllpayArg) (form string, errCode int, err error
 	}
 	paymentSchema, errCode, err := allpay.getPaymentSchema(arg.MethodCode)
 	if err != nil {
-		return form, errCode, err
+		return payArg, errCode, err
 	}
 
 	gateWay := allpay.getPayWay(arg.UserAgentType)
 	if gateWay == "" {
 		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
-		return form, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+		return payArg, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 
 	tradeFrom := allpay.getTradeFrom(arg.MethodCode, arg.UserAgentType)
 
-	payArg := payment.PayArg{
+	payArg = payment.PayArg{
 		OrderNum:      arg.OrderId,
 		OrderAmount:   arg.TotalFee,
 		FrontUrl:      callbackUrl,
@@ -117,11 +117,36 @@ func (allpay *Allpay) Submit(arg AllpayArg) (form string, errCode int, err error
 		OrderCurrency: arg.Currency,
 		Timeout:       expireTime,
 	}
+
+	return payArg, 0, nil
+}
+
+func (allpay *Allpay) OrderSubmit(arg AllpayArg) (form string, errCode int, err error) {
+	payArg, errCode, err := allpay.getPayArg(arg)
+	if err != nil {
+		return form, errCode, err
+	}
+
 	form, errCode, err = new(payment.Payment).CreateForm(payArg)
 	if err != nil {
 		return form, errCode, err
 	}
+
 	return form, 0, nil
+}
+
+func (allpay *Allpay) AmpSubmit(arg AllpayArg) (payStr string, errCode int, err error) {
+	payArg, errCode, err := allpay.getPayArg(arg)
+	if err != nil {
+		return payStr, errCode, err
+	}
+
+	payStr, errCode, err = new(payment.Payment).CreateAmpPayStr(payArg)
+	if err != nil {
+		return payStr, errCode, err
+	}
+
+	return payStr, 0, nil
 }
 
 func (allpay *Allpay) getPaymentSchema(methodCode string) (string, int, error) {

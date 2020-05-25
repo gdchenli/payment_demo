@@ -42,7 +42,7 @@ type JdpayArg struct {
 }
 
 //发起支付
-func (jd *Jd) Submit(arg JdpayArg) (form string, errCode int, err error) {
+func (jd *Jd) OrderSubmit(arg JdpayArg) (form string, errCode int, err error) {
 	//金额转为分
 	totalFee := arg.TotalFee * 100
 	//金额字段类型转换

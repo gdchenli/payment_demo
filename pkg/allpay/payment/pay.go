@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"payment_demo/pkg/allpay/util"
+	"payment_demo/tools/curl"
+	"strings"
 	"time"
 )
 
@@ -15,6 +18,8 @@ const (
 const (
 	PayGoodsInfoFormatErrCode    = 10101
 	PayGoodsInfoFormatErrMessage = "发起支付，商品数据转换失败"
+	PayNetErrCode                = 10110
+	PayNetErrMessage             = "发起支付,网络错误"
 )
 
 type Payment struct{}
@@ -42,15 +47,26 @@ type DetailInfo struct {
 }
 
 func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
+	paramMap, errCode, err := payment.getPayParamMap(arg)
+	if err != nil {
+		return form, errCode, err
+	}
+
+	form = payment.buildForm(paramMap, arg.PayWay)
+
+	return form, 0, nil
+}
+
+func (payment *Payment) getPayParamMap(arg PayArg) (paramMap map[string]string, errCode int, err error) {
 	orderAmount := fmt.Sprintf("%.2f", arg.OrderAmount)
 	transTime := time.Now().Format(TimeLayout)
 	detailInfoBytes, err := json.Marshal(arg.DetailInfo)
 	if err != nil {
-		return form, PayGoodsInfoFormatErrCode, errors.New(PayGoodsInfoFormatErrMessage)
+		return paramMap, PayGoodsInfoFormatErrCode, errors.New(PayGoodsInfoFormatErrMessage)
 	}
 	detailInfo := util.BASE64EncodeStr(detailInfoBytes)
 
-	paramMap := map[string]string{
+	paramMap = map[string]string{
 		"version":       Version,
 		"charSet":       CharSet,
 		"transType":     PayTransType,
@@ -72,9 +88,7 @@ func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err er
 	}
 	paramMap["signature"] = payment.getSign(paramMap, arg.Md5Key)
 
-	form = payment.buildForm(paramMap, arg.PayWay)
-
-	return form, 0, nil
+	return paramMap, 0, nil
 }
 
 func (payment *Payment) getSign(paramMap map[string]string, signKey string) string {
@@ -90,4 +104,33 @@ func (payment *Payment) buildForm(paramMap map[string]string, payWay string) (fo
 	payUrl += "</form>"
 	payUrl += "<script>var form = document.getElementById('pay_form');form.submit()</script>"
 	return payUrl
+}
+
+type AmpProgramRsp struct {
+	RespCode  string `json:"RespCode"`
+	ResMsg    string `json:"RespMsg"`
+	SdkParams string `json:"sdk_params"`
+}
+
+func (payment *Payment) CreateAmpPayStr(arg PayArg) (payStr string, errCode int, err error) {
+	paramMap, errCode, err := payment.getPayParamMap(arg)
+	if err != nil {
+		return payStr, errCode, err
+	}
+	values := url.Values{}
+	for k, v := range paramMap {
+		values.Add(k, v)
+	}
+	var ampProgramRsp AmpProgramRsp
+
+	err = curl.PostJSON(arg.PayWay, &ampProgramRsp, strings.NewReader(values.Encode()))
+	if err != nil {
+		return payStr, PayNetErrCode, errors.New(PayNetErrMessage)
+	}
+
+	if ampProgramRsp.RespCode != "00" {
+		return payStr, PayNetErrCode, errors.New(PayNetErrMessage)
+	}
+
+	return ampProgramRsp.SdkParams, 0, nil
 }

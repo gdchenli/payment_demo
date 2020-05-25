@@ -30,7 +30,8 @@ type Pay struct{}
 func (pay *Pay) Router(router *gin.Engine) {
 	r := router.Group("/payment")
 	{
-		r.POST("/submit", pay.submit)
+		r.POST("/order/submit", pay.orderSubmit)
+		r.POST("/amp/submit", pay.ampSubmit)
 		r.POST("/notify/:org/:method", pay.notify)
 		r.POST("/callback/:org/:method", pay.callback)
 		r.GET("/trade", pay.trade)
@@ -39,7 +40,54 @@ func (pay *Pay) Router(router *gin.Engine) {
 }
 
 //发起支付
-func (pay *Pay) submit(ctx *gin.Context) {
+func (pay *Pay) ampSubmit(ctx *gin.Context) {
+	var errCode int
+	var err error
+	var payStr string
+	order := new(defs.Order)
+	ctx.ShouldBind(order)
+
+	if errCode, err = order.Validate(); err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		return
+	}
+	switch order.OrgCode {
+	case JdOrg:
+		err = errors.New(NotSupportPaymentOrgMsg)
+	case AllpayOrg:
+		payStr, errCode, err = pay.allpayAmpSubmit(*order)
+	case AlipayOrg:
+		err = errors.New(NotSupportPaymentOrgMsg)
+	case WechatOrg:
+		err = errors.New(NotSupportPaymentOrgMsg)
+	case EpaymentsOrg:
+		err = errors.New(NotSupportPaymentOrgMsg)
+	default:
+		err = errors.New(NotSupportPaymentOrgMsg)
+	}
+
+	if errCode, err = order.Validate(); err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": payStr})
+
+}
+func (pay *Pay) allpayAmpSubmit(order defs.Order) (form string, errCode int, err error) {
+	allpayArg := method.AllpayArg{
+		OrderId:       order.OrderId,
+		TotalFee:      order.TotalFee,
+		Currency:      order.Currency,
+		UserId:        order.UserId,
+		UserAgentType: order.UserAgentType,
+		MethodCode:    order.MethodCode,
+	}
+
+	return new(method.Allpay).AmpSubmit(allpayArg)
+}
+
+//发起支付
+func (pay *Pay) orderSubmit(ctx *gin.Context) {
 	var errCode int
 	var err error
 	var form string
@@ -53,9 +101,9 @@ func (pay *Pay) submit(ctx *gin.Context) {
 
 	switch order.OrgCode {
 	case JdOrg:
-		form, errCode, err = pay.jdSubmit(*order)
+		form, errCode, err = pay.jdOrderSubmit(*order)
 	case AllpayOrg:
-		form, errCode, err = pay.allpaySubmit(*order)
+		form, errCode, err = pay.allpayOrderSubmit(*order)
 	case AlipayOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	case WechatOrg:
@@ -75,7 +123,7 @@ func (pay *Pay) submit(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(form))
 }
 
-func (pay *Pay) jdSubmit(order defs.Order) (form string, errCode int, err error) {
+func (pay *Pay) jdOrderSubmit(order defs.Order) (form string, errCode int, err error) {
 	jdpayArg := method.JdpayArg{
 		OrderId:       order.OrderId,
 		TotalFee:      order.TotalFee,
@@ -84,10 +132,10 @@ func (pay *Pay) jdSubmit(order defs.Order) (form string, errCode int, err error)
 		UserAgentType: order.UserAgentType,
 	}
 
-	return new(method.Jd).Submit(jdpayArg)
+	return new(method.Jd).OrderSubmit(jdpayArg)
 }
 
-func (pay *Pay) allpaySubmit(order defs.Order) (form string, errCode int, err error) {
+func (pay *Pay) allpayOrderSubmit(order defs.Order) (form string, errCode int, err error) {
 	allpayArg := method.AllpayArg{
 		OrderId:       order.OrderId,
 		TotalFee:      order.TotalFee,
@@ -97,7 +145,7 @@ func (pay *Pay) allpaySubmit(order defs.Order) (form string, errCode int, err er
 		MethodCode:    order.MethodCode,
 	}
 
-	return new(method.Allpay).Submit(allpayArg)
+	return new(method.Allpay).OrderSubmit(allpayArg)
 }
 
 func (pay *Pay) notify(ctx *gin.Context) {
