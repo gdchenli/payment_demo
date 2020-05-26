@@ -28,16 +28,17 @@ func HaSha256(str string) string {
 	h := sha256.New()
 	h.Write([]byte(str))
 	cipherStr := h.Sum(nil)
+	//return cipherStr
 	return hex.EncodeToString(cipherStr)
 }
 
 // base编码
 func BASE64EncodeStr(src string) string {
-	return string(base64.StdEncoding.EncodeToString([]byte(src)))
+	return base64.StdEncoding.EncodeToString([]byte(src))
 }
 
 //对消息的散列值进行数字签名
-func SignPKCS1v15(msg, privateKey []byte) ([]byte, error) {
+func SignPKCS1v15(msg, privateKey []byte, hashType crypto.Hash) ([]byte, error) {
 	block, _ := pem.Decode(privateKey)
 	if block == nil {
 		return nil, errors.New("private key format error")
@@ -47,7 +48,7 @@ func SignPKCS1v15(msg, privateKey []byte) ([]byte, error) {
 		return nil, errors.New("parse private key error")
 	}
 
-	sign, err := rsa.SignPKCS1v15(rand.Reader, pri, crypto.Hash(0), msg)
+	sign, err := rsa.SignPKCS1v15(rand.Reader, pri, hashType, msg)
 	if err != nil {
 		return nil, errors.New("sign error")
 	}

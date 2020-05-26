@@ -67,7 +67,7 @@ func TripleEcbDesDecrypt(crypted, key []byte) ([]byte, error) {
 	return out, nil
 }
 
-func VerifyPKCS1v15(msg, sign []byte, publicKey []byte) bool {
+func VerifyPKCS1v15(msg, sign, publicKey []byte, hashType crypto.Hash) bool {
 	block, _ := pem.Decode(publicKey)
 	if block == nil {
 		return false
@@ -77,6 +77,6 @@ func VerifyPKCS1v15(msg, sign []byte, publicKey []byte) bool {
 		panic(err)
 	}
 
-	err = rsa.VerifyPKCS1v15(pub.(*rsa.PublicKey), crypto.Hash(0), msg, sign)
+	err = rsa.VerifyPKCS1v15(pub.(*rsa.PublicKey), hashType, msg, sign)
 	return err == nil
 }

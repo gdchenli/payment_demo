@@ -46,6 +46,7 @@ func (pay *Pay) ampSubmit(ctx *gin.Context) {
 	var payStr string
 	order := new(defs.Order)
 	ctx.ShouldBind(order)
+	order.UserAgentType = 7
 
 	if errCode, err = order.Validate(); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})

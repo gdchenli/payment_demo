@@ -1,6 +1,7 @@
 package payment
 
 import (
+	"crypto"
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
@@ -142,7 +143,7 @@ func (closed *Closed) Trade(arg ClosedArg) (closedRsp ClosedRsp, errCode int, er
 
 	//生成签名
 	sha256 := util.HaSha256(xmlStr)
-	signBytes, err := util.SignPKCS1v15([]byte(sha256), []byte(arg.PrivateKey))
+	signBytes, err := util.SignPKCS1v15([]byte(sha256), []byte(arg.PrivateKey), crypto.Hash(0))
 	if err != nil {
 		logrus.Errorf(CloseTradeBuildSignErrMessage+",request:%+v,errCode:%v,err:%v", arg, CloseTradeBuildSignErrCode, err.Error())
 		return closedRsp, CloseTradeBuildSignErrCode, errors.New(CloseTradeBuildSignErrMessage)
@@ -253,7 +254,7 @@ func (closed *Closed) checkSignature(sign, decryptRsp, publicKey string) bool {
 		return false
 	}
 	sha256 := util.HaSha256(originXml)
-	verifySign := util.VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey))
+	verifySign := util.VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey), crypto.Hash(0))
 	if !verifySign {
 		fmt.Println("签名校验不通过")
 	}

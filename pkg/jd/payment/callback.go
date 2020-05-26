@@ -1,6 +1,7 @@
 package payment
 
 import (
+	"crypto"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -149,5 +150,5 @@ func (callback *Callback) checkSign(urlValuesMap map[string]string, publicKey st
 
 	sha256 := util.HaSha256(encodePayString)
 
-	return util.VerifyPKCS1v15([]byte(sha256), signBytes, []byte(publicKey))
+	return util.VerifyPKCS1v15([]byte(sha256), signBytes, []byte(publicKey), crypto.Hash(0))
 }

@@ -1,6 +1,7 @@
 package payment
 
 import (
+	"crypto"
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
@@ -176,5 +177,5 @@ func (notify *Notify) checkSign(decryptBytes []byte, sign, publicKey string) boo
 
 	sha256 := util.HaSha256(originXml)
 
-	return util.VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey))
+	return util.VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey), crypto.Hash(0))
 }

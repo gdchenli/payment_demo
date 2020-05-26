@@ -1,6 +1,7 @@
 package payment
 
 import (
+	"crypto"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -140,7 +141,7 @@ func (payment *Payment) encrypt3DES(paramMap map[string]string, desKey string) (
 func (payment *Payment) getSign(paramMap map[string]string, privateKey string) (string, error) {
 	payString := util.GetSortString(paramMap)
 	sha256 := util.HaSha256(payString)
-	sign, err := util.SignPKCS1v15([]byte(sha256), []byte(privateKey))
+	sign, err := util.SignPKCS1v15([]byte(sha256), []byte(privateKey), crypto.Hash(0))
 	if err != nil {
 		return "", err
 	}
