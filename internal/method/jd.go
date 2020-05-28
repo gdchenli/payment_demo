@@ -396,6 +396,7 @@ type JdLogisticsArg struct {
 	LogisticsCompany string `json:"logistics_company"` //物流公司名称
 }
 
+//物流信息上传
 func (jd *Jd) LogisticsUpload(arg JdLogisticsArg) (logisticsRsp defs.LogisticsRsp, errCode int, err error) {
 	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPrivateKey))
 	privateFile, err := os.Open(privateKeyPath)
