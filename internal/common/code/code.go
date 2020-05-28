@@ -32,4 +32,6 @@ const (
 	Md5KeyNotExistsErrMessage         = "md5 key不存在"
 	AcqIdNotExistsErrCode             = 10015
 	AcqIdNotExistsErrMessage          = "收单行id不存在"
+	MerchantNameNotExistsErrCode      = 10016
+	MerchantNameNotExistsErrMessage   = "商户名称不存在"
 )

@@ -36,6 +36,7 @@ func (pay *Pay) Router(router *gin.Engine) {
 		r.POST("/callback/:org/:method", pay.callback)
 		r.GET("/trade", pay.trade)
 		r.GET("/closed", pay.closed)
+		r.POST("/logistics/upload", pay.logisticsUpload)
 	}
 }
 
@@ -342,4 +343,37 @@ func (pay *Pay) jdClosed(closed defs.Closed) (closedRsp defs.ClosedRsp, errCode 
 		TotalFee: closed.TotalFee,
 	}
 	return new(method.Jd).Closed(closedArg)
+}
+
+func (pay *Pay) logisticsUpload(ctx *gin.Context) {
+	var errCode int
+	var err error
+	var logisticsRsp defs.LogisticsRsp
+
+	logistics := new(defs.Logistics)
+	ctx.ShouldBind(logistics)
+
+	switch logistics.OrgCode {
+	case JdOrg:
+		logisticsRsp, errCode, err = pay.JdLogisticsUpload(logistics)
+	default:
+		err = errors.New(NotSupportPaymentOrgMsg)
+	}
+
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, logisticsRsp)
+}
+
+func (pay *Pay) JdLogisticsUpload(logistics *defs.Logistics) (logisticsRsp defs.LogisticsRsp, errCode int, err error) {
+	arg := method.JdLogisticsArg{
+		OrderId:          logistics.OrderId,
+		LogisticsCompany: logistics.LogisticsCompany,
+		LogisticsNo:      logistics.LogisticsNo,
+	}
+
+	return new(method.Jd).LogisticsUpload(arg)
 }

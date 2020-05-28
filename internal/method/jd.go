@@ -29,6 +29,8 @@ const (
 	JdPublicKey      = "jd.public_key"
 	JdTradeWay       = "jd.trade_way"
 	JdClosedWay      = "jd.closed_way"
+	JdLogisticsWay   = "jd.logistics_way"
+	JdMerchantName   = "jd.merchant_name"
 )
 
 type Jd struct{}
@@ -386,4 +388,83 @@ func (jd *Jd) Closed(arg JdClosedArg) (closedRsp defs.ClosedRsp, errCode int, er
 	closedRsp.Status = jdClosedRsp.Status
 
 	return closedRsp, 0, nil
+}
+
+type JdLogisticsArg struct {
+	OrderId          string `json:"order_id"`          //订单编号
+	LogisticsNo      string `json:"logistics_no"`      //物流单号
+	LogisticsCompany string `json:"logistics_company"` //物流公司名称
+}
+
+func (jd *Jd) LogisticsUpload(arg JdLogisticsArg) (logisticsRsp defs.LogisticsRsp, errCode int, err error) {
+	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPrivateKey))
+	privateFile, err := os.Open(privateKeyPath)
+	if err != nil {
+		logrus.Errorf(code.PrivateKeyNotExistsErrMessage+",errCode:%v,err:%v", code.PrivateKeyNotExistsErrCode, err.Error())
+		return logisticsRsp, code.PrivateKeyNotExistsErrCode, errors.New(code.PrivateKeyNotExistsErrMessage)
+	}
+	privateKeyBytes, err := ioutil.ReadAll(privateFile)
+	if err != nil {
+		logrus.Errorf(code.PrivateKeyContentErrMessage+",errCode:%v,err:%v", code.PrivateKeyContentErrCode, err.Error())
+		return logisticsRsp, code.PrivateKeyContentErrCode, errors.New(code.PrivateKeyContentErrMessage)
+	}
+	privateKey := string(privateKeyBytes)
+
+	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
+	file, err := os.Open(publicKeyPath)
+	if err != nil {
+		logrus.Errorf(code.PublicKeyNotExistsErrMessage+",errCode:%v,err:%v", code.PublicKeyNotExistsErrCode, err.Error())
+		return logisticsRsp, code.PublicKeyNotExistsErrCode, errors.New(code.PublicKeyNotExistsErrMessage)
+	}
+	publicKeyBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		logrus.Errorf(code.PublicKeyContentErrMessage+",errCode:%v,err:%v", code.PublicKeyContentErrCode, err.Error())
+		return logisticsRsp, code.PublicKeyContentErrCode, errors.New(code.PublicKeyContentErrMessage)
+	}
+	publicKey := string(publicKeyBytes)
+
+	merchant := config.GetInstance().GetString(JdMerchant)
+	if merchant == "" {
+		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		return logisticsRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+	}
+
+	desKey := config.GetInstance().GetString(JdDesKey)
+	if desKey == "" {
+		logrus.Errorf(code.DesKeyNotExistsErrMessage+",errCode:%v,err:%v", code.DesKeyNotExistsErrCode)
+		return logisticsRsp, code.DesKeyNotExistsErrCode, errors.New(code.DesKeyNotExistsErrMessage)
+	}
+
+	gateWay := config.GetInstance().GetString(JdLogisticsWay)
+	if gateWay == "" {
+		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		return logisticsRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+	}
+
+	merchantName := config.GetInstance().GetString(JdMerchantName)
+	if merchantName == "" {
+		logrus.Errorf(code.MerchantNameNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNameNotExistsErrCode)
+		return logisticsRsp, code.MerchantNameNotExistsErrCode, errors.New(code.MerchantNameNotExistsErrMessage)
+	}
+
+	logisticsArg := payment.LogisticsArg{
+		OrderId:          arg.OrderId,
+		LogisticsNo:      arg.LogisticsNo,
+		LogisticsCompany: arg.LogisticsCompany,
+		Merchant:         merchant,
+		PrivateKey:       privateKey,
+		PublicKey:        publicKey,
+		DesKey:           desKey,
+		MerchantName:     merchantName,
+		GateWay:          gateWay,
+	}
+	jdLogisticsRsp, errCode, err := new(payment.Logistics).Upload(logisticsArg)
+	if err != nil {
+		return logisticsRsp, errCode, err
+	}
+
+	logisticsRsp.Status = jdLogisticsRsp.Status
+	logisticsRsp.OrderId = jdLogisticsRsp.OrderId
+
+	return logisticsRsp, 0, nil
 }

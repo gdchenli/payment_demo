@@ -22,7 +22,9 @@ auth_password = ""
 
 [jd]
 # 京东支付商户id
-merchant="22294531"
+merchant=""
+# 京东商户名称
+merchant_name=""
 # 同步通知地址
 callback_url="http://localhost:8090/payment/notify/jd/jd_payment"
 # 异步通知地址
@@ -45,3 +47,23 @@ h5_pay_way="https://h5pay.jd.com/jdpay/saveOrder"
 trade_way="https://paygate.jd.com/service/query"
 # 关闭订单交易网关地址
 closed_way="https://paygate.jd.com/service/revoke"
+# 物流信息上传网关地址
+logistics_way ="https://paygate.jd.com/service/afterPayInfoNotify"
+
+[allpay]
+# 支付机构allpay商户Id
+merchant=""
+# 支付机构allpay收单行
+acq_id=""
+# 支付机构allpay商户md5 key
+md5_key= ""
+# 订单交易过期时间，取值：5m、10m、15m、30m、1h、2h、3h、5h、10h、12h、1d；单位说明：m分钟，h小时,d天
+timeout="3h"
+# 同步通知地址
+front_url="http://localhost:8090/payment/verify/allpay/alipay_payment"
+# 异步通知地址
+back_url="http://localhost:8090/payment/notify/allpay/alipay_payment"
+# pc端发起支付网关地址
+pc_pay_way="https://testapi.allpayx.com/api/unifiedorder"
+# h5端发起支付网关地址
+h5_pay_way="https://tapi.allpayx.com/api/unifiedorder"
