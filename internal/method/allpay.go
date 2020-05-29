@@ -38,7 +38,6 @@ type AllpayArg struct {
 	OrderId       string  `json:"order_id"`
 	TotalFee      float64 `json:"total_fee"`
 	Currency      string  `json:"currency"`
-	UserId        string  `json:"user_id"`
 	MethodCode    string  `json:"method_code"`
 	UserAgentType int     `json:"user_agent_type"`
 }

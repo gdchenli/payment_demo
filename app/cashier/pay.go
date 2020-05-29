@@ -80,7 +80,6 @@ func (pay *Pay) allpayAmpSubmit(order defs.Order) (form string, errCode int, err
 		OrderId:       order.OrderId,
 		TotalFee:      order.TotalFee,
 		Currency:      order.Currency,
-		UserId:        order.UserId,
 		UserAgentType: order.UserAgentType,
 		MethodCode:    order.MethodCode,
 	}
@@ -142,7 +141,6 @@ func (pay *Pay) allpayOrderSubmit(order defs.Order) (form string, errCode int, e
 		OrderId:       order.OrderId,
 		TotalFee:      order.TotalFee,
 		Currency:      order.Currency,
-		UserId:        order.UserId,
 		UserAgentType: order.UserAgentType,
 		MethodCode:    order.MethodCode,
 	}
