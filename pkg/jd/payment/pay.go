@@ -113,8 +113,8 @@ func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err er
 	return form, 0, nil
 }
 
-func (payment *Payment) buildForm(paramMap map[string]string, payWay string) string {
-	payUrl := "<form action='" + payWay + "' method='post' id='pay_form'>"
+func (payment *Payment) buildForm(paramMap map[string]string, gateWay string) string {
+	payUrl := "<form action='" + gateWay + "' method='post' id='pay_form'>"
 	for k, v := range paramMap {
 		payUrl += "<input value='" + v + "' name='" + k + "' type='hidden'/>"
 	}

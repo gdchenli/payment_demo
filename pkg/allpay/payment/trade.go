@@ -54,7 +54,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	transTime := time.Now().Format(TimeLayout)
 	paramMap := map[string]string{
 		"version":       Version,
-		"charSet":       CharSet,
+		"charSet":       CharsetUTF8,
 		"transType":     SearchTradeTransType,
 		"orderNum":      arg.OrderNum,
 		"merID":         arg.MerId,

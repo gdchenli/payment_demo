@@ -68,7 +68,7 @@ func (payment *Payment) getPayParamMap(arg PayArg) (paramMap map[string]string, 
 
 	paramMap = map[string]string{
 		"version":       Version,
-		"charSet":       CharSet,
+		"charSet":       CharsetUTF8,
 		"transType":     PayTransType,
 		"orderNum":      arg.OrderNum,
 		"orderAmount":   orderAmount,
@@ -96,8 +96,8 @@ func (payment *Payment) getSign(paramMap map[string]string, signKey string) stri
 	return util.Md5(sortString + signKey)
 }
 
-func (payment *Payment) buildForm(paramMap map[string]string, payWay string) (form string) {
-	payUrl := "<form action='" + payWay + "' method='post' id='pay_form'>"
+func (payment *Payment) buildForm(paramMap map[string]string, gateWay string) (form string) {
+	payUrl := "<form action='" + gateWay + "' method='post' id='pay_form'>"
 	for k, v := range paramMap {
 		payUrl += "<input value='" + v + "' name='" + k + "' type='hidden'/>"
 	}
