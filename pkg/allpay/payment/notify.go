@@ -33,7 +33,7 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 	notifyRsp.Rsp = query
 
 	//解析参数
-	queryMap, err := util.ParseQueryString(query)
+	queryMap, err := util.JsonToMap(query)
 	if err != nil {
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}

@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/url"
 	"sort"
 	"strings"
@@ -48,4 +49,12 @@ func ParseQueryString(str string) (map[string]string, error) {
 	}
 
 	return queryMap, nil
+}
+
+//json转map
+func JsonToMap(paramString string) (paramMap map[string]string, err error) {
+	if err := json.Unmarshal([]byte(paramString), &paramMap); err != nil {
+		return paramMap, err
+	}
+	return paramMap, nil
 }

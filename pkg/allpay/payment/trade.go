@@ -10,6 +10,9 @@ import (
 )
 
 const (
+	SearchTradeTransType = "INQY"
+)
+const (
 	TradeProcess = "2" //交易成功
 	TradeClosed  = "3" //交易关闭
 )
@@ -52,6 +55,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	paramMap := map[string]string{
 		"version":       Version,
 		"charSet":       CharSet,
+		"transType":     SearchTradeTransType,
 		"orderNum":      arg.OrderNum,
 		"merID":         arg.MerId,
 		"acqID":         arg.AcqId,

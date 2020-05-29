@@ -250,6 +250,9 @@ func (pay *Pay) jdCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errC
 func (pay *Pay) allpayCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errCode int, err error) {
 	ctx.Request.ParseForm()
 	query := ctx.Request.PostForm.Encode()
+	if query == "" {
+		query = ctx.Request.URL.Query().Encode()
+	}
 
 	return new(method.Allpay).Callback(query, ctx.Param("method"))
 }
