@@ -34,15 +34,7 @@ const (
 
 type Allpay struct{}
 
-type AllpayArg struct {
-	OrderId       string  `json:"order_id"`
-	TotalFee      float64 `json:"total_fee"`
-	Currency      string  `json:"currency"`
-	MethodCode    string  `json:"method_code"`
-	UserAgentType int     `json:"user_agent_type"`
-}
-
-func (allpay *Allpay) getPayArg(arg AllpayArg) (payArg payment.PayArg, errCode int, err error) {
+func (allpay *Allpay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AllpayMerchant)
 	if merchant == "" {
 		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
@@ -118,7 +110,7 @@ func (allpay *Allpay) getPayArg(arg AllpayArg) (payArg payment.PayArg, errCode i
 	return payArg, 0, nil
 }
 
-func (allpay *Allpay) OrderSubmit(arg AllpayArg) (form string, errCode int, err error) {
+func (allpay *Allpay) OrderSubmit(arg defs.Order) (form string, errCode int, err error) {
 	payArg, errCode, err := allpay.getPayArg(arg)
 	if err != nil {
 		return form, errCode, err
@@ -132,7 +124,7 @@ func (allpay *Allpay) OrderSubmit(arg AllpayArg) (form string, errCode int, err 
 	return form, 0, nil
 }
 
-func (allpay *Allpay) AmpSubmit(arg AllpayArg) (payStr string, errCode int, err error) {
+func (allpay *Allpay) AmpSubmit(arg defs.Order) (payStr string, errCode int, err error) {
 	payArg, errCode, err := allpay.getPayArg(arg)
 	if err != nil {
 		return payStr, errCode, err

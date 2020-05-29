@@ -35,16 +35,8 @@ const (
 
 type Jd struct{}
 
-type JdpayArg struct {
-	OrderId       string  `json:"order_id"`
-	TotalFee      float64 `json:"total_fee"`
-	Currency      string  `json:"currency"`
-	UserId        string  `json:"user_id"`
-	UserAgentType int     `json:"user_agent_type"`
-}
-
 //发起支付
-func (jd *Jd) OrderSubmit(arg JdpayArg) (form string, errCode int, err error) {
+func (jd *Jd) OrderSubmit(arg defs.Order) (form string, errCode int, err error) {
 	//金额转为分
 	totalFee := arg.TotalFee * 100
 	//金额字段类型转换
@@ -149,12 +141,12 @@ func (jd *Jd) getPayWay(userAgentType int) string {
 }
 
 //异步通知
-func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+func (jd *Jd) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
 	var jdNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
 		logrus.Info("order id:%v,org:%v,method:%v,notify encrypt data:%+v,notify decrypt data:%v",
-			jdNotifyRsp.OrderId, code.JdOrg, code.JdMethod, jdNotifyRsp.EncryptRsp, jdNotifyRsp.DecryptRsp)
+			jdNotifyRsp.OrderId, code.JdOrg, methodCode, jdNotifyRsp.EncryptRsp, jdNotifyRsp.DecryptRsp)
 	}()
 
 	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
@@ -188,7 +180,7 @@ func (jd *Jd) Notify(query string) (notifyRsp defs.NotifyRsp, errCode int, err e
 }
 
 //同步通知
-func (jd *Jd) Callback(query string) (callbackRsp defs.CallbackRsp, errCode int, err error) {
+func (jd *Jd) Callback(query, methodCode string) (callbackRsp defs.CallbackRsp, errCode int, err error) {
 	var jdCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -225,13 +217,13 @@ func (jd *Jd) Callback(query string) (callbackRsp defs.CallbackRsp, errCode int,
 }
 
 //查询交易
-func (jd *Jd) Trade(orderId string) (tradeRsp defs.TradeRsp, errCode int, err error) {
+func (jd *Jd) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode int, err error) {
 	var jdTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
 		logrus.Info("order id:%v,org:%v,method:%v,trade search request encrypt data:%+v,trade search request decrypt data:%v"+
 			",trade search response search encrypt data:%v,trade search response search decrypt data:%v",
-			jdTradeRsp.OrderId, code.JdOrg, code.JdMethod, jdTradeRsp.EncryptRes, jdTradeRsp.DecryptRes, jdTradeRsp.EncryptRsp, jdTradeRsp.DecryptRsp)
+			jdTradeRsp.OrderId, code.JdOrg, methodCode, jdTradeRsp.EncryptRes, jdTradeRsp.DecryptRes, jdTradeRsp.EncryptRsp, jdTradeRsp.DecryptRsp)
 
 	}()
 

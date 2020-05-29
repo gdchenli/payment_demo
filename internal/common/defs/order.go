@@ -2,6 +2,13 @@ package defs
 
 import "errors"
 
+type PayMethod interface {
+	OrderSubmit(Order) (string, int, error)            //发起支付
+	Notify(string, string) (NotifyRsp, int, error)     //异步通知
+	Callback(string, string) (CallbackRsp, int, error) //同步通知
+	Trade(string, string) (TradeRsp, int, error)       //交易查询
+}
+
 const (
 	RequiredPayOrderIdErrCode            = 10150
 	RequiredPayOrderIdErrMessage         = "请输入发起支付的订单编号"
