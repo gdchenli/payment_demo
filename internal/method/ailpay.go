@@ -1,10 +1,20 @@
 package method
 
-import "payment_demo/internal/common/defs"
+import (
+	"payment_demo/internal/common/defs"
+	"payment_demo/pkg/alipay/payment"
+)
 
 type Alipay struct{}
 
 func (alipay *Alipay) OrderSubmit(arg defs.Order) (form string, errCode int, err error) {
+	payArg := payment.PayArg{}
+
+	form, errCode, err = new(payment.Payment).CreateForm(payArg)
+	if err != nil {
+		return form, errCode, err
+	}
+
 	return form, 0, nil
 }
 
