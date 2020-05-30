@@ -18,8 +18,9 @@ const (
 	AllpayMerchant = "allpay.merchant"
 	AllpayAcqId    = "allpay.acq_id"
 	AllpayMd5Key   = "allpay.md5_key"
-	AllpayPayWay   = "allpay.gate_way"
+	AllpayPayWay   = "allpay.pay_way"
 	AllpayTimeout  = "allpay.timeout"
+	AllpayTradeWay = "allpay.trade_way"
 )
 
 const (
@@ -256,7 +257,7 @@ func (allpay *Allpay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp,
 		return tradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
-	gateWay := config.GetInstance().GetString(AllpayPayWay)
+	gateWay := config.GetInstance().GetString(AllpayTradeWay)
 	if gateWay == "" {
 		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
 		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)

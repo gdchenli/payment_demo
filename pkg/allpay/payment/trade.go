@@ -3,6 +3,7 @@ package payment
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"payment_demo/pkg/allpay/util"
 	"payment_demo/tools/curl"
@@ -61,14 +62,14 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 		"acqID":         arg.AcqId,
 		"paymentSchema": arg.PaymentSchema,
 		"transTime":     transTime,
-		"signType":      PayMD5SignType,
+		"signType":      MD5SignType,
 	}
 	paramMap["signature"] = trade.getSign(paramMap, arg.Md5Key)
 	values := url.Values{}
 	for k, v := range paramMap {
 		values.Add(k, v)
 	}
-
+	fmt.Println("values.Encode()", arg.PayWay+"?"+values.Encode())
 	returnBytes, err := curl.GetJSONReturnByte(arg.PayWay + "?" + values.Encode())
 	if err != nil {
 		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
@@ -78,7 +79,8 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	if err != nil {
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
-
+	fmt.Printf("%+v\n", rspMap)
+	tradeRsp.OrderId = arg.OrderNum
 	//校验签名
 	sign := rspMap["signature"]
 	delete(rspMap, "signature")
@@ -89,6 +91,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	//交易状态
 	if rspMap["RespCode"] == "00" {
 		tradeRsp.Status = TradeProcess
+		tradeRsp.TradeNo = rspMap["transID"]
 	}
 
 	return tradeRsp, 0, nil
