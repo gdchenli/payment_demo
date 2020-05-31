@@ -8,3 +8,9 @@ const (
 	KRW         = "KRW"        //韩币种符号
 	JPY         = "JPY"        //日币符号
 )
+
+const (
+	TradeSuccess    = "TRADE_SUCCESS" //支付成功
+	TradeFinished   = "TRADE_FINISHED"
+	TradeWaitBuyPay = "WAIT_BUYER_PAY"
+)

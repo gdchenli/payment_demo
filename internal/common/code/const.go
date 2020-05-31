@@ -7,6 +7,7 @@ const (
 	UnionpayMethod = "vtpayment_payment" //银联
 	JdOrg          = "jd"
 	AllpayOrg      = "allpay"
+	AlipayOrg      = "alipay"
 )
 
 //支付环境

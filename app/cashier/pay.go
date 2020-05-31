@@ -135,7 +135,7 @@ func (pay *Pay) notify(ctx *gin.Context) {
 	case AllpayOrg:
 		notifyRsp, errCode, err = pay.allpayNotify(ctx)
 	case AlipayOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		notifyRsp, errCode, err = pay.alipayNotify(ctx)
 	case EpaymentsOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	default:
@@ -182,6 +182,13 @@ func (pay *Pay) allpayNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errCod
 	return new(method.Allpay).Notify(query, ctx.Param("method"))
 }
 
+func (pay *Pay) alipayNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+	ctx.Request.ParseForm()
+	query := ctx.Request.PostForm.Encode()
+
+	return new(method.Alipay).Notify(query, ctx.Param("method"))
+}
+
 func (pay *Pay) callback(ctx *gin.Context) {
 	var errCode int
 	var err error
@@ -194,7 +201,7 @@ func (pay *Pay) callback(ctx *gin.Context) {
 	case AllpayOrg:
 		callBackRsp, errCode, err = pay.allpayCallback(ctx)
 	case AlipayOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		callBackRsp, errCode, err = pay.alipayCallback(ctx)
 	case EpaymentsOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	default:
@@ -224,6 +231,16 @@ func (pay *Pay) allpayCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, 
 	}
 
 	return new(method.Allpay).Callback(query, ctx.Param("method"))
+}
+
+func (pay *Pay) alipayCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errCode int, err error) {
+	ctx.Request.ParseForm()
+	query := ctx.Request.PostForm.Encode()
+	if query == "" {
+		query = ctx.Request.URL.Query().Encode()
+	}
+
+	return new(method.Alipay).Callback(query, ctx.Param("method"))
 }
 
 func (pay *Pay) trade(ctx *gin.Context) {

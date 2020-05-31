@@ -126,10 +126,53 @@ func (alipay *Alipay) getUserAgentType(userAgentType int) string {
 }
 
 func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+	var alipayNotifyRsp payment.NotifyRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,notify data:%+v",
+			alipayNotifyRsp.OrderId, code.AlipayOrg, methodCode, alipayNotifyRsp.Rsp)
+	}()
+
+	md5key := config.GetInstance().GetString(AlipayMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return notifyRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	alipayNotifyRsp, errCode, err = new(payment.Notify).Validate(query, md5key)
+	if err != nil {
+		return notifyRsp, errCode, err
+	}
+	notifyRsp.TradeNo = alipayNotifyRsp.TradeNo
+	notifyRsp.Status = alipayNotifyRsp.Status
+	notifyRsp.OrderId = alipayNotifyRsp.OrderId
+	notifyRsp.Message = "success"
+
 	return notifyRsp, 0, nil
 }
 
 func (alipay *Alipay) Callback(query, methodCode string) (callbackRsp defs.CallbackRsp, errCode int, err error) {
+	var alipayCallbackRsp payment.CallbackRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
+			alipayCallbackRsp.OrderId, code.AlipayOrg, methodCode, alipayCallbackRsp.Rsp)
+	}()
+
+	md5key := config.GetInstance().GetString(AlipayMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return callbackRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	alipayCallbackRsp, errCode, err = new(payment.Callback).Validate(query, md5key)
+	if err != nil {
+		return callbackRsp, errCode, err
+	}
+
+	callbackRsp.Status = alipayCallbackRsp.Status
+	callbackRsp.OrderId = alipayCallbackRsp.OrderId
+
 	return callbackRsp, 0, nil
 }
 

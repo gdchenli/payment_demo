@@ -71,7 +71,7 @@ func (payment *Payment) getParamMap(arg PayArg) (paramMap map[string]string, err
 		paramMap["product_code"] = payment.getProductCode(arg.UserAgentType)
 	}
 	//签名
-	payString := util.GetPayString(paramMap)
+	payString := util.GetSortString(paramMap)
 	paramMap["sign"] = util.Md5(payString + arg.Md5key)
 
 	return paramMap, 0, nil
@@ -82,7 +82,7 @@ func (payment *Payment) CreateAmpPayStr(arg PayArg) (payString string, errCode i
 	if err != nil {
 		return payString, errCode, err
 	}
-	return util.GetPayString(paramMap), 0, nil
+	return util.GetSortString(paramMap), 0, nil
 }
 
 func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
