@@ -67,3 +67,25 @@ back_url="http://localhost:8090/payment/notify/allpay/alipay_payment"
 pay_way="https://api.allpayx.com/api/unifiedorder"
 # 查询交易网关地址
 trade_way="https://api.allpayx.com/api/orderquery"
+
+[alipay]
+# alipay商户Id
+merchant=""
+# alipay商户账号
+supplier=""
+# alipay结算币种
+trans_currency="AUD"
+# alipay商户md5 key
+md5_key= ""
+# 订单交易过期时间，取值：5m、10m、15m、30m、1h、2h、3h、5h、10h、12h、1d；单位说明：m分钟，h小时,d天
+timeout="1h"
+# 异步通知地址
+notify_url="http://localhost:8090/payment/notify/alipay/alipay_payment"
+# 同步通知地址
+return_url="http://localhost:8090/payment/verify/alipay/alipay_payment"
+# refer_url
+refer_url="https://cn.pharmacyonline.com.au"
+# 发起支付网关地址
+gate_way="https://mapi.alipay.com/gateway.do"
+# 支付类型 1旧接口 2新接口
+pay_way="2"
