@@ -46,7 +46,7 @@ type TradeInformation struct {
 	TotalQuantity int    `json:"total_quantity"`
 }
 
-func (payment *Payment) getPayment(arg PayArg) (paramMap map[string]string, errCode int, err error) {
+func (payment *Payment) getParamMap(arg PayArg) (paramMap map[string]string, errCode int, err error) {
 	paramMap = map[string]string{
 		"service":           payment.getServiceType(arg.UserAgentType),
 		"partner":           arg.Partner,
@@ -78,7 +78,7 @@ func (payment *Payment) getPayment(arg PayArg) (paramMap map[string]string, errC
 }
 
 func (payment *Payment) CreateAmpPayStr(arg PayArg) (payString string, errCode int, err error) {
-	paramMap, errCode, err := payment.getPayment(arg)
+	paramMap, errCode, err := payment.getParamMap(arg)
 	if err != nil {
 		return payString, errCode, err
 	}
@@ -86,7 +86,7 @@ func (payment *Payment) CreateAmpPayStr(arg PayArg) (payString string, errCode i
 }
 
 func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
-	paramMap, errCode, err := payment.getPayment(arg)
+	paramMap, errCode, err := payment.getParamMap(arg)
 	if err != nil {
 		return form, errCode, err
 	}
