@@ -57,8 +57,11 @@ func main() {
 
 func registerRouter(router *gin.Engine) {
 	new(cart.Checkout).Router(router)
-	new(cashier.Page).Router(router)
 	new(cashier.Pay).Router(router)
+	new(cashier.Notify).Router(router)
+	new(cashier.Callback).Router(router)
+	new(cashier.Trade).Router(router)
+	new(cashier.Logistics).Router(router)
 }
 
 func registerMonitor(router *gin.Engine) {
