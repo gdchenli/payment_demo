@@ -25,34 +25,34 @@ const (
 	AlipayTransCurrency = "alipay.trans_currency"
 )
 
-func (alipay *Alipay) OrderSubmit(arg defs.Order) (form string, errCode int, err error) {
+func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AlipayMerchant)
 	if merchant == "" {
 		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
-		return form, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+		return payArg, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 	md5key := config.GetInstance().GetString(AlipayMd5Key)
 	if md5key == "" {
 		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
-		return form, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+		return payArg, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	gateWay := config.GetInstance().GetString(AlipayGateWay)
 	if gateWay == "" {
 		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
-		return form, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+		return payArg, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 
 	notifyUrl := config.GetInstance().GetString(AlipayNotifyUrl)
 	if notifyUrl == "" {
 		logrus.Errorf(code.NotifyUrlNotExistsErrMessage+",errCode:%v,err:%v", code.NotifyUrlNotExistsErrCode)
-		return form, code.NotifyUrlNotExistsErrCode, errors.New(code.NotifyUrlNotExistsErrMessage)
+		return payArg, code.NotifyUrlNotExistsErrCode, errors.New(code.NotifyUrlNotExistsErrMessage)
 	}
 
 	callbackUrl := config.GetInstance().GetString(AlipayReturnUrl)
 	if callbackUrl == "" {
 		logrus.Errorf(code.CallbackUrlNotExistsErrMessage+",errCode:%v,err:%v", code.CallbackUrlNotExistsErrCode)
-		return form, code.CallbackUrlNotExistsErrCode, errors.New(code.CallbackUrlNotExistsErrMessage)
+		return payArg, code.CallbackUrlNotExistsErrCode, errors.New(code.CallbackUrlNotExistsErrMessage)
 	}
 
 	supplier := config.GetInstance().GetString(AlipaySupplier)
@@ -60,7 +60,7 @@ func (alipay *Alipay) OrderSubmit(arg defs.Order) (form string, errCode int, err
 	expireTime := config.GetInstance().GetString(AlipayTimeout)
 	if expireTime == "" {
 		logrus.Errorf(code.ExpireTimeNotExistsErrMessage+",errCode:%v,err:%v", code.ExpireTimeNotExistsErrCode)
-		return form, code.ExpireTimeNotExistsErrCode, errors.New(code.ExpireTimeNotExistsErrMessage)
+		return payArg, code.ExpireTimeNotExistsErrCode, errors.New(code.ExpireTimeNotExistsErrMessage)
 	}
 
 	referUrl := config.GetInstance().GetString(AlipayReferUrl)
@@ -68,7 +68,7 @@ func (alipay *Alipay) OrderSubmit(arg defs.Order) (form string, errCode int, err
 	transCurrency := config.GetInstance().GetString(AlipayTransCurrency)
 	payWay := config.GetInstance().GetString(AlipayPayWay)
 
-	payArg := payment.PayArg{
+	payArg = payment.PayArg{
 		Partner:       merchant,
 		NotifyUrl:     notifyUrl,
 		ReturnUrl:     callbackUrl,
@@ -87,6 +87,23 @@ func (alipay *Alipay) OrderSubmit(arg defs.Order) (form string, errCode int, err
 		PayWay:        payWay,
 	}
 
+	return payArg, 0, nil
+}
+
+func (alipay *Alipay) AmpSubmit(arg defs.Order) (form string, errCode int, err error) {
+	payArg, errCode, err := alipay.getPayArg(arg)
+	if err != nil {
+		return form, errCode, err
+	}
+
+	return new(payment.Payment).CreateAmpPayStr(payArg)
+}
+
+func (alipay *Alipay) OrderSubmit(arg defs.Order) (form string, errCode int, err error) {
+	payArg, errCode, err := alipay.getPayArg(arg)
+	if err != nil {
+		return form, errCode, err
+	}
 	form, errCode, err = new(payment.Payment).CreateForm(payArg)
 	if err != nil {
 		return form, errCode, err

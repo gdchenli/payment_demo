@@ -46,8 +46,8 @@ type TradeInformation struct {
 	TotalQuantity int    `json:"total_quantity"`
 }
 
-func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
-	paramMap := map[string]string{
+func (payment *Payment) getPayment(arg PayArg) (paramMap map[string]string, errCode int, err error) {
+	paramMap = map[string]string{
 		"service":           payment.getServiceType(arg.UserAgentType),
 		"partner":           arg.Partner,
 		"return_url":        arg.ReturnUrl,
@@ -73,6 +73,23 @@ func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err er
 	//签名
 	payString := util.GetPayString(paramMap)
 	paramMap["sign"] = util.Md5(payString + arg.Md5key)
+
+	return paramMap, 0, nil
+}
+
+func (payment *Payment) CreateAmpPayStr(arg PayArg) (payString string, errCode int, err error) {
+	paramMap, errCode, err := payment.getPayment(arg)
+	if err != nil {
+		return payString, errCode, err
+	}
+	return util.GetPayString(paramMap), 0, nil
+}
+
+func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
+	paramMap, errCode, err := payment.getPayment(arg)
+	if err != nil {
+		return form, errCode, err
+	}
 
 	//生成form表单
 	form = payment.buildForm(paramMap, arg.GateWay)

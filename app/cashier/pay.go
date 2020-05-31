@@ -60,7 +60,7 @@ func (pay *Pay) ampSubmit(ctx *gin.Context) {
 	case AllpayOrg:
 		payStr, errCode, err = pay.allpayAmpSubmit(*order)
 	case AlipayOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		payStr, errCode, err = pay.alipayAmpSubmit(*order)
 	case WechatOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	case EpaymentsOrg:
@@ -76,8 +76,13 @@ func (pay *Pay) ampSubmit(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": payStr})
 
 }
+
 func (pay *Pay) allpayAmpSubmit(order defs.Order) (form string, errCode int, err error) {
 	return new(method.Allpay).AmpSubmit(order)
+}
+
+func (pay *Pay) alipayAmpSubmit(order defs.Order) (form string, errCode int, err error) {
+	return new(method.Alipay).AmpSubmit(order)
 }
 
 //发起支付
