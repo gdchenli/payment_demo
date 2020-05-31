@@ -13,39 +13,32 @@ const (
 	newOverseasSeller      = "NEW_OVERSEAS_SELLER"     //海外销售产品代码
 	newWapOverseasSeller   = "NEW_WAP_OVERSEAS_SELLER" //海外移动端销售产品代码
 	businessTypeSalesGoods = 4
-	amp                    = "amp"
 )
 
 type Payment struct{}
 
 type PayArg struct {
-	Service          string  `json:"service"`           //service,PC端:create_forex_trade,手机端:create_forex_trade_wap
-	Partner          string  `json:"partner"`           //PartnerId
-	NotifyUrl        string  `json:"notify_url"`        //支付结果异步通知到该地址
-	ReturnUrl        string  `json:"return_url"`        //支付结果异步通知到该地址
-	Subject          string  `json:"subject"`           //主题
-	Body             string  `json:"body"`              //主体
-	OutTradeNo       string  `json:"out_trade_no"`      //订单号
-	TotalFee         float64 `json:"total_fee"`         //订单金额(CNY)
-	Currency         string  `json:"currency"`          //订单币种
-	Supplier         string  `json:"supplier"`          //供应商
-	TimeoutRule      string  `json:"timeout_rule"`      //超时时间,如:12h,10m
-	ReferUrl         string  `json:"refer_url"`         //商家url(站点url)
-	ProductCode      string  `json:"product_code"`      //NEW_OVERSEAS_SELLER，海外卖家
-	GateWay          string  `json:"gate_way"`          //网关地址
-	SecretKey        string  `json:"secret_key"`        //密钥
-	TradeInformation string  `json:"trade_information"` //交易明细json串
-	Items            []Item  `json:"items"`             //订单明细
-	TransCurrency    string  `json:"trade_information"` //结算币种
-	OrderSource      string  `json:"order_source"`      //订单客户端 PC:web  手机端：web_mobile
-	PayWay           string  `json:"pay_way"`           //版本 1旧版本 2新版本
+	Partner       string  `json:"partner"`           //PartnerId
+	NotifyUrl     string  `json:"notify_url"`        //支付结果异步通知到该地址
+	ReturnUrl     string  `json:"return_url"`        //支付结果异步通知到该地址
+	Body          string  `json:"body"`              //主体
+	OutTradeNo    string  `json:"out_trade_no"`      //订单号
+	TotalFee      float64 `json:"total_fee"`         //订单金额(CNY)
+	Currency      string  `json:"currency"`          //订单币种
+	Supplier      string  `json:"supplier"`          //供应商
+	TimeoutRule   string  `json:"timeout_rule"`      //超时时间,如:12h,10m
+	ReferUrl      string  `json:"refer_url"`         //商家url(站点url)
+	GateWay       string  `json:"gate_way"`          //网关地址
+	Md5key        string  `json:"md5_key"`           //密钥
+	TransCurrency string  `json:"trade_information"` //结算币种
+	UserAgentType string  `json:"user_agent_type"`   //订单客户端 PC:web  手机端：web_mobile
+	PayWay        string  `json:"pay_way"`           //版本 1旧版本 2新版本
+	Items         []Item  `json:"item"`
 }
 
 type Item struct {
-	Id    string  `form:"id" json:"id"`
-	Name  string  `form:"name" json:"name" `
-	Price float64 `form:"price" json:"price"`
-	Qty   int     `form:"qty_ordered" json:"qty_ordered"`
+	Name string `form:"name" json:"name" `
+	Qty  int    `form:"qty_ordered" json:"qty_ordered"`
 }
 type TradeInformation struct {
 	BusinessType  int    `json:"business_type"`
@@ -55,12 +48,12 @@ type TradeInformation struct {
 
 func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
 	paramMap := map[string]string{
-		"service":           payment.getServiceType(arg.OrderSource),
+		"service":           payment.getServiceType(arg.UserAgentType),
 		"partner":           arg.Partner,
 		"return_url":        arg.ReturnUrl,
 		"notify_url":        arg.NotifyUrl,
 		"_input_charset":    CharsetUTF8,
-		"subject":           arg.Subject,
+		"subject":           arg.OutTradeNo,
 		"body":              arg.Body,
 		"out_trade_no":      arg.OutTradeNo,
 		"total_fee":         payment.getTotalFee(arg),
@@ -75,11 +68,11 @@ func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err er
 	}
 	//判断新旧版本
 	if arg.PayWay == newPay {
-		paramMap["product_code"] = payment.getProductCode(arg.OrderSource)
+		paramMap["product_code"] = payment.getProductCode(arg.UserAgentType)
 	}
 	//签名
 	payString := util.GetPayString(paramMap)
-	paramMap["sign"] = util.Md5(payString + arg.SecretKey)
+	paramMap["sign"] = util.Md5(payString + arg.Md5key)
 
 	//生成form表单
 	form = payment.buildForm(paramMap, arg.GateWay)
@@ -103,7 +96,7 @@ func (payment *Payment) getServiceType(orderSource string) (serviceType string) 
 		serviceType = pcServiceType
 	} else if orderSource == MobileWeb {
 		serviceType = wapServiceType
-	} else if orderSource == amp {
+	} else if orderSource == Amp {
 		serviceType = wapServiceType
 	}
 	return serviceType

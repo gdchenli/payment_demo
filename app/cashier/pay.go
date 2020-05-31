@@ -93,7 +93,7 @@ func (pay *Pay) orderSubmit(ctx *gin.Context) {
 		return
 	}
 
-	var payMethod defs.PayMethod
+	var payMethod method.PayMethod
 	switch order.OrgCode {
 	case JdOrg:
 		payMethod = new(method.Jd)
