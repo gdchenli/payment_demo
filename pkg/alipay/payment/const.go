@@ -7,10 +7,13 @@ const (
 	Amp         = "amp"        //小程序
 	KRW         = "KRW"        //韩币种符号
 	JPY         = "JPY"        //日币符号
+	CNY         = "CNY"        //人民币符号
+	SignTypeMD5 = "MD5"        //MD5加密方式
 )
 
 const (
 	TradeSuccess    = "TRADE_SUCCESS" //支付成功
 	TradeFinished   = "TRADE_FINISHED"
 	TradeWaitBuyPay = "WAIT_BUYER_PAY"
+	TradeClosed     = "TRADE_CLOSED"
 )

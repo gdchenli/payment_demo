@@ -80,7 +80,7 @@ func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode 
 		TimeoutRule:   expireTime,
 		ReferUrl:      referUrl,
 		GateWay:       gateWay,
-		Md5key:        md5key,
+		Md5Key:        md5key,
 		Items:         []payment.Item{{Name: "test", Qty: 1}},
 		TransCurrency: transCurrency,
 		UserAgentType: userAgentType,
@@ -177,5 +177,36 @@ func (alipay *Alipay) Callback(query, methodCode string) (callbackRsp defs.Callb
 }
 
 func (alipay *Alipay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode int, err error) {
+	merchant := config.GetInstance().GetString(AlipayMerchant)
+	if merchant == "" {
+		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		return tradeRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+	}
+	md5key := config.GetInstance().GetString(AlipayMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return tradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	gateWay := config.GetInstance().GetString(AlipayGateWay)
+	if gateWay == "" {
+		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+	}
+
+	tradeArg := payment.TradeArg{
+		Merchant:   merchant,
+		OutTradeNo: orderId,
+		Md5Key:     md5key,
+		TradeWay:   gateWay,
+	}
+	alipayTradeRsp, errCode, err := new(payment.Trade).Search(tradeArg)
+	if err != nil {
+		return tradeRsp, 0, nil
+	}
+	tradeRsp.Status = alipayTradeRsp.Status
+	tradeRsp.OrderId = alipayTradeRsp.OrderId
+	tradeRsp.TradeNo = alipayTradeRsp.TradeNo
+
 	return tradeRsp, 0, nil
 }

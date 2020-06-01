@@ -29,7 +29,7 @@ type PayArg struct {
 	TimeoutRule   string  `json:"timeout_rule"`      //超时时间,如:12h,10m
 	ReferUrl      string  `json:"refer_url"`         //商家url(站点url)
 	GateWay       string  `json:"gate_way"`          //网关地址
-	Md5key        string  `json:"md5_key"`           //密钥
+	Md5Key        string  `json:"md5_key"`           //密钥
 	TransCurrency string  `json:"trade_information"` //结算币种
 	UserAgentType string  `json:"user_agent_type"`   //订单客户端 PC:web  手机端：web_mobile
 	PayWay        string  `json:"pay_way"`           //版本 1旧版本 2新版本
@@ -70,9 +70,17 @@ func (payment *Payment) getParamMap(arg PayArg) (paramMap map[string]string, err
 	if arg.PayWay == newPay {
 		paramMap["product_code"] = payment.getProductCode(arg.UserAgentType)
 	}
+
+	//人民币币种替换字段
+	if arg.Currency == CNY {
+		paramMap["rmb_fee"] = paramMap["total_fee"]
+		delete(paramMap, "total_fee")
+	}
+
 	//签名
 	payString := util.GetSortString(paramMap)
-	paramMap["sign"] = util.Md5(payString + arg.Md5key)
+	paramMap["sign"] = util.Md5(payString + arg.Md5Key)
+	paramMap["sign_type"] = SignTypeMD5
 
 	return paramMap, 0, nil
 }

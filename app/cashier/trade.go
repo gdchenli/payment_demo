@@ -40,7 +40,7 @@ func (trade *Trade) search(ctx *gin.Context) {
 	case AllpayOrg:
 		tradeRsp, errCode, err = trade.allpayTrade(*t)
 	case AlipayOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		tradeRsp, errCode, err = trade.alipayTrade(*t)
 	case EpaymentsOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	default:
@@ -61,6 +61,9 @@ func (trade *Trade) jdTrade(t defs.Trade) (tradeRsp defs.TradeRsp, errCode int, 
 
 func (trade *Trade) allpayTrade(t defs.Trade) (tradeRsp defs.TradeRsp, errCode int, err error) {
 	return new(method.Allpay).Trade(t.OrderId, t.MethodCode)
+}
+func (trade *Trade) alipayTrade(t defs.Trade) (tradeRsp defs.TradeRsp, errCode int, err error) {
+	return new(method.Alipay).Trade(t.OrderId, t.MethodCode)
 }
 
 func (trade *Trade) closed(ctx *gin.Context) {
