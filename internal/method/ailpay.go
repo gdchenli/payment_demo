@@ -69,7 +69,7 @@ func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode 
 	payWay := config.GetInstance().GetString(AlipayPayWay)
 
 	payArg = payment.PayArg{
-		Partner:       merchant,
+		Merchant:      merchant,
 		NotifyUrl:     notifyUrl,
 		ReturnUrl:     callbackUrl,
 		Body:          arg.OrderId,
@@ -177,6 +177,13 @@ func (alipay *Alipay) Callback(query, methodCode string) (callbackRsp defs.Callb
 }
 
 func (alipay *Alipay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode int, err error) {
+	var alipayTradeRsp payment.TradeRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
+			alipayTradeRsp.OrderId, code.AlipayOrg, methodCode, alipayTradeRsp.Rsp)
+	}()
+
 	merchant := config.GetInstance().GetString(AlipayMerchant)
 	if merchant == "" {
 		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
@@ -200,7 +207,7 @@ func (alipay *Alipay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp,
 		Md5Key:     md5key,
 		TradeWay:   gateWay,
 	}
-	alipayTradeRsp, errCode, err := new(payment.Trade).Search(tradeArg)
+	alipayTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
 	if err != nil {
 		return tradeRsp, 0, nil
 	}

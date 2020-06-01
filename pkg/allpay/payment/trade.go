@@ -14,9 +14,15 @@ const (
 	SearchTradeTransType = "INQY"
 )
 const (
-	TradeProcess = "2" //交易成功
-	TradeClosed  = "3" //交易关闭
+	SearchTradeWait    = "1" //等待支付
+	SearchTradeProcess = "2" //交易成功
+	SearchTradeClosed  = "3" //交易关闭
+	SearchTradeError   = "4" //交易失败
+	SearchTradeRevoked = "5" //交撤销
+	SearchTradeNotPay  = "6" //未支付
+	SearchTradeRefund  = "7" //转入退款
 )
+
 const (
 	SearchTradeNetErrCode                   = 10504
 	SearchTradeNetErrMessage                = "查询交易流水,网络错误"
@@ -88,9 +94,10 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
 
+	tradeRsp.Status = SearchTradeWait
 	//交易状态
 	if rspMap["RespCode"] == "00" {
-		tradeRsp.Status = TradeProcess
+		tradeRsp.Status = SearchTradeProcess
 		tradeRsp.TradeNo = rspMap["transID"]
 	}
 

@@ -33,7 +33,7 @@ func (callback *Callback) callback(ctx *gin.Context) {
 	case AlipayOrg:
 		callBackRsp, errCode, err = callback.alipayCallback(ctx)
 	case EpaymentsOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		callBackRsp, errCode, err = callback.epaymentsCallback(ctx)
 	default:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	}
@@ -71,4 +71,14 @@ func (callback *Callback) alipayCallback(ctx *gin.Context) (callBackRsp defs.Cal
 	}
 
 	return new(method.Alipay).Callback(query, ctx.Param("method"))
+}
+
+func (callback *Callback) epaymentsCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errCode int, err error) {
+	ctx.Request.ParseForm()
+	query := ctx.Request.PostForm.Encode()
+	if query == "" {
+		query = ctx.Request.URL.Query().Encode()
+	}
+
+	return new(method.Epayments).Callback(query, ctx.Param("method"))
 }

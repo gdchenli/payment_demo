@@ -3,8 +3,9 @@ package code
 //支付方式code
 const (
 	JdMethod       = "jd_payment"
-	AliapayMethod  = "alipay_payment"    //支付宝
+	AlipayMethod   = "alipay_payment"    //支付宝
 	UnionpayMethod = "vtpayment_payment" //银联
+	WechatMethod   = "wechat"            //微信支付
 	JdOrg          = "jd"
 	AllpayOrg      = "allpay"
 	AlipayOrg      = "alipay"

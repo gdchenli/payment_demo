@@ -19,18 +19,9 @@ var requestTimeout = 15 * time.Second
 
 // GetJSON executes HTTP GET against specified url and tried to parse
 // the response into out object.
-func GetJSON(c *nova.Context, operation, url string, out interface{}) error {
-	span, _ := opentracing.StartSpanFromContext(c.Context(), "HTTP GET: "+operation)
-	defer span.Finish()
-
+func GetJSON(url string, out interface{}) error {
 	client := &http.Client{Timeout: requestTimeout}
 	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-
-	carrier := opentracing.HTTPHeadersCarrier(req.Header)
-	err = span.Tracer().Inject(span.Context(), opentracing.HTTPHeaders, carrier)
 	if err != nil {
 		return err
 	}

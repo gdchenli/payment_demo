@@ -19,11 +19,13 @@ const (
 )
 
 const (
-	TradeCreate  = "0" //交易创建
-	TradePending = "1" //交易处理中
-	TradeProcess = "2" //交易成功
-	TradeClosed  = "3" //交易关闭
-	TradeFailed  = "4" //交易失败
+	SearchTradeWait    = "1" //等待支付
+	SearchTradeProcess = "2" //交易成功
+	SearchTradeClosed  = "3" //交易关闭
+	SearchTradeError   = "4" //交易失败
+	SearchTradeRevoked = "5" //交撤销
+	SearchTradeNotPay  = "6" //未支付
+	SearchTradeRefund  = "7" //转入退款
 )
 
 const (
@@ -233,8 +235,19 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 		logrus.Errorf(SearchTradeResponseDataSignErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataSignErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
+	switch searchDecryptRsp.Status {
+	case TradeCreate:
+		tradeRsp.Status = SearchTradeWait
+	case TradePending:
+		tradeRsp.Status = SearchTradeWait
+	case TradeProcess:
+		tradeRsp.Status = SearchTradeProcess
+	case TradeClosed:
+		tradeRsp.Status = SearchTradeClosed
+	case TradeFailed:
+		tradeRsp.Status = SearchTradeError
+	}
 
-	tradeRsp.Status = searchDecryptRsp.Status
 	tradeRsp.TradeNo = searchDecryptRsp.TradeNum //该接口不会返回交易流水号，使用请求交易时的订单号
 
 	return tradeRsp, 0, err

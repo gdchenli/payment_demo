@@ -1,21 +1,202 @@
 package method
 
-import "payment_demo/internal/common/defs"
+import (
+	"errors"
+	"payment_demo/internal/common/code"
+	"payment_demo/internal/common/config"
+	"payment_demo/internal/common/defs"
+	"payment_demo/pkg/epayments/payment"
+
+	"github.com/sirupsen/logrus"
+)
+
+const (
+	EpaymentsTimeout       = "epayments.timeout"
+	EpaymentsMerchant      = "epayments.merchant"
+	EpaymentsMd5Key        = "epayments.md5_key"
+	EpaymentsGateWay       = "epayments.gate_way"
+	EpaymentsNotifyUrl     = "epayments.notify_url"
+	EpaymentsReturnUrl     = "epayments.return_url"
+	EpaymentsSupplier      = "epayments.supplier"
+	EpaymentsReferUrl      = "epayments.refer_url"
+	EpaymentsPayWay        = "Epayments.pay_way"
+	EpaymentsTransCurrency = "epayments.trans_currency"
+)
 
 type Epayments struct{}
 
-func (e *Epayments) OrderSubmit(order defs.Order) (string, int, error) {
-	panic("implement me")
+func (e *Epayments) getPayArg(order defs.Order) (payArg payment.PayArg, errCode int, err error) {
+	merchant := config.GetInstance().GetString(EpaymentsMerchant)
+	if merchant == "" {
+		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		return payArg, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+	}
+
+	md5key := config.GetInstance().GetString(EpaymentsMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return payArg, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	gateWay := config.GetInstance().GetString(EpaymentsGateWay)
+	if gateWay == "" {
+		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		return payArg, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+	}
+
+	notifyUrl := config.GetInstance().GetString(EpaymentsNotifyUrl)
+	if notifyUrl == "" {
+		logrus.Errorf(code.NotifyUrlNotExistsErrMessage+",errCode:%v,err:%v", code.NotifyUrlNotExistsErrCode)
+		return payArg, code.NotifyUrlNotExistsErrCode, errors.New(code.NotifyUrlNotExistsErrMessage)
+	}
+
+	callbackUrl := config.GetInstance().GetString(EpaymentsReturnUrl)
+	if callbackUrl == "" {
+		logrus.Errorf(code.CallbackUrlNotExistsErrMessage+",errCode:%v,err:%v", code.CallbackUrlNotExistsErrCode)
+		return payArg, code.CallbackUrlNotExistsErrCode, errors.New(code.CallbackUrlNotExistsErrMessage)
+	}
+
+	expireTime := config.GetInstance().GetString(AlipayTimeout)
+	if expireTime == "" {
+		logrus.Errorf(code.ExpireTimeNotExistsErrMessage+",errCode:%v,err:%v", code.ExpireTimeNotExistsErrCode)
+		return payArg, code.ExpireTimeNotExistsErrCode, errors.New(code.ExpireTimeNotExistsErrMessage)
+	}
+
+	transCurrency := config.GetInstance().GetString(AlipayTransCurrency)
+	paymentChannels := e.getPaymentChannels(order.MethodCode)
+
+	payArg = payment.PayArg{
+		MerchantId:      merchant,
+		NotifyUrl:       notifyUrl,
+		ReturnUrl:       callbackUrl,
+		ValidMins:       expireTime,
+		IncrementId:     order.OrderId,
+		GrandTotal:      order.TotalFee,
+		Currency:        order.Currency,
+		GateWay:         gateWay,
+		SecretKey:       md5key,
+		TransCurrency:   transCurrency,
+		PaymentChannels: paymentChannels,
+	}
+
+	return payArg, 0, nil
 }
 
-func (e *Epayments) Notify(query, methodCode string) (defs.NotifyRsp, int, error) {
-	panic("implement me")
+func (e *Epayments) OrderSubmit(order defs.Order) (form string, errCode int, err error) {
+	payArg, errCode, err := e.getPayArg(order)
+	if err != nil {
+		return form, errCode, err
+	}
+	return new(payment.Payment).CreateForm(payArg)
 }
 
-func (e *Epayments) Callback(query, methodCode string) (defs.CallbackRsp, int, error) {
-	panic("implement me")
+func (e *Epayments) OrderQrCode(order defs.Order) (form string, errCode int, err error) {
+	payArg, errCode, err := e.getPayArg(order)
+	if err != nil {
+		return form, errCode, err
+	}
+	return new(payment.Payment).CreateQrCode(payArg)
 }
 
-func (e *Epayments) Trade(orderId, methodCode string) (defs.TradeRsp, int, error) {
-	panic("implement me")
+//获取支付通道
+func (e *Epayments) getPaymentChannels(methodCode string) (paymentChannels string) {
+	if methodCode == code.WechatMethod {
+		paymentChannels = payment.ChannelWechat
+	} else if methodCode == code.AlipayMethod {
+		paymentChannels = payment.ChannelAlipay
+	}
+	return paymentChannels
+}
+
+func (e *Epayments) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+	var epaymentsNotifyRsp payment.NotifyRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,notify data:%+v",
+			epaymentsNotifyRsp.OrderId, code.AlipayOrg, methodCode, epaymentsNotifyRsp.Rsp)
+	}()
+
+	md5key := config.GetInstance().GetString(AlipayMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return notifyRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	epaymentsNotifyRsp, errCode, err = new(payment.Notify).Validate(query, md5key)
+	if err != nil {
+		return notifyRsp, errCode, err
+	}
+	notifyRsp.TradeNo = epaymentsNotifyRsp.TradeNo
+	notifyRsp.Status = epaymentsNotifyRsp.Status
+	notifyRsp.OrderId = epaymentsNotifyRsp.OrderId
+	notifyRsp.Message = "success"
+
+	return notifyRsp, 0, nil
+}
+
+func (e *Epayments) Callback(query, methodCode string) (callbackRsp defs.CallbackRsp, errCode int, err error) {
+	var epaymentsCallbackRsp payment.CallbackRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
+			epaymentsCallbackRsp.OrderId, code.AlipayOrg, methodCode, epaymentsCallbackRsp.Rsp)
+	}()
+
+	md5key := config.GetInstance().GetString(AlipayMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return callbackRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	epaymentsCallbackRsp, errCode, err = new(payment.Callback).Validate(query, md5key)
+	if err != nil {
+		return callbackRsp, errCode, err
+	}
+
+	callbackRsp.Status = epaymentsCallbackRsp.Status
+	callbackRsp.OrderId = epaymentsCallbackRsp.OrderId
+
+	return callbackRsp, 0, nil
+}
+
+func (e *Epayments) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode int, err error) {
+	var epaymentsTradeRsp payment.TradeRsp
+	defer func() {
+		//记录日志
+		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
+			epaymentsTradeRsp.OrderId, code.AlipayOrg, methodCode, epaymentsTradeRsp.Rsp)
+	}()
+
+	merchant := config.GetInstance().GetString(AlipayMerchant)
+	if merchant == "" {
+		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		return tradeRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+	}
+	md5key := config.GetInstance().GetString(AlipayMd5Key)
+	if md5key == "" {
+		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		return tradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+	}
+
+	gateWay := config.GetInstance().GetString(AlipayGateWay)
+	if gateWay == "" {
+		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+	}
+
+	tradeArg := payment.TradeArg{
+		Merchant:    merchant,
+		IncrementId: orderId,
+		Md5Key:      md5key,
+		TradeWay:    gateWay,
+	}
+	epaymentsTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
+	if err != nil {
+		return tradeRsp, 0, nil
+	}
+	tradeRsp.Status = epaymentsTradeRsp.Status
+	tradeRsp.OrderId = epaymentsTradeRsp.OrderId
+	tradeRsp.TradeNo = epaymentsTradeRsp.TradeNo
+
+	return tradeRsp, 0, nil
 }

@@ -17,6 +17,10 @@ const (
 	SearchTradeWait    = "1" //等待交易
 	SearchTradeProcess = "2" //交易成功
 	SearchTradeClosed  = "3" //交易关闭
+	SearchTradeError   = "4" //交易失败
+	SearchTradeRevoked = "5" //交撤销
+	SearchTradeNotPay  = "6" //未支付
+	SearchTradeRefund  = "7" //转入退款
 )
 
 const (

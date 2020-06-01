@@ -36,7 +36,7 @@ func (notify *Notify) notify(ctx *gin.Context) {
 	case AlipayOrg:
 		notifyRsp, errCode, err = notify.alipayNotify(ctx)
 	case EpaymentsOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		notifyRsp, errCode, err = notify.epaymentsNotify(ctx)
 	default:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	}
@@ -86,4 +86,11 @@ func (notify *Notify) alipayNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, 
 	query := ctx.Request.PostForm.Encode()
 
 	return new(method.Alipay).Notify(query, ctx.Param("method"))
+}
+
+func (notify *Notify) epaymentsNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+	ctx.Request.ParseForm()
+	query := ctx.Request.PostForm.Encode()
+
+	return new(method.Epayments).Notify(query, ctx.Param("method"))
 }

@@ -141,7 +141,7 @@ func (allpay *Allpay) AmpSubmit(arg defs.Order) (payStr string, errCode int, err
 
 func (allpay *Allpay) getPaymentSchema(methodCode string) (string, int, error) {
 	switch methodCode {
-	case code.AliapayMethod:
+	case code.AlipayMethod:
 		return AlipayPaymentSchema, 0, nil
 	case code.UnionpayMethod:
 		return UpPaymentSchema, 0, nil
@@ -150,7 +150,7 @@ func (allpay *Allpay) getPaymentSchema(methodCode string) (string, int, error) {
 }
 
 func (allpay *Allpay) getTradeFrom(methodCode string, userAgentType int) string {
-	if methodCode == code.AliapayMethod {
+	if methodCode == code.AlipayMethod {
 		switch userAgentType {
 		case code.WebUserAgentType:
 			return AlipayWebTradeFrom

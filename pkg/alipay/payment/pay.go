@@ -18,7 +18,7 @@ const (
 type Payment struct{}
 
 type PayArg struct {
-	Partner       string  `json:"partner"`           //PartnerId
+	Merchant      string  `json:"merchant"`          //PartnerId
 	NotifyUrl     string  `json:"notify_url"`        //支付结果异步通知到该地址
 	ReturnUrl     string  `json:"return_url"`        //支付结果异步通知到该地址
 	Body          string  `json:"body"`              //主体
@@ -49,7 +49,7 @@ type TradeInformation struct {
 func (payment *Payment) getParamMap(arg PayArg) (paramMap map[string]string, errCode int, err error) {
 	paramMap = map[string]string{
 		"service":           payment.getServiceType(arg.UserAgentType),
-		"partner":           arg.Partner,
+		"partner":           arg.Merchant,
 		"return_url":        arg.ReturnUrl,
 		"notify_url":        arg.NotifyUrl,
 		"_input_charset":    CharsetUTF8,

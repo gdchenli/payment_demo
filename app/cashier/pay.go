@@ -20,8 +20,9 @@ const (
 )
 
 const (
-	NotSupportPaymentOrgMsg = "不支持该支付机构"
-	NotifyFailMsg           = "fail"
+	NotSupportPaymentOrgCode = "10101"
+	NotSupportPaymentOrgMsg  = "不支持该支付机构"
+	NotifyFailMsg            = "fail"
 )
 
 type Pay struct{}
@@ -102,7 +103,7 @@ func (pay *Pay) orderSubmit(ctx *gin.Context) {
 	case EpaymentsOrg:
 		payMethod = new(method.Epayments)
 	default:
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(err.Error()))
+		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
 		return
 	}
 

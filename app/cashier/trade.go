@@ -3,7 +3,6 @@ package cashier
 import (
 	"errors"
 	"net/http"
-	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/defs"
 	"payment_demo/internal/method"
 
@@ -33,37 +32,29 @@ func (trade *Trade) search(ctx *gin.Context) {
 		return
 	}
 
+	var payMethod method.PayMethod
 	org := ctx.Query("org_code")
 	switch org {
 	case JdOrg:
-		tradeRsp, errCode, err = trade.jdTrade(*t)
+		payMethod = new(method.Jd)
 	case AllpayOrg:
-		tradeRsp, errCode, err = trade.allpayTrade(*t)
+		payMethod = new(method.Allpay)
 	case AlipayOrg:
-		tradeRsp, errCode, err = trade.alipayTrade(*t)
+		payMethod = new(method.Alipay)
 	case EpaymentsOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		payMethod = new(method.Epayments)
 	default:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		ctx.JSON(http.StatusOK, gin.H{"message": NotSupportPaymentOrgMsg, "code": NotSupportPaymentOrgCode})
+		return
 	}
 
+	tradeRsp, errCode, err = payMethod.Trade(t.OrderId, t.MethodCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, tradeRsp)
-}
-
-func (trade *Trade) jdTrade(t defs.Trade) (tradeRsp defs.TradeRsp, errCode int, err error) {
-	return new(method.Jd).Trade(t.OrderId, code.JdMethod)
-}
-
-func (trade *Trade) allpayTrade(t defs.Trade) (tradeRsp defs.TradeRsp, errCode int, err error) {
-	return new(method.Allpay).Trade(t.OrderId, t.MethodCode)
-}
-func (trade *Trade) alipayTrade(t defs.Trade) (tradeRsp defs.TradeRsp, errCode int, err error) {
-	return new(method.Alipay).Trade(t.OrderId, t.MethodCode)
 }
 
 func (trade *Trade) closed(ctx *gin.Context) {
@@ -83,16 +74,11 @@ func (trade *Trade) closed(ctx *gin.Context) {
 	switch org {
 	case JdOrg:
 		closedRsp, errCode, err = trade.jdClosed(*closed)
-	case AllpayOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
-	case AlipayOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
-	case WechatOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
 	case EpaymentsOrg:
 		err = errors.New(NotSupportPaymentOrgMsg)
 	default:
-		err = errors.New(NotSupportPaymentOrgMsg)
+		ctx.JSON(http.StatusOK, gin.H{"message": NotSupportPaymentOrgMsg, "code": NotSupportPaymentOrgCode})
+		return
 	}
 
 	if err != nil {
