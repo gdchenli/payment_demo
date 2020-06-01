@@ -35,6 +35,10 @@ const (
 
 type Allpay struct{}
 
+func (allpay *Allpay) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, err error) {
+	return closedRsp, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+}
+
 func (allpay *Allpay) OrderQrCode(arg defs.Order) (form string, errCode int, err error) {
 	return form, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
 }

@@ -299,14 +299,8 @@ func (jd *Jd) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode
 	return tradeRsp, 0, nil
 }
 
-type JdClosedArg struct {
-	OrderId  string
-	Currency string
-	TotalFee float64
-}
-
 //关闭交易
-func (jd *Jd) Closed(arg JdClosedArg) (closedRsp defs.ClosedRsp, errCode int, err error) {
+func (jd *Jd) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, err error) {
 	var jdClosedRsp payment.ClosedRsp
 	defer func() {
 		//记录日志

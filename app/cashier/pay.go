@@ -1,12 +1,12 @@
 package cashier
 
 import (
-	"azoya/nova/binding"
 	"fmt"
 	"net/http"
 	"payment_demo/internal/common/defs"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 const (

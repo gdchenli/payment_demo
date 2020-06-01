@@ -201,3 +201,7 @@ func (e *Epayments) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, e
 
 	return tradeRsp, 0, nil
 }
+
+func (e *Epayments) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, err error) {
+	return closedRsp, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+}

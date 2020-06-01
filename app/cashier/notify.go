@@ -1,7 +1,6 @@
 package cashier
 
 import (
-	"azoya/nova/binding"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +10,7 @@ import (
 	"payment_demo/internal/method"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type Notify struct{}
