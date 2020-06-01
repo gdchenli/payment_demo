@@ -89,3 +89,19 @@ refer_url="https://cn.pharmacyonline.com.au"
 gate_way="https://mapi.alipay.com/gateway.do"
 # 支付类型 1旧接口 2新接口
 pay_way="2"
+
+[epayments]
+# epayments商户Id
+merchant=""
+# epayments结算币种
+trans_currency="AUD"
+# epayments商户md5 key
+md5_key= ""
+# 订单交易过期时间，单位为分钟
+timeout="300"
+# 异步通知地址
+notify_url="http://localhost:8090/payment/notify/alipay/alipay_payment"
+# 同步通知地址
+return_url="http://localhost:8090/payment/verify/alipay/alipay_payment"
+# 发起支付网关地址
+gate_way="https://www.kiwifast.com/api/v1/info/smartpay"

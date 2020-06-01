@@ -2,11 +2,9 @@ package cashier
 
 import (
 	"azoya/nova/binding"
-	"errors"
 	"fmt"
 	"net/http"
 	"payment_demo/internal/common/defs"
-	"payment_demo/internal/method"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,7 +30,36 @@ func (pay *Pay) Router(router *gin.Engine) {
 	{
 		r.POST("/order/submit", pay.orderSubmit) //发起支付
 		r.POST("/amp/submit", pay.ampSubmit)     //支付宝小程序，支付参数
+		r.POST("/order/qrcode", pay.qrCode)      //二维码
 	}
+}
+
+func (pay *Pay) qrCode(ctx *gin.Context) {
+	var errCode int
+	var err error
+	var payStr string
+	order := new(defs.Order)
+	ctx.ShouldBind(order)
+	order.UserAgentType = 7
+
+	if errCode, err = order.Validate(); err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		return
+	}
+
+	payMethod := getPayMethod(order.OrgCode)
+	if payMethod == nil {
+		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
+		return
+	}
+
+	payStr, errCode, err = payMethod.AmpSubmit(*order)
+	if errCode, err = order.Validate(); err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": payStr})
 }
 
 //发起支付
@@ -48,35 +75,20 @@ func (pay *Pay) ampSubmit(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
-	switch order.OrgCode {
-	case JdOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
-	case AllpayOrg:
-		payStr, errCode, err = pay.allpayAmpSubmit(*order)
-	case AlipayOrg:
-		payStr, errCode, err = pay.alipayAmpSubmit(*order)
-	case WechatOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
-	case EpaymentsOrg:
-		err = errors.New(NotSupportPaymentOrgMsg)
-	default:
-		err = errors.New(NotSupportPaymentOrgMsg)
+
+	payMethod := getPayMethod(order.OrgCode)
+	if payMethod == nil {
+		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
+		return
 	}
 
+	payStr, errCode, err = payMethod.OrderQrCode(*order)
 	if errCode, err = order.Validate(); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": payStr})
-
-}
-
-func (pay *Pay) allpayAmpSubmit(order defs.Order) (form string, errCode int, err error) {
-	return new(method.Allpay).AmpSubmit(order)
-}
-
-func (pay *Pay) alipayAmpSubmit(order defs.Order) (form string, errCode int, err error) {
-	return new(method.Alipay).AmpSubmit(order)
 }
 
 //发起支付
@@ -92,17 +104,8 @@ func (pay *Pay) orderSubmit(ctx *gin.Context) {
 		return
 	}
 
-	var payMethod method.PayMethod
-	switch order.OrgCode {
-	case JdOrg:
-		payMethod = new(method.Jd)
-	case AllpayOrg:
-		payMethod = new(method.Allpay)
-	case AlipayOrg:
-		payMethod = new(method.Alipay)
-	case EpaymentsOrg:
-		payMethod = new(method.Epayments)
-	default:
+	payMethod := getPayMethod(order.OrgCode)
+	if payMethod == nil {
 		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
 		return
 	}

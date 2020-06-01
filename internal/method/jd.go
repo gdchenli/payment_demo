@@ -35,6 +35,14 @@ const (
 
 type Jd struct{}
 
+func (jd *Jd) OrderQrCode(arg defs.Order) (form string, errCode int, err error) {
+	return form, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+}
+
+func (jd *Jd) AmpSubmit(arg defs.Order) (form string, errCode int, err error) {
+	return form, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+}
+
 //发起支付
 func (jd *Jd) OrderSubmit(arg defs.Order) (form string, errCode int, err error) {
 	//金额转为分

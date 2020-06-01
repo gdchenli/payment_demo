@@ -35,6 +35,10 @@ const (
 
 type Allpay struct{}
 
+func (allpay *Allpay) OrderQrCode(arg defs.Order) (form string, errCode int, err error) {
+	return form, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+}
+
 func (allpay *Allpay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AllpayMerchant)
 	if merchant == "" {

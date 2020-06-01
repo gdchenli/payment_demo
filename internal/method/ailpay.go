@@ -25,6 +25,10 @@ const (
 	AlipayTransCurrency = "alipay.trans_currency"
 )
 
+func (alipay *Alipay) OrderQrCode(arg defs.Order) (form string, errCode int, err error) {
+	return form, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+}
+
 func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AlipayMerchant)
 	if merchant == "" {

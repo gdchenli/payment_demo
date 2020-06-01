@@ -9,6 +9,7 @@ const (
 	JdOrg          = "jd"
 	AllpayOrg      = "allpay"
 	AlipayOrg      = "alipay"
+	EpaymentsOrg   = "epayments"
 )
 
 //支付环境

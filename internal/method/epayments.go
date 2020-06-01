@@ -17,13 +17,14 @@ const (
 	EpaymentsGateWay       = "epayments.gate_way"
 	EpaymentsNotifyUrl     = "epayments.notify_url"
 	EpaymentsReturnUrl     = "epayments.return_url"
-	EpaymentsSupplier      = "epayments.supplier"
-	EpaymentsReferUrl      = "epayments.refer_url"
-	EpaymentsPayWay        = "Epayments.pay_way"
 	EpaymentsTransCurrency = "epayments.trans_currency"
 )
 
 type Epayments struct{}
+
+func (e *Epayments) AmpSubmit(arg defs.Order) (form string, errCode int, err error) {
+	return form, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+}
 
 func (e *Epayments) getPayArg(order defs.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(EpaymentsMerchant)
@@ -56,13 +57,13 @@ func (e *Epayments) getPayArg(order defs.Order) (payArg payment.PayArg, errCode 
 		return payArg, code.CallbackUrlNotExistsErrCode, errors.New(code.CallbackUrlNotExistsErrMessage)
 	}
 
-	expireTime := config.GetInstance().GetString(AlipayTimeout)
+	expireTime := config.GetInstance().GetString(EpaymentsTimeout)
 	if expireTime == "" {
 		logrus.Errorf(code.ExpireTimeNotExistsErrMessage+",errCode:%v,err:%v", code.ExpireTimeNotExistsErrCode)
 		return payArg, code.ExpireTimeNotExistsErrCode, errors.New(code.ExpireTimeNotExistsErrMessage)
 	}
 
-	transCurrency := config.GetInstance().GetString(AlipayTransCurrency)
+	transCurrency := config.GetInstance().GetString(EpaymentsTransCurrency)
 	paymentChannels := e.getPaymentChannels(order.MethodCode)
 
 	payArg = payment.PayArg{
@@ -113,7 +114,7 @@ func (e *Epayments) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, 
 	defer func() {
 		//记录日志
 		logrus.Info("order id:%v,org:%v,method:%v,notify data:%+v",
-			epaymentsNotifyRsp.OrderId, code.AlipayOrg, methodCode, epaymentsNotifyRsp.Rsp)
+			epaymentsNotifyRsp.OrderId, code.EpaymentsOrg, methodCode, epaymentsNotifyRsp.Rsp)
 	}()
 
 	md5key := config.GetInstance().GetString(AlipayMd5Key)
@@ -139,10 +140,10 @@ func (e *Epayments) Callback(query, methodCode string) (callbackRsp defs.Callbac
 	defer func() {
 		//记录日志
 		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
-			epaymentsCallbackRsp.OrderId, code.AlipayOrg, methodCode, epaymentsCallbackRsp.Rsp)
+			epaymentsCallbackRsp.OrderId, code.EpaymentsOrg, methodCode, epaymentsCallbackRsp.Rsp)
 	}()
 
-	md5key := config.GetInstance().GetString(AlipayMd5Key)
+	md5key := config.GetInstance().GetString(EpaymentsMd5Key)
 	if md5key == "" {
 		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return callbackRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
@@ -164,21 +165,21 @@ func (e *Epayments) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, e
 	defer func() {
 		//记录日志
 		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
-			epaymentsTradeRsp.OrderId, code.AlipayOrg, methodCode, epaymentsTradeRsp.Rsp)
+			epaymentsTradeRsp.OrderId, code.EpaymentsOrg, methodCode, epaymentsTradeRsp.Rsp)
 	}()
 
-	merchant := config.GetInstance().GetString(AlipayMerchant)
+	merchant := config.GetInstance().GetString(EpaymentsMerchant)
 	if merchant == "" {
 		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
 		return tradeRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
-	md5key := config.GetInstance().GetString(AlipayMd5Key)
+	md5key := config.GetInstance().GetString(EpaymentsMd5Key)
 	if md5key == "" {
 		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return tradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
-	gateWay := config.GetInstance().GetString(AlipayGateWay)
+	gateWay := config.GetInstance().GetString(EpaymentsGateWay)
 	if gateWay == "" {
 		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
 		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
