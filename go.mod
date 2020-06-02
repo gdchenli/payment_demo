@@ -15,5 +15,6 @@ require (
 	github.com/prometheus/client_golang v1.6.0
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sirupsen/logrus v1.6.0
+	github.com/skip2/go-qrcode v0.0.0-20200526175731-7ac0b40b2038
 	github.com/spf13/viper v1.7.0
 )

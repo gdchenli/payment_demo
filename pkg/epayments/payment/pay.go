@@ -7,6 +7,8 @@ import (
 	"payment_demo/pkg/epayments/util"
 	"payment_demo/tools/curl"
 	"strconv"
+
+	"github.com/skip2/go-qrcode"
 )
 
 const (
@@ -149,6 +151,13 @@ func (payment *Payment) CreateQrCode(arg PayArg) (qrCodeUrl string, errCode int,
 	if qrCodeResult.Code != SuccessCode {
 		return qrCodeUrl, PayNetErrCode, errors.New(PayNetErrMessage)
 	}
-
-	return qrCodeResult.CodeUrl, 0, nil
+	if qrCodeResult.CodeUrl == "" {
+		return qrCodeUrl, PayNetErrCode, errors.New(PayNetErrMessage)
+	}
+	qrCodeBytes, err := qrcode.Encode(qrCodeResult.CodeUrl, qrcode.Medium, 256)
+	if qrCodeResult.CodeUrl == "" {
+		return qrCodeUrl, PayNetErrCode, errors.New(PayNetErrMessage)
+	}
+	imgStr := "data:image/png;base64," + util.BASE64EncodeStr(qrCodeBytes)
+	return imgStr, 0, nil
 }
