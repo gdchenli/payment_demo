@@ -27,9 +27,10 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 
 	//校验签名
 	var sign string
-	if value, ok := queryMap["sign"]; ok {
+	if value, ok := queryMap["signature"]; ok {
 		sign = value
-		delete(queryMap, "sign")
+		delete(queryMap, "signature")
+		delete(queryMap, "sign_type")
 	}
 
 	if !callback.checkSign(queryMap, md5Key, sign) {

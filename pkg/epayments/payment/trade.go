@@ -75,8 +75,9 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	tradeRsp.OrderId = arg.IncrementId
 
 	//校验签名
-	sign := rspMap["sign"]
-	delete(rspMap, "sign")
+	sign := rspMap["signature"]
+	delete(rspMap, "signature")
+	delete(rspMap, "sign_type")
 	if !trade.checkSign(rspMap, arg.Md5Key, sign) {
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}

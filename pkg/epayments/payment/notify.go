@@ -35,9 +35,10 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 
 	//校验签名
 	var sign string
-	if value, ok := queryMap["sign"]; ok {
+	if value, ok := queryMap["signature"]; ok {
 		sign = value
-		delete(queryMap, "sign")
+		delete(queryMap, "signature")
+		delete(queryMap, "sign_type")
 	}
 
 	if !notify.checkSign(queryMap, md5Key, sign) {
