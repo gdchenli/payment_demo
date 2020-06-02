@@ -30,6 +30,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	if value, ok := queryMap["sign"]; ok {
 		sign = value
 		delete(queryMap, "sign")
+		delete(queryMap, "sign_type")
 	}
 
 	if !callback.checkSign(queryMap, md5Key, sign) {
