@@ -3,7 +3,6 @@ package payment
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/url"
 	"payment_demo/pkg/epayments/util"
 	"payment_demo/tools/curl"
@@ -138,11 +137,10 @@ func (payment *Payment) CreateQrCode(arg PayArg) (qrCodeUrl string, errCode int,
 		values.Add(k, v)
 	}
 	returnBytes, err := curl.GetJSONReturnByte(arg.GateWay + "?" + values.Encode())
-	fmt.Println(arg.GateWay + "?" + values.Encode())
 	if err != nil {
 		return qrCodeUrl, PayNetErrCode, errors.New(PayNetErrMessage)
 	}
-	fmt.Printf("%+v\n", string(returnBytes))
+
 	var qrCodeResult QrCodeResult
 	if err = json.Unmarshal(returnBytes, &qrCodeResult); err != nil {
 		return qrCodeUrl, PayNetErrCode, errors.New(PayNetErrMessage)
