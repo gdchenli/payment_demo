@@ -1,7 +1,6 @@
 package curl
 
 import (
-	"azoya/nova"
 	"compress/gzip"
 	"encoding/json"
 	"encoding/xml"
@@ -11,8 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
-
-	"github.com/opentracing/opentracing-go"
 )
 
 var requestTimeout = 15 * time.Second
@@ -54,18 +51,10 @@ func GetJSON(url string, out interface{}) error {
 
 // GetJSON executes HTTP GET against specified url and tried to parse
 // the response into out object.
-func GetJSONWithHeader(c *nova.Context, params map[string]string, operation, url string, out interface{}) error {
-	span, _ := opentracing.StartSpanFromContext(c.Context(), "HTTP GET: "+operation)
-	defer span.Finish()
+func GetJSONWithHeader(params map[string]string, operation, url string, out interface{}) error {
 
 	client := &http.Client{Timeout: requestTimeout}
 	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-
-	carrier := opentracing.HTTPHeadersCarrier(req.Header)
-	err = span.Tracer().Inject(span.Context(), opentracing.HTTPHeaders, carrier)
 	if err != nil {
 		return err
 	}
