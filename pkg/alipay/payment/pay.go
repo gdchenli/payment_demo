@@ -90,6 +90,7 @@ func (payment *Payment) CreateAmpPayStr(arg PayArg) (payString string, errCode i
 	if err != nil {
 		return payString, errCode, err
 	}
+
 	return util.GetSortString(paramMap), 0, nil
 }
 

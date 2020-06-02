@@ -75,7 +75,7 @@ func (e *Epayments) getPayArg(order defs.Order) (payArg payment.PayArg, errCode 
 		GrandTotal:      order.TotalFee,
 		Currency:        order.Currency,
 		GateWay:         gateWay,
-		SecretKey:       md5key,
+		Md5Key:          md5key,
 		TransCurrency:   transCurrency,
 		PaymentChannels: paymentChannels,
 	}
@@ -96,6 +96,7 @@ func (e *Epayments) OrderQrCode(order defs.Order) (form string, errCode int, err
 	if err != nil {
 		return form, errCode, err
 	}
+
 	return new(payment.Payment).CreateQrCode(payArg)
 }
 

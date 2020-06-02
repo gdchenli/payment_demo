@@ -88,6 +88,7 @@ type TradeRsp struct {
 }
 
 func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err error) {
+	tradeRsp.OrderId = arg.OutTradeNo
 	paramMap := map[string]string{
 		"service":        SearchServiceType, //交易查询服务
 		"partner":        arg.Merchant,      //商户ID

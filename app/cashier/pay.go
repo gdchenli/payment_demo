@@ -52,8 +52,8 @@ func (pay *Pay) qrCode(ctx *gin.Context) {
 		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
 		return
 	}
+	payStr, errCode, err = payMethod.OrderQrCode(*order)
 
-	payStr, errCode, err = payMethod.AmpSubmit(*order)
 	if errCode, err = order.Validate(); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -82,7 +82,7 @@ func (pay *Pay) ampSubmit(ctx *gin.Context) {
 		return
 	}
 
-	payStr, errCode, err = payMethod.OrderQrCode(*order)
+	payStr, errCode, err = payMethod.AmpSubmit(*order)
 	if errCode, err = order.Validate(); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return

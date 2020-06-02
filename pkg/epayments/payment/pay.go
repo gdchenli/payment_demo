@@ -3,6 +3,7 @@ package payment
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"payment_demo/pkg/epayments/util"
 	"payment_demo/tools/curl"
@@ -37,7 +38,7 @@ type PayArg struct {
 	GrandTotal      float64 `json:"grandtotal"`     //订单金额
 	Currency        string  `json:"currency"`       //订单币种
 	GateWay         string  `json:"gate_way"`       //网关地址
-	SecretKey       string  `json:"secret_key"`     //密钥
+	Md5Key          string  `json:"md5_key"`        //密钥
 	TransCurrency   string  `json:"trans_currency"` //结算币种
 	PaymentChannels string  `json:"payment_channels"`
 }
@@ -129,7 +130,7 @@ func (payment *Payment) CreateQrCode(arg PayArg) (qrCodeUrl string, errCode int,
 	}
 
 	sortString := util.GetSortString(paramMap)
-	paramMap["signature"] = util.Md5(sortString)
+	paramMap["signature"] = util.Md5(sortString + arg.Md5Key)
 	paramMap["sign_type"] = SignTypeMD5
 
 	values := url.Values{}
@@ -137,9 +138,11 @@ func (payment *Payment) CreateQrCode(arg PayArg) (qrCodeUrl string, errCode int,
 		values.Add(k, v)
 	}
 	returnBytes, err := curl.GetJSONReturnByte(arg.GateWay + "?" + values.Encode())
+	fmt.Println(arg.GateWay + "?" + values.Encode())
 	if err != nil {
 		return qrCodeUrl, PayNetErrCode, errors.New(PayNetErrMessage)
 	}
+	fmt.Printf("%+v\n", string(returnBytes))
 	var qrCodeResult QrCodeResult
 	if err = json.Unmarshal(returnBytes, &qrCodeResult); err != nil {
 		return qrCodeUrl, PayNetErrCode, errors.New(PayNetErrMessage)
