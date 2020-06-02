@@ -2,6 +2,7 @@ package payment
 
 import (
 	"errors"
+	"fmt"
 	"payment_demo/pkg/alipay/util"
 )
 
@@ -29,6 +30,7 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 	if err != nil {
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
+	fmt.Printf("%+v\n", queryMap)
 
 	//订单编号
 	notifyRsp.OrderId = queryMap["out_trade_no"]
@@ -38,6 +40,7 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 	if value, ok := queryMap["sign"]; ok {
 		sign = value
 		delete(queryMap, "sign")
+		delete(queryMap, "sign_type")
 	}
 
 	if !notify.checkSign(queryMap, md5Key, sign) {
@@ -57,6 +60,8 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 
 func (notify *Notify) checkSign(queryMap map[string]string, md5Key, sign string) bool {
 	sortString := util.GetSortString(queryMap)
+	fmt.Println("sortString", sortString)
 	calculateSign := util.Md5(sortString + md5Key)
+	fmt.Println("calculateSign", calculateSign)
 	return calculateSign == sign
 }

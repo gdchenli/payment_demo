@@ -153,7 +153,7 @@ func (jd *Jd) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCod
 	var jdNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,notify encrypt data:%+v,notify decrypt data:%v",
+		logrus.Infof("order id:%v,org:%v,method:%v,notify encrypt data:%+v,notify decrypt data:%v",
 			jdNotifyRsp.OrderId, code.JdOrg, methodCode, jdNotifyRsp.EncryptRsp, jdNotifyRsp.DecryptRsp)
 	}()
 
@@ -229,7 +229,7 @@ func (jd *Jd) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode
 	var jdTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,trade search request encrypt data:%+v,trade search request decrypt data:%v"+
+		logrus.Infof("order id:%v,org:%v,method:%v,trade search request encrypt data:%+v,trade search request decrypt data:%v"+
 			",trade search response search encrypt data:%v,trade search response search decrypt data:%v",
 			jdTradeRsp.OrderId, code.JdOrg, methodCode, jdTradeRsp.EncryptRes, jdTradeRsp.DecryptRes, jdTradeRsp.EncryptRsp, jdTradeRsp.DecryptRsp)
 

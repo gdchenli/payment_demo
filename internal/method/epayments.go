@@ -113,7 +113,7 @@ func (e *Epayments) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, 
 	var epaymentsNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,notify data:%+v",
+		logrus.Infof("order id:%v,org:%v,method:%v,notify data:%+v",
 			epaymentsNotifyRsp.OrderId, code.EpaymentsOrg, methodCode, epaymentsNotifyRsp.Rsp)
 	}()
 
@@ -164,7 +164,7 @@ func (e *Epayments) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, e
 	var epaymentsTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
+		logrus.Infof("order id:%v,org:%v,method:%v,callback data:%+v",
 			epaymentsTradeRsp.OrderId, code.EpaymentsOrg, methodCode, epaymentsTradeRsp.Rsp)
 	}()
 

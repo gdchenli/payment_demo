@@ -137,7 +137,7 @@ func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp
 	var alipayNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,notify data:%+v",
+		logrus.Infof("order id:%v,org:%v,method:%v,notify data:%+v",
 			alipayNotifyRsp.OrderId, code.AlipayOrg, methodCode, alipayNotifyRsp.Rsp)
 	}()
 
@@ -163,7 +163,7 @@ func (alipay *Alipay) Callback(query, methodCode string) (callbackRsp defs.Callb
 	var alipayCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
+		logrus.Infof("order id:%v,org:%v,method:%v,callback data:%+v",
 			alipayCallbackRsp.OrderId, code.AlipayOrg, methodCode, alipayCallbackRsp.Rsp)
 	}()
 
@@ -188,7 +188,7 @@ func (alipay *Alipay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp,
 	var alipayTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
+		logrus.Infof("order id:%v,org:%v,method:%v,callback data:%+v",
 			alipayTradeRsp.OrderId, code.AlipayOrg, methodCode, alipayTradeRsp.Rsp)
 	}()
 

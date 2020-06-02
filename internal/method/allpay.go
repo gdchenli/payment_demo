@@ -192,7 +192,7 @@ func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp
 	var allpayNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,notify data:%+v",
+		logrus.Infof("order id:%v,org:%v,method:%v,notify data:%+v",
 			allpayNotifyRsp.OrderId, code.AllpayOrg, methodCode, allpayNotifyRsp.Rsp)
 	}()
 
@@ -218,7 +218,7 @@ func (allpay *Allpay) Callback(query, methodCode string) (callbackRsp defs.Callb
 	var allpayCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
+		logrus.Infof("order id:%v,org:%v,method:%v,callback data:%+v",
 			allpayCallbackRsp.OrderId, code.AllpayOrg, methodCode, allpayCallbackRsp.Rsp)
 	}()
 
@@ -243,7 +243,7 @@ func (allpay *Allpay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp,
 	var allpayTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,trade data:%+v",
+		logrus.Infof("order id:%v,org:%v,method:%v,trade data:%+v",
 			allpayTradeRsp.OrderId, code.AllpayOrg, methodCode, allpayTradeRsp.Rsp)
 	}()
 
