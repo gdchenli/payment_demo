@@ -14,9 +14,6 @@ import (
 const (
 	createSmartPay   = "create_smart_pay"
 	AggregateCodePay = "aggregate_code_pay"
-	AlipayOrgCode    = "alipay"         //支付宝
-	AlipayMethodCode = "alipay_payment" //支付宝支付
-	WechatMethodCode = "wechat"         //微信支付
 )
 
 const (
