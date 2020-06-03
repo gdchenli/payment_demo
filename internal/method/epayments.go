@@ -118,7 +118,7 @@ func (e *Epayments) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, 
 			epaymentsNotifyRsp.OrderId, code.EpaymentsOrg, methodCode, epaymentsNotifyRsp.Rsp)
 	}()
 
-	md5key := config.GetInstance().GetString(AlipayMd5Key)
+	md5key := config.GetInstance().GetString(EpaymentsMd5Key)
 	if md5key == "" {
 		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return notifyRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
@@ -140,7 +140,7 @@ func (e *Epayments) Callback(query, methodCode string) (callbackRsp defs.Callbac
 	var epaymentsCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
-		logrus.Info("order id:%v,org:%v,method:%v,callback data:%+v",
+		logrus.Infof("order id:%v,org:%v,method:%v,callback data:%+v",
 			epaymentsCallbackRsp.OrderId, code.EpaymentsOrg, methodCode, epaymentsCallbackRsp.Rsp)
 	}()
 

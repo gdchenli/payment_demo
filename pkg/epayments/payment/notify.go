@@ -3,6 +3,8 @@ package payment
 import (
 	"errors"
 	"payment_demo/pkg/epayments/util"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -27,6 +29,7 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
+		logrus.Errorf(NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
@@ -42,6 +45,7 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 	}
 
 	if !notify.checkSign(queryMap, md5Key, sign) {
+		logrus.Errorf(NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 

@@ -2,7 +2,10 @@ package payment
 
 import (
 	"errors"
+	"fmt"
 	"payment_demo/pkg/epayments/util"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Callback struct{}
@@ -19,6 +22,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
+		logrus.Errorf(NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
 		return callbackRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
@@ -34,6 +38,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	}
 
 	if !callback.checkSign(queryMap, md5Key, sign) {
+		logrus.Errorf(NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return callbackRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
@@ -47,6 +52,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 
 func (callback *Callback) checkSign(queryMap map[string]string, signKey, sign string) bool {
 	sortString := util.GetSortString(queryMap)
+	fmt.Println("sortString", sortString)
 	calculateSign := util.Md5(sortString + signKey)
 	return calculateSign == sign
 }

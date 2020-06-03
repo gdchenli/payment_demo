@@ -3,9 +3,12 @@ package payment
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"payment_demo/pkg/epayments/util"
 	"payment_demo/tools/curl"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -62,26 +65,35 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 		values.Add(k, v)
 	}
 
+	fmt.Println(arg.TradeWay + "?" + values.Encode())
 	returnBytes, err := curl.GetJSONReturnByte(arg.TradeWay + "?" + values.Encode())
 	if err != nil {
 		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
 	}
 
-	rspMap := make(map[string]string)
+	rspMap := make(map[string]interface{})
 	err = json.Unmarshal(returnBytes, &rspMap)
 	if err != nil {
+		logrus.Errorf(SearchTradeResponseDataFormatErrMessage+",query:%v,errCode:%v,err:%v", sortString, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 	tradeRsp.OrderId = arg.IncrementId
 
 	//校验签名
-	sign := rspMap["signature"]
-	delete(rspMap, "signature")
-	delete(rspMap, "sign_type")
-	if !trade.checkSign(rspMap, arg.Md5Key, sign) {
+	sign := rspMap["signature"].(string)
+	tradeRspMap := make(map[string]string)
+	for k, v := range rspMap {
+		if k == "signature" || k == "sign_type" {
+			continue
+		}
+		tradeRspMap[k] = fmt.Sprintf("%v", v)
+	}
+	if !trade.checkSign(tradeRspMap, arg.Md5Key, sign) {
+		logrus.Errorf(SearchTradeResponseDataSignErrMessage+",query:%v,errCode:%v", sortString, SearchTradeResponseDataSignErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
 
+	tradeRsp.TradeNo = tradeRspMap["trade_no"]
 	switch rspMap["trade_status"] {
 	case TradeFinished:
 		tradeRsp.Status = SearchTradeProcess
