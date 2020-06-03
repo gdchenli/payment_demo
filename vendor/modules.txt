@@ -95,6 +95,10 @@ github.com/prometheus/procfs/internal/util
 github.com/rifflock/lfshook
 # github.com/sirupsen/logrus v1.6.0
 github.com/sirupsen/logrus
+# github.com/skip2/go-qrcode v0.0.0-20200526175731-7ac0b40b2038
+github.com/skip2/go-qrcode
+github.com/skip2/go-qrcode/bitset
+github.com/skip2/go-qrcode/reedsolomon
 # github.com/spf13/afero v1.1.2
 github.com/spf13/afero
 github.com/spf13/afero/mem
