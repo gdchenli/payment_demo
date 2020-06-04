@@ -1,17 +1,17 @@
 package cashier
 
-import "payment_demo/internal/method"
+import "payment_demo/internal/cashier"
 
-func getPayMethod(orgCode string) method.PayMethod {
+func getPayMethod(orgCode string) cashier.PayMethod {
 	switch orgCode {
 	case JdOrg:
-		return new(method.Jd)
+		return new(cashier.Jd)
 	case AllpayOrg:
-		return new(method.Allpay)
+		return new(cashier.Allpay)
 	case AlipayOrg:
-		return new(method.Alipay)
+		return new(cashier.Alipay)
 	case EpaymentsOrg:
-		return new(method.Epayments)
+		return new(cashier.Epayments)
 	default:
 		return nil
 	}

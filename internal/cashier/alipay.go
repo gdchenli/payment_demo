@@ -1,4 +1,4 @@
-package method
+package cashier
 
 import (
 	"errors"

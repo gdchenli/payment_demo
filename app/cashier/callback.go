@@ -3,9 +3,9 @@ package cashier
 import (
 	"errors"
 	"net/http"
+	"payment_demo/internal/cashier"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/defs"
-	"payment_demo/internal/method"
 
 	"github.com/gin-gonic/gin"
 )
@@ -50,7 +50,7 @@ func (callback *Callback) jdCallback(ctx *gin.Context) (callBackRsp defs.Callbac
 	ctx.Request.ParseForm()
 	query := ctx.Request.PostForm.Encode()
 
-	return new(method.Jd).Callback(query, code.JdMethod)
+	return new(cashier.Jd).Callback(query, code.JdMethod)
 }
 
 func (callback *Callback) allpayCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errCode int, err error) {
@@ -60,7 +60,7 @@ func (callback *Callback) allpayCallback(ctx *gin.Context) (callBackRsp defs.Cal
 		query = ctx.Request.URL.Query().Encode()
 	}
 
-	return new(method.Allpay).Callback(query, ctx.Param("method"))
+	return new(cashier.Allpay).Callback(query, ctx.Param("method"))
 }
 
 func (callback *Callback) alipayCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errCode int, err error) {
@@ -70,7 +70,7 @@ func (callback *Callback) alipayCallback(ctx *gin.Context) (callBackRsp defs.Cal
 		query = ctx.Request.URL.Query().Encode()
 	}
 
-	return new(method.Alipay).Callback(query, ctx.Param("method"))
+	return new(cashier.Alipay).Callback(query, ctx.Param("method"))
 }
 
 func (callback *Callback) epaymentsCallback(ctx *gin.Context) (callBackRsp defs.CallbackRsp, errCode int, err error) {
@@ -80,5 +80,5 @@ func (callback *Callback) epaymentsCallback(ctx *gin.Context) (callBackRsp defs.
 		query = ctx.Request.URL.Query().Encode()
 	}
 
-	return new(method.Epayments).Callback(query, ctx.Param("method"))
+	return new(cashier.Epayments).Callback(query, ctx.Param("method"))
 }

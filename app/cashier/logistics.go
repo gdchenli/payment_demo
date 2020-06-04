@@ -3,8 +3,8 @@ package cashier
 import (
 	"errors"
 	"net/http"
+	"payment_demo/internal/cashier"
 	"payment_demo/internal/common/defs"
-	"payment_demo/internal/method"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,11 +42,11 @@ func (logistics *Logistics) logisticsUpload(ctx *gin.Context) {
 }
 
 func (logistics *Logistics) JdLogisticsUpload(l defs.Logistics) (logisticsRsp defs.LogisticsRsp, errCode int, err error) {
-	arg := method.JdLogisticsArg{
+	arg := cashier.JdLogisticsArg{
 		OrderId:          l.OrderId,
 		LogisticsCompany: l.LogisticsCompany,
 		LogisticsNo:      l.LogisticsNo,
 	}
 
-	return new(method.Jd).LogisticsUpload(arg)
+	return new(cashier.Jd).LogisticsUpload(arg)
 }

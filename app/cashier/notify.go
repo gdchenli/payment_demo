@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"payment_demo/internal/cashier"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/defs"
-	"payment_demo/internal/method"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -64,7 +64,7 @@ func (notify *Notify) jdNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errC
 		ctx.Request.Body.Close()
 	}()
 	query := string(notifyBytes)
-	return new(method.Jd).Notify(query, code.JdMethod)
+	return new(cashier.Jd).Notify(query, code.JdMethod)
 }
 
 func (notify *Notify) allpayNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errCode int, err error) {
@@ -78,19 +78,19 @@ func (notify *Notify) allpayNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, 
 	}()
 	query := string(notifyBytes)
 
-	return new(method.Allpay).Notify(query, ctx.Param("method"))
+	return new(cashier.Allpay).Notify(query, ctx.Param("method"))
 }
 
 func (notify *Notify) alipayNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errCode int, err error) {
 	ctx.Request.ParseForm()
 	query := ctx.Request.PostForm.Encode()
 
-	return new(method.Alipay).Notify(query, ctx.Param("method"))
+	return new(cashier.Alipay).Notify(query, ctx.Param("method"))
 }
 
 func (notify *Notify) epaymentsNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errCode int, err error) {
 	ctx.Request.ParseForm()
 	query := ctx.Request.PostForm.Encode()
 
-	return new(method.Epayments).Notify(query, ctx.Param("method"))
+	return new(cashier.Epayments).Notify(query, ctx.Param("method"))
 }

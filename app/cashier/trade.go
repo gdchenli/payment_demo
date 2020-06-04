@@ -2,8 +2,8 @@ package cashier
 
 import (
 	"net/http"
+	"payment_demo/internal/cashier"
 	"payment_demo/internal/common/defs"
-	"payment_demo/internal/method"
 
 	"github.com/gin-gonic/gin/binding"
 
@@ -80,5 +80,5 @@ func (trade *Trade) closed(ctx *gin.Context) {
 }
 
 func (trade *Trade) jdClosed(closed defs.Closed) (closedRsp defs.ClosedRsp, errCode int, err error) {
-	return new(method.Jd).Closed(closed)
+	return new(cashier.Jd).Closed(closed)
 }

@@ -1,4 +1,4 @@
-package method
+package cashier
 
 import "payment_demo/internal/common/defs"
 

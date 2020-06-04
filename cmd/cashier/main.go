@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"payment_demo/app/cart"
 	"payment_demo/app/cashier"
 	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/log"
@@ -33,7 +32,7 @@ func init() {
 func main() {
 	gin.SetMode(config.GetInstance().GetString(Mode))
 	router := gin.Default()
-	router.StaticFS("/assets", http.Dir("../../assets"))
+	//router.StaticFS("/assets", http.Dir("../../assets"))
 
 	router.Use(recovery.Recovery(RecoveryHandler))
 	registerMonitor(router)
@@ -56,7 +55,6 @@ func main() {
 }
 
 func registerRouter(router *gin.Engine) {
-	new(cart.Checkout).Router(router)
 	new(cashier.Pay).Router(router)
 	new(cashier.Notify).Router(router)
 	new(cashier.Callback).Router(router)
