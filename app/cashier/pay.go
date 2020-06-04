@@ -1,12 +1,10 @@
 package cashier
 
 import (
-	"fmt"
 	"net/http"
 	"payment_demo/internal/common/defs"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 const (
@@ -49,7 +47,7 @@ func (pay *Pay) qrCode(ctx *gin.Context) {
 
 	payMethod := getPayMethod(order.OrgCode)
 	if payMethod == nil {
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
+		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
 		return
 	}
 	payStr, errCode, err = payMethod.OrderQrCode(*order)
@@ -78,7 +76,7 @@ func (pay *Pay) ampSubmit(ctx *gin.Context) {
 
 	payMethod := getPayMethod(order.OrgCode)
 	if payMethod == nil {
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
+		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
 		return
 	}
 
@@ -100,22 +98,21 @@ func (pay *Pay) orderSubmit(ctx *gin.Context) {
 	ctx.ShouldBind(order)
 
 	if errCode, err = order.Validate(); err != nil {
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(err.Error()))
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
 	payMethod := getPayMethod(order.OrgCode)
 	if payMethod == nil {
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
+		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
 		return
 	}
 
 	form, errCode, err = payMethod.OrderSubmit(*order)
 	if err != nil {
-		fmt.Println(errCode)
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(err.Error()))
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(form))
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": form})
 }
