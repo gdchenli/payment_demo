@@ -48,6 +48,6 @@ cd cmd/cashier/ && go build . && ./cashier
 │   │   ├── interface.go
 │   │   └── jd.go               京东支付
 │   └── common
-├── pkg                       工具文件夹
+├── pkg                         工具文件夹
 └── vendor                      第三方依赖包文件夹
 ```
