@@ -48,19 +48,6 @@ cd cmd/cashier/ && go build . && ./cashier
 │   │   ├── interface.go
 │   │   └── jd.go               京东支付
 │   └── common
-├── pkg
-│   ├── alipay                  支付宝直连文件夹          
-│   │   ├── payment
-│   │   └── util                
-│   ├── allpay                  allpay文件夹
-│   │   ├── payment
-│   │   └── util                
-│   ├── epayments               epayments文件夹
-│   │   ├── payment
-│   │   └── util
-│   └── jd                      京东支付文件夹
-│       ├── payment
-│       └── util
-├── tools                       工具文件夹
+├── pkg                       工具文件夹
 └── vendor                      第三方依赖包文件夹
 ```
