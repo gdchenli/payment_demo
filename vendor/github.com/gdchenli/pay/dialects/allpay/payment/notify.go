@@ -2,9 +2,8 @@ package payment
 
 import (
 	"errors"
-	"payment_demo/pkg/epayments/util"
 
-	"github.com/sirupsen/logrus"
+	"github.com/gdchenli/pay/dialects/allpay/util"
 )
 
 const (
@@ -27,35 +26,35 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 	notifyRsp.Rsp = query
 
 	//解析参数
-	queryMap, err := util.ParseQueryString(query)
+	queryMap, err := util.JsonToMap(query)
 	if err != nil {
-		logrus.Errorf(NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
 	//订单编号
-	notifyRsp.OrderId = queryMap["increment_id"]
+	notifyRsp.OrderId = queryMap["orderNum"]
 
 	//校验签名
 	var sign string
+	if value, ok := queryMap["sign"]; ok {
+		sign = value
+		delete(queryMap, "sign")
+	}
 	if value, ok := queryMap["signature"]; ok {
 		sign = value
 		delete(queryMap, "signature")
-		delete(queryMap, "sign_type")
 	}
-
 	if !notify.checkSign(queryMap, md5Key, sign) {
-		logrus.Errorf(NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
 	//交易状态
-	if queryMap["trade_status"] == TradeFinished || queryMap["trade_status"] == TradeSuccess {
+	if queryMap["RespCode"] == "00" {
 		notifyRsp.Status = true
 	}
 
-	//alipay交易流水号，
-	notifyRsp.TradeNo = queryMap["trade_no"]
+	//allpay交易流水号，
+	notifyRsp.TradeNo = queryMap["transID"]
 
 	return notifyRsp, 0, nil
 }

@@ -2,7 +2,8 @@ package payment
 
 import (
 	"errors"
-	"payment_demo/pkg/allpay/util"
+	"fmt"
+	"github.com/gdchenli/pay/dialects/alipay/util"
 )
 
 const (
@@ -25,41 +26,42 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 	notifyRsp.Rsp = query
 
 	//解析参数
-	queryMap, err := util.JsonToMap(query)
+	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
+	fmt.Printf("%+v\n", queryMap)
 
 	//订单编号
-	notifyRsp.OrderId = queryMap["orderNum"]
+	notifyRsp.OrderId = queryMap["out_trade_no"]
 
 	//校验签名
 	var sign string
 	if value, ok := queryMap["sign"]; ok {
 		sign = value
 		delete(queryMap, "sign")
+		delete(queryMap, "sign_type")
 	}
-	if value, ok := queryMap["signature"]; ok {
-		sign = value
-		delete(queryMap, "signature")
-	}
+
 	if !notify.checkSign(queryMap, md5Key, sign) {
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
 	//交易状态
-	if queryMap["RespCode"] == "00" {
+	if queryMap["trade_status"] == TradeFinished || queryMap["trade_status"] == TradeSuccess {
 		notifyRsp.Status = true
 	}
 
-	//allpay交易流水号，
-	notifyRsp.TradeNo = queryMap["transID"]
+	//alipay交易流水号，
+	notifyRsp.TradeNo = queryMap["trade_no"]
 
 	return notifyRsp, 0, nil
 }
 
 func (notify *Notify) checkSign(queryMap map[string]string, md5Key, sign string) bool {
 	sortString := util.GetSortString(queryMap)
+	fmt.Println("sortString", sortString)
 	calculateSign := util.Md5(sortString + md5Key)
+	fmt.Println("calculateSign", calculateSign)
 	return calculateSign == sign
 }

@@ -17,6 +17,16 @@ github.com/facebookgo/stack
 github.com/facebookgo/stats
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
+# github.com/gdchenli/pay v1.0.0
+github.com/gdchenli/pay/dialects/alipay/payment
+github.com/gdchenli/pay/dialects/allpay/payment
+github.com/gdchenli/pay/dialects/allpay/util
+github.com/gdchenli/pay/dialects/epayments/payment
+github.com/gdchenli/pay/dialects/jd/payment
+github.com/gdchenli/pay/dialects/alipay/util
+github.com/gdchenli/pay/pkg/curl
+github.com/gdchenli/pay/dialects/epayments/util
+github.com/gdchenli/pay/dialects/jd/util
 # github.com/gin-contrib/sse v0.1.0
 github.com/gin-contrib/sse
 # github.com/gin-gonic/gin v1.6.3

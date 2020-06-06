@@ -4,9 +4,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"net/url"
-	"payment_demo/pkg/alipay/util"
-	"payment_demo/tools/curl"
 	"strconv"
+
+	"github.com/gdchenli/pay/dialects/alipay/util"
+	"github.com/gdchenli/pay/pkg/curl"
 )
 
 const (

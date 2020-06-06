@@ -5,9 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
-	"payment_demo/pkg/jd/util"
 	"strings"
 
+	"github.com/gdchenli/pay/dialects/jd/util"
 	"github.com/sirupsen/logrus"
 )
 

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/pkg/epayments/util"
-	"payment_demo/tools/curl"
 
+	"github.com/gdchenli/pay/dialects/epayments/util"
+	"github.com/gdchenli/pay/pkg/curl"
 	"github.com/sirupsen/logrus"
 )
 

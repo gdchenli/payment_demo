@@ -6,9 +6,9 @@ import (
 	"payment_demo/app/cashier"
 	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/log"
-	"payment_demo/tools/ginprometheus"
-	"payment_demo/tools/grace"
-	"payment_demo/tools/recovery"
+	"payment_demo/pkg/ginprometheus"
+	"payment_demo/pkg/grace"
+	"payment_demo/pkg/recovery"
 	"time"
 
 	"github.com/gin-gonic/gin"

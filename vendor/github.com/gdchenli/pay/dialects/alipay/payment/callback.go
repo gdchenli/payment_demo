@@ -2,10 +2,7 @@ package payment
 
 import (
 	"errors"
-	"fmt"
-	"payment_demo/pkg/epayments/util"
-
-	"github.com/sirupsen/logrus"
+	"github.com/gdchenli/pay/dialects/alipay/util"
 )
 
 type Callback struct{}
@@ -22,23 +19,21 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
-		logrus.Errorf(NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
 		return callbackRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
 	//订单编号
-	callbackRsp.OrderId = queryMap["increment_id"]
+	callbackRsp.OrderId = queryMap["out_trade_no"]
 
 	//校验签名
 	var sign string
-	if value, ok := queryMap["signature"]; ok {
+	if value, ok := queryMap["sign"]; ok {
 		sign = value
-		delete(queryMap, "signature")
+		delete(queryMap, "sign")
 		delete(queryMap, "sign_type")
 	}
 
 	if !callback.checkSign(queryMap, md5Key, sign) {
-		logrus.Errorf(NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return callbackRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
@@ -52,7 +47,6 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 
 func (callback *Callback) checkSign(queryMap map[string]string, signKey, sign string) bool {
 	sortString := util.GetSortString(queryMap)
-	fmt.Println("sortString", sortString)
 	calculateSign := util.Md5(sortString + signKey)
 	return calculateSign == sign
 }

@@ -2,7 +2,7 @@ package payment
 
 import (
 	"encoding/json"
-	"payment_demo/pkg/alipay/util"
+	"github.com/gdchenli/pay/dialects/alipay/util"
 	"strconv"
 )
 

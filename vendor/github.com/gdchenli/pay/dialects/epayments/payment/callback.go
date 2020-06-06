@@ -2,7 +2,10 @@ package payment
 
 import (
 	"errors"
-	"payment_demo/pkg/allpay/util"
+	"fmt"
+
+	"github.com/gdchenli/pay/dialects/epayments/util"
+	"github.com/sirupsen/logrus"
 )
 
 type Callback struct{}
@@ -19,28 +22,28 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
+		logrus.Errorf(NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
 		return callbackRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
 	//订单编号
-	callbackRsp.OrderId = queryMap["orderNum"]
+	callbackRsp.OrderId = queryMap["increment_id"]
 
 	//校验签名
 	var sign string
-	if value, ok := queryMap["sign"]; ok {
-		sign = value
-		delete(queryMap, "sign")
-	}
 	if value, ok := queryMap["signature"]; ok {
 		sign = value
 		delete(queryMap, "signature")
+		delete(queryMap, "sign_type")
 	}
+
 	if !callback.checkSign(queryMap, md5Key, sign) {
+		logrus.Errorf(NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return callbackRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
 	//交易状态
-	if queryMap["RespCode"] == "00" {
+	if queryMap["trade_status"] == TradeFinished || queryMap["trade_status"] == TradeSuccess {
 		callbackRsp.Status = true
 	}
 
@@ -49,6 +52,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 
 func (callback *Callback) checkSign(queryMap map[string]string, signKey, sign string) bool {
 	sortString := util.GetSortString(queryMap)
+	fmt.Println("sortString", sortString)
 	calculateSign := util.Md5(sortString + signKey)
 	return calculateSign == sign
 }

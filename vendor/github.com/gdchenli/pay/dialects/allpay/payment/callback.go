@@ -2,7 +2,8 @@ package payment
 
 import (
 	"errors"
-	"payment_demo/pkg/alipay/util"
+
+	"github.com/gdchenli/pay/dialects/allpay/util"
 )
 
 type Callback struct{}
@@ -23,22 +24,24 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	}
 
 	//订单编号
-	callbackRsp.OrderId = queryMap["out_trade_no"]
+	callbackRsp.OrderId = queryMap["orderNum"]
 
 	//校验签名
 	var sign string
 	if value, ok := queryMap["sign"]; ok {
 		sign = value
 		delete(queryMap, "sign")
-		delete(queryMap, "sign_type")
 	}
-
+	if value, ok := queryMap["signature"]; ok {
+		sign = value
+		delete(queryMap, "signature")
+	}
 	if !callback.checkSign(queryMap, md5Key, sign) {
 		return callbackRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
 	//交易状态
-	if queryMap["trade_status"] == TradeFinished || queryMap["trade_status"] == TradeSuccess {
+	if queryMap["RespCode"] == "00" {
 		callbackRsp.Status = true
 	}
 

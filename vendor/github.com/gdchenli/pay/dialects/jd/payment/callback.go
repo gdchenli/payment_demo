@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/pkg/jd/util"
 
+	"github.com/gdchenli/pay/dialects/jd/util"
 	"github.com/sirupsen/logrus"
 )
 

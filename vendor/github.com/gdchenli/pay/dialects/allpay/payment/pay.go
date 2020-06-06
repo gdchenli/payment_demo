@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/pkg/allpay/util"
-	"payment_demo/tools/curl"
 	"strings"
 	"time"
+
+	"github.com/gdchenli/pay/dialects/allpay/util"
+	"github.com/gdchenli/pay/pkg/curl"
 )
 
 const (

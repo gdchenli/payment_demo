@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"payment_demo/pkg/jd/util"
 	"time"
 
+	"github.com/gdchenli/pay/dialects/jd/util"
 	"github.com/sirupsen/logrus"
 )
 

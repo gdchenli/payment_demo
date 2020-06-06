@@ -6,11 +6,11 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"payment_demo/pkg/jd/util"
-	"payment_demo/tools/curl"
 	"regexp"
 	"strings"
 
+	"github.com/gdchenli/pay/dialects/jd/util"
+	"github.com/gdchenli/pay/pkg/curl"
 	"github.com/sirupsen/logrus"
 )
 

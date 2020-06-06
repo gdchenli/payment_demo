@@ -5,10 +5,10 @@ import (
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/defs"
-	"payment_demo/pkg/allpay/payment"
-	"payment_demo/pkg/allpay/util"
 	"time"
 
+	"github.com/gdchenli/pay/dialects/allpay/payment"
+	"github.com/gdchenli/pay/dialects/allpay/util"
 	"github.com/sirupsen/logrus"
 )
 

@@ -5,8 +5,8 @@ import (
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/defs"
-	"payment_demo/pkg/epayments/payment"
 
+	"github.com/gdchenli/pay/dialects/epayments/payment"
 	"github.com/sirupsen/logrus"
 )
 

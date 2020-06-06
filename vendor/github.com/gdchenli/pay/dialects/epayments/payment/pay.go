@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/url"
-	"payment_demo/pkg/epayments/util"
-	"payment_demo/tools/curl"
 	"strconv"
 
+	"github.com/gdchenli/pay/dialects/epayments/util"
+	"github.com/gdchenli/pay/pkg/curl"
 	"github.com/skip2/go-qrcode"
 )
 

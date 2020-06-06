@@ -2,8 +2,9 @@ package payment
 
 import (
 	"errors"
-	"fmt"
-	"payment_demo/pkg/alipay/util"
+
+	"github.com/gdchenli/pay/dialects/epayments/util"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -28,22 +29,23 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
+		logrus.Errorf(NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
-	fmt.Printf("%+v\n", queryMap)
 
 	//订单编号
-	notifyRsp.OrderId = queryMap["out_trade_no"]
+	notifyRsp.OrderId = queryMap["increment_id"]
 
 	//校验签名
 	var sign string
-	if value, ok := queryMap["sign"]; ok {
+	if value, ok := queryMap["signature"]; ok {
 		sign = value
-		delete(queryMap, "sign")
+		delete(queryMap, "signature")
 		delete(queryMap, "sign_type")
 	}
 
 	if !notify.checkSign(queryMap, md5Key, sign) {
+		logrus.Errorf(NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
@@ -60,8 +62,6 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 
 func (notify *Notify) checkSign(queryMap map[string]string, md5Key, sign string) bool {
 	sortString := util.GetSortString(queryMap)
-	fmt.Println("sortString", sortString)
 	calculateSign := util.Md5(sortString + md5Key)
-	fmt.Println("calculateSign", calculateSign)
 	return calculateSign == sign
 }

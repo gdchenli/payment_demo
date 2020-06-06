@@ -9,10 +9,10 @@ import (
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/defs"
-	"payment_demo/pkg/jd/payment"
 	"strconv"
 	"time"
 
+	"github.com/gdchenli/pay/dialects/jd/payment"
 	"github.com/sirupsen/logrus"
 )
 
