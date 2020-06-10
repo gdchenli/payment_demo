@@ -2,7 +2,9 @@ package payment
 
 import (
 	"errors"
+
 	"github.com/gdchenli/pay/dialects/alipay/util"
+	"github.com/sirupsen/logrus"
 )
 
 type Callback struct{}
@@ -19,6 +21,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
+		logrus.Errorf("org:alipay,"+NotifyQueryFormatErrMessage+",errCode:%v,err:%v", NotifyQueryFormatErrCode, err.Error())
 		return callbackRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
@@ -34,6 +37,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	}
 
 	if !callback.checkSign(queryMap, md5Key, sign) {
+		logrus.Errorf("org:alipay,"+NotifySignErrMessage+",orderId:%v,errCode:%v", callbackRsp.OrderId, NotifySignErrCode)
 		return callbackRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 

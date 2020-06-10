@@ -58,7 +58,7 @@ func (callback *Callback) Validate(query string, arg CallbackArg) (callbackRsp C
 	//解析参数
 	urlValuesMap, err := url.ParseQuery(query)
 	if err != nil {
-		logrus.Errorf(CallbackEncryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackEncryptFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+CallbackEncryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackEncryptFormatErrCode, err.Error())
 		return callbackRsp, CallbackEncryptFormatErrCode, errors.New(CallbackEncryptFormatErrMessage)
 	}
 	queryMap := make(map[string]string)
@@ -69,12 +69,12 @@ func (callback *Callback) Validate(query string, arg CallbackArg) (callbackRsp C
 	//解密
 	decryptMap, err := callback.decryptArg(queryMap, arg.DesKey)
 	if err != nil {
-		logrus.Errorf(CallbackDecryptFailedErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFailedErrCode, err.Error())
+		logrus.Errorf("org:jd,"+CallbackDecryptFailedErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFailedErrCode, err.Error())
 		return callbackRsp, CallbackDecryptFailedErrCode, errors.New(CallbackDecryptFailedErrMessage)
 	}
 	decryptBytes, err := json.Marshal(decryptMap)
 	if err != nil {
-		logrus.Errorf(CallbackDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+CallbackDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFormatErrCode, err.Error())
 		return callbackRsp, CallbackDecryptFormatErrCode, errors.New(CallbackDecryptFormatErrMessage)
 	}
 	callbackRsp.DecryptRsp = string(decryptBytes)
@@ -84,20 +84,20 @@ func (callback *Callback) Validate(query string, arg CallbackArg) (callbackRsp C
 	var callbackQuery CallbackQuery
 	err = json.Unmarshal(decryptBytes, &callbackQuery)
 	if err != nil {
-		logrus.Errorf(CallbackDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+CallbackDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFormatErrCode, err.Error())
 		return callbackRsp, CallbackDecryptFormatErrCode, errors.New(CallbackDecryptFormatErrMessage)
 	}
 	callbackRsp.OrderId = callbackQuery.TradeNum
 
 	//校验签名
 	if !callback.checkSign(decryptMap, arg.PublicKey) {
-		logrus.Errorf(CallbackSignErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackSignErrCode)
+		logrus.Errorf("org:jd,"+CallbackSignErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackSignErrCode)
 		return callbackRsp, CallbackSignErrCode, errors.New(CallbackSignErrMessage)
 	}
 
 	//交易状态
 	if callbackQuery.Status != CallbackSuccessCode {
-		logrus.Errorf(CallbackStatusErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackStatusErrCode)
+		logrus.Errorf("org:jd,"+CallbackStatusErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackStatusErrCode)
 		return callbackRsp, CallbackStatusErrCode, errors.New(CallbackStatusErrMessage)
 	}
 	callbackRsp.Status = true

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gdchenli/pay/dialects/allpay/util"
 	"github.com/gdchenli/pay/pkg/curl"
 )
@@ -63,6 +65,7 @@ func (payment *Payment) getPayParamMap(arg PayArg) (paramMap map[string]string, 
 	transTime := time.Now().Format(TimeLayout)
 	detailInfoBytes, err := json.Marshal(arg.DetailInfo)
 	if err != nil {
+		logrus.Errorf("org:allpay,"+PayGoodsInfoFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.OrderNum, PayGoodsInfoFormatErrCode, err.Error())
 		return paramMap, PayGoodsInfoFormatErrCode, errors.New(PayGoodsInfoFormatErrMessage)
 	}
 	detailInfo := util.BASE64EncodeStr(detailInfoBytes)
@@ -126,6 +129,7 @@ func (payment *Payment) CreateAmpPayStr(arg PayArg) (payStr string, errCode int,
 
 	err = curl.PostJSON(arg.PayWay, &ampProgramRsp, strings.NewReader(values.Encode()))
 	if err != nil {
+		logrus.Errorf("org:allpay,"+PayNetErrMessage+",order id %v,errCode:%v,err:%v", arg.OrderNum, PayNetErrCode, err.Error())
 		return payStr, PayNetErrCode, errors.New(PayNetErrMessage)
 	}
 

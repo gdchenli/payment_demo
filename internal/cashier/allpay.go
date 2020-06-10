@@ -46,37 +46,37 @@ func (allpay *Allpay) OrderQrCode(arg defs.Order) (form string, errCode int, err
 func (allpay *Allpay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AllpayMerchant)
 	if merchant == "" {
-		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
 		return payArg, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 
 	notifyUrl := config.GetInstance().GetString(AllpayBackUrl)
 	if notifyUrl == "" {
-		logrus.Errorf(code.NotifyUrlNotExistsErrMessage+",errCode:%v,err:%v", code.NotifyUrlNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.NotifyUrlNotExistsErrMessage+",errCode:%v,err:%v", code.NotifyUrlNotExistsErrCode)
 		return payArg, code.NotifyUrlNotExistsErrCode, errors.New(code.NotifyUrlNotExistsErrMessage)
 	}
 
 	callbackUrl := config.GetInstance().GetString(AllpayFrontUrl)
 	if callbackUrl == "" {
-		logrus.Errorf(code.CallbackUrlNotExistsErrMessage+",errCode:%v,err:%v", code.CallbackUrlNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.CallbackUrlNotExistsErrMessage+",errCode:%v,err:%v", code.CallbackUrlNotExistsErrCode)
 		return payArg, code.CallbackUrlNotExistsErrCode, errors.New(code.CallbackUrlNotExistsErrMessage)
 	}
 
 	expireTime := config.GetInstance().GetString(AllpayTimeout)
 	if expireTime == "" {
-		logrus.Errorf(code.ExpireTimeNotExistsErrMessage+",errCode:%v,err:%v", code.ExpireTimeNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.ExpireTimeNotExistsErrMessage+",errCode:%v,err:%v", code.ExpireTimeNotExistsErrCode)
 		return payArg, code.ExpireTimeNotExistsErrCode, errors.New(code.ExpireTimeNotExistsErrMessage)
 	}
 
 	md5key := config.GetInstance().GetString(AllpayMd5Key)
 	if md5key == "" {
-		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return payArg, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	acqId := config.GetInstance().GetString(AllpayAcqId)
 	if acqId == "" {
-		logrus.Errorf(code.AcqIdNotExistsErrMessage+",errCode:%v,err:%v", code.AcqIdNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.AcqIdNotExistsErrMessage+",errCode:%v,err:%v", code.AcqIdNotExistsErrCode)
 		return payArg, code.AcqIdNotExistsErrCode, errors.New(code.AcqIdNotExistsErrMessage)
 	}
 
@@ -93,7 +93,7 @@ func (allpay *Allpay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode 
 
 	gateWay := allpay.getPayWay(arg.UserAgentType)
 	if gateWay == "" {
-		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
 		return payArg, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 
@@ -198,7 +198,7 @@ func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp
 
 	md5key := config.GetInstance().GetString(AllpayMd5Key)
 	if md5key == "" {
-		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return notifyRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
@@ -224,7 +224,7 @@ func (allpay *Allpay) Callback(query, methodCode string) (callbackRsp defs.Callb
 
 	md5key := config.GetInstance().GetString(AllpayMd5Key)
 	if md5key == "" {
-		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return callbackRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
@@ -249,25 +249,25 @@ func (allpay *Allpay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp,
 
 	merchant := config.GetInstance().GetString(AllpayMerchant)
 	if merchant == "" {
-		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
 		return tradeRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 
 	acqId := config.GetInstance().GetString(AllpayAcqId)
 	if acqId == "" {
-		logrus.Errorf(code.AcqIdNotExistsErrMessage+",errCode:%v,err:%v", code.AcqIdNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.AcqIdNotExistsErrMessage+",errCode:%v,err:%v", code.AcqIdNotExistsErrCode)
 		return tradeRsp, code.AcqIdNotExistsErrCode, errors.New(code.AcqIdNotExistsErrMessage)
 	}
 
 	md5key := config.GetInstance().GetString(AllpayMd5Key)
 	if md5key == "" {
-		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return tradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	gateWay := config.GetInstance().GetString(AllpayTradeWay)
 	if gateWay == "" {
-		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		logrus.Errorf("org:allpay,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
 		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 

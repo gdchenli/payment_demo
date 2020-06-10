@@ -36,30 +36,30 @@ func (alipay *Alipay) OrderQrCode(arg defs.Order) (form string, errCode int, err
 func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AlipayMerchant)
 	if merchant == "" {
-		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
 		return payArg, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 	md5key := config.GetInstance().GetString(AlipayMd5Key)
 	if md5key == "" {
-		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return payArg, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	gateWay := config.GetInstance().GetString(AlipayGateWay)
 	if gateWay == "" {
-		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
 		return payArg, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 
 	notifyUrl := config.GetInstance().GetString(AlipayNotifyUrl)
 	if notifyUrl == "" {
-		logrus.Errorf(code.NotifyUrlNotExistsErrMessage+",errCode:%v,err:%v", code.NotifyUrlNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.NotifyUrlNotExistsErrMessage+",errCode:%v,err:%v", code.NotifyUrlNotExistsErrCode)
 		return payArg, code.NotifyUrlNotExistsErrCode, errors.New(code.NotifyUrlNotExistsErrMessage)
 	}
 
 	callbackUrl := config.GetInstance().GetString(AlipayReturnUrl)
 	if callbackUrl == "" {
-		logrus.Errorf(code.CallbackUrlNotExistsErrMessage+",errCode:%v,err:%v", code.CallbackUrlNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.CallbackUrlNotExistsErrMessage+",errCode:%v,err:%v", code.CallbackUrlNotExistsErrCode)
 		return payArg, code.CallbackUrlNotExistsErrCode, errors.New(code.CallbackUrlNotExistsErrMessage)
 	}
 
@@ -67,7 +67,7 @@ func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode 
 
 	expireTime := config.GetInstance().GetString(AlipayTimeout)
 	if expireTime == "" {
-		logrus.Errorf(code.ExpireTimeNotExistsErrMessage+",errCode:%v,err:%v", code.ExpireTimeNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.ExpireTimeNotExistsErrMessage+",errCode:%v,err:%v", code.ExpireTimeNotExistsErrCode)
 		return payArg, code.ExpireTimeNotExistsErrCode, errors.New(code.ExpireTimeNotExistsErrMessage)
 	}
 
@@ -141,16 +141,30 @@ func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp
 			alipayNotifyRsp.OrderId, code.AlipayOrg, methodCode, alipayNotifyRsp.Rsp)
 	}()
 
+	merchant := config.GetInstance().GetString(AlipayMerchant)
+	if merchant == "" {
+		logrus.Errorf("org:alipay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		return notifyRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+	}
+
+	gateWay := config.GetInstance().GetString(AlipayGateWay)
+	if gateWay == "" {
+		logrus.Errorf("org:alipay,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		return notifyRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+	}
+
 	md5key := config.GetInstance().GetString(AlipayMd5Key)
 	if md5key == "" {
-		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return notifyRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
-	alipayNotifyRsp, errCode, err = new(payment.Notify).Validate(query, md5key)
+	notifyArg := payment.NotifyArg{Merchant: merchant, Md5Key: md5key, GateWay: gateWay}
+	alipayNotifyRsp, errCode, err = new(payment.Notify).Validate(query, notifyArg)
 	if err != nil {
 		return notifyRsp, errCode, err
 	}
+
 	notifyRsp.TradeNo = alipayNotifyRsp.TradeNo
 	notifyRsp.Status = alipayNotifyRsp.Status
 	notifyRsp.OrderId = alipayNotifyRsp.OrderId
@@ -169,7 +183,7 @@ func (alipay *Alipay) Callback(query, methodCode string) (callbackRsp defs.Callb
 
 	md5key := config.GetInstance().GetString(AlipayMd5Key)
 	if md5key == "" {
-		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return callbackRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
@@ -194,18 +208,18 @@ func (alipay *Alipay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp,
 
 	merchant := config.GetInstance().GetString(AlipayMerchant)
 	if merchant == "" {
-		logrus.Errorf(code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
 		return tradeRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 	md5key := config.GetInstance().GetString(AlipayMd5Key)
 	if md5key == "" {
-		logrus.Errorf(code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
 		return tradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	gateWay := config.GetInstance().GetString(AlipayGateWay)
 	if gateWay == "" {
-		logrus.Errorf(code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
+		logrus.Errorf("org:alipay,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
 		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 

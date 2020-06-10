@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/gdchenli/pay/dialects/jd/util"
 	"github.com/gdchenli/pay/pkg/curl"
@@ -122,13 +123,15 @@ type SearchPayRsp struct {
 }
 
 type TradeRsp struct {
-	Status     string `json:"status"`      //交易状态
-	OrderId    string `json:"order_id"`    //订单号
-	TradeNo    string `json:"trade_no"`    //支付机构交易流水号
-	EncryptRsp string `json:"encrypt_rsp"` //返回的加密数据
-	DecryptRsp string `json:"decrypt_rsp"` //返回的解密数据
-	EncryptRes string `json:"encrypt_res"` //请求的加密数据
-	DecryptRes string `json:"decrypt_res"` //请求的未加密数据
+	Status     string  `json:"status"`      //交易状态
+	OrderId    string  `json:"order_id"`    //订单号
+	TradeNo    string  `json:"trade_no"`    //支付机构交易流水号
+	PaidAt     string  `json:"paid_at"`     //支付gmt时间
+	RmbFee     float64 `json:"rmb_fee"`     //人民币金额
+	EncryptRsp string  `json:"encrypt_rsp"` //返回的加密数据
+	DecryptRsp string  `json:"decrypt_rsp"` //返回的解密数据
+	EncryptRes string  `json:"encrypt_res"` //请求的加密数据
+	DecryptRes string  `json:"decrypt_res"` //请求的未加密数据
 }
 
 func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err error) {
@@ -154,7 +157,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	sha256 := util.HaSha256(xmlStr)
 	signBytes, err := util.SignPKCS1v15([]byte(sha256), []byte(arg.PrivateKey), crypto.Hash(0))
 	if err != nil {
-		logrus.Errorf(SearchTradeBuildSignErrMessage+",request:%+v,errCode:%v,err:%v", arg, SearchTradeBuildSignErrCode, err.Error())
+		logrus.Errorf("org:jd,"+SearchTradeBuildSignErrMessage+",request:%+v,errCode:%v,err:%v", arg, SearchTradeBuildSignErrCode, err.Error())
 		return tradeRsp, SearchTradeBuildSignErrCode, errors.New(SearchTradeBuildSignErrMessage)
 	}
 	sign := base64.StdEncoding.EncodeToString(signBytes)
@@ -173,12 +176,12 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 
 	desKeyBytes, err := base64.StdEncoding.DecodeString(arg.DesKey)
 	if err != nil {
-		logrus.Errorf(SearchTradeDesKeyFormatErrMessage+",request:%+v,errCode:%v,err:%v", arg, SearchTradeDesKeyFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+SearchTradeDesKeyFormatErrMessage+",request:%+v,errCode:%v,err:%v", arg, SearchTradeDesKeyFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeDesKeyFormatErrCode, errors.New(SearchTradeDesKeyFormatErrMessage)
 	}
 	encryptBytes, err := util.TripleEcbDesEncrypt([]byte(xmlStr), desKeyBytes)
 	if err != nil {
-		logrus.Errorf(SearchTradeRequestDataEncryptFailedErrMessage+",query:%+v,errCode:%v,err:%v", arg, SearchTradeRequestDataEncryptFailedErrCode, err.Error())
+		logrus.Errorf("org:jd,"+SearchTradeRequestDataEncryptFailedErrMessage+",query:%+v,errCode:%v,err:%v", arg, SearchTradeRequestDataEncryptFailedErrCode, err.Error())
 		return tradeRsp, SearchTradeRequestDataEncryptFailedErrCode, errors.New(SearchTradeRequestDataEncryptFailedErrMessage)
 	}
 	reqEncrypt := util.DecimalByteSlice2HexString(encryptBytes)
@@ -197,12 +200,12 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	playLoad := strings.NewReader(xmlStr)
 	err = curl.PostXML(arg.GateWay, &searchResult, playLoad)
 	if err != nil {
-		logrus.Errorf(SearchTradeNetErrMessage+",request:%+v,errCode:%v,err:%v", arg, SearchTradeNetErrCode, err.Error())
+		logrus.Errorf("org:jd,"+SearchTradeNetErrMessage+",request:%+v,errCode:%v,err:%v", arg, SearchTradeNetErrCode, err.Error())
 		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
 	}
 	searchResultBytes, err := xml.Marshal(searchResult)
 	if err != nil {
-		logrus.Errorf(SearchTradeResponseDataEncryptFormatErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataEncryptFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+SearchTradeResponseDataEncryptFormatErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataEncryptFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataEncryptFormatErrCode, errors.New(SearchTradeResponseDataEncryptFormatErrMessage)
 	}
 	tradeRsp.EncryptRsp = string(searchResultBytes)
@@ -210,13 +213,13 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	//解密数据
 	rspEncryptBytes, err := base64.StdEncoding.DecodeString(searchResult.Encrypt)
 	if err != nil {
-		logrus.Errorf(SearchTradeResponseDataDecryptFailedErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataDecryptFailedErrCode, err.Error())
+		logrus.Errorf("org:jd,"+SearchTradeResponseDataDecryptFailedErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataDecryptFailedErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataDecryptFailedErrCode, errors.New(SearchTradeResponseDataDecryptFailedErrMessage)
 	}
 	rspEncryptBytes, err = util.HexString2Bytes(string(rspEncryptBytes))
 	rspDecryptBytes, err := util.TripleEcbDesDecrypt(rspEncryptBytes, desKeyBytes)
 	if err != nil {
-		logrus.Errorf(SearchTradeResponseDataDecryptFailedErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataDecryptFailedErrCode, err.Error())
+		logrus.Errorf("org:jd,"+SearchTradeResponseDataDecryptFailedErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataDecryptFailedErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataDecryptFailedErrCode, errors.New(SearchTradeResponseDataDecryptFailedErrMessage)
 	}
 	//fmt.Println("search rsp", string(rspDecrypt))
@@ -225,14 +228,14 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	var searchDecryptRsp SearchDecryptRsp
 	err = xml.Unmarshal(rspDecryptBytes, &searchDecryptRsp)
 	if err != nil {
-		logrus.Errorf(SearchTradeResponseDataDecryptFormatErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataDecryptFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+SearchTradeResponseDataDecryptFormatErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataDecryptFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataDecryptFormatErrCode, errors.New(SearchTradeResponseDataDecryptFormatErrMessage)
 	}
 	tradeRsp.OrderId = searchDecryptRsp.TradeNum
 
 	//签名校验
 	if !trade.checkSignature(searchDecryptRsp.Sign, tradeRsp.DecryptRsp, arg.PublicKey) {
-		logrus.Errorf(SearchTradeResponseDataSignErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataSignErrCode)
+		logrus.Errorf("org:jd,"+SearchTradeResponseDataSignErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, searchResult, SearchTradeResponseDataSignErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
 	switch searchDecryptRsp.Status {
@@ -249,6 +252,8 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	}
 
 	tradeRsp.TradeNo = searchDecryptRsp.TradeNum //该接口不会返回交易流水号，使用请求交易时的订单号
+	tradeRsp.PaidAt = time.Now().UTC().Format(DateTimeFormatLayout)
+	tradeRsp.RmbFee = float64(searchDecryptRsp.Amount / 100)
 
 	return tradeRsp, 0, err
 }

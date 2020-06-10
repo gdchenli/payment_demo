@@ -2,6 +2,9 @@ package payment
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/gdchenli/pay/dialects/epayments/util"
 	"github.com/sirupsen/logrus"
@@ -17,10 +20,13 @@ const (
 type Notify struct{}
 
 type NotifyRsp struct {
-	OrderId string `json:"order_id"` //订单号
-	Status  bool   `json:"status"`   //交易状态，true交易成功 false交易失败
-	TradeNo string `json:"trade_no"` //支付机构交易流水号
-	Rsp     string `json:"rsp"`      //返回的数据
+	OrderId string  `json:"order_id"` //订单号
+	Status  bool    `json:"status"`   //交易状态，true交易成功 false交易失败
+	TradeNo string  `json:"trade_no"` //支付机构交易流水号
+	PaidAt  string  `json:"paid_at"`  //支付gmt时间
+	RmbFee  float64 `json:"rmb_fee"`  //人民币金额
+	Rate    float64 `json:"rate"`     //汇率
+	Rsp     string  `json:"rsp"`      //返回的数据
 }
 
 func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCode int, err error) {
@@ -45,7 +51,7 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 	}
 
 	if !notify.checkSign(queryMap, md5Key, sign) {
-		logrus.Errorf(NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
+		logrus.Errorf("org:epayments,"+NotifySignErrMessage+",orderId%v,query:%v,errCode:%v", notifyRsp.OrderId, query, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
@@ -54,8 +60,37 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 		notifyRsp.Status = true
 	}
 
-	//alipay交易流水号，
+	//交易流水号
 	notifyRsp.TradeNo = queryMap["trade_no"]
+
+	//支付时间
+	parseTime, err := time.Parse(DateTimeFormatLayout, queryMap["gmt_payment"])
+	if err != nil {
+		logrus.Errorf("org:epayments,"+NotifyQueryFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", notifyRsp.OrderId, query, NotifyQueryFormatErrCode, err.Error())
+		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
+	}
+	notifyRsp.PaidAt = parseTime.UTC().Format(DateTimeFormatLayout)
+
+	//汇率
+	notifyRsp.Rate, err = strconv.ParseFloat(queryMap["rate"], 64)
+	if err != nil {
+		logrus.Errorf("org:epayments,"+NotifyQueryFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", notifyRsp.OrderId, query, NotifyQueryFormatErrCode, err.Error())
+		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
+	}
+
+	//人民币金额
+	grandTotal, err := strconv.ParseFloat(queryMap["grandtotal"], 64)
+	if err != nil {
+		logrus.Errorf("org:epayments,"+NotifyQueryFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", notifyRsp.OrderId, query, NotifyQueryFormatErrCode, err.Error())
+		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
+	}
+	rmbFee := grandTotal * notifyRsp.Rate
+	rmbFee, err = strconv.ParseFloat(fmt.Sprintf("%.2f", rmbFee), 64)
+	if err != nil {
+		logrus.Errorf("org:epayments,"+NotifyQueryFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", notifyRsp.OrderId, query, NotifyQueryFormatErrCode, err.Error())
+		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
+	}
+	notifyRsp.RmbFee = rmbFee
 
 	return notifyRsp, 0, nil
 }

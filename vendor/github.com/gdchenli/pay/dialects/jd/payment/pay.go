@@ -65,12 +65,12 @@ type KjInfo struct {
 func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
 	goodsInfoBytes, err := json.Marshal(arg.GoodsInfo)
 	if err != nil {
-		logrus.Errorf(PayGoodsInfoFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.TradeNum, PayGoodsInfoFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+PayGoodsInfoFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.TradeNum, PayGoodsInfoFormatErrCode, err.Error())
 		return form, PayGoodsInfoFormatErrCode, errors.New(PayGoodsInfoFormatErrMessage)
 	}
 	kjInfoBytes, err := json.Marshal(arg.KjInfo)
 	if err != nil {
-		logrus.Errorf(PayKjInfoFormatErrMessage+",errCode:%v,err:%v", PayKjInfoFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+PayKjInfoFormatErrMessage+",errCode:%v,err:%v", PayKjInfoFormatErrCode, err.Error())
 		return form, PayKjInfoFormatErrCode, errors.New(PayKjInfoFormatErrMessage)
 	}
 
@@ -96,14 +96,14 @@ func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err er
 	//签名
 	paramMap["sign"], err = payment.getSign(paramMap, arg.PrivateKey)
 	if err != nil {
-		logrus.Errorf(PaySignErrMessage+",order id %v,errCode:%v,err:%v", arg.TradeNum, PaySignErrCode, err.Error())
+		logrus.Errorf("org:jd,"+PaySignErrMessage+",order id %v,errCode:%v,err:%v", arg.TradeNum, PaySignErrCode, err.Error())
 		return form, PaySignErrCode, errors.New(PaySignErrMessage)
 	}
 
 	//加密
 	paramMap, err = payment.encrypt3DES(paramMap, arg.DesKey)
 	if err != nil {
-		logrus.Errorf(PayEncryptErrMessage+",order id %v,errCode:%v,err:%v", arg.TradeNum, PayEncryptErrCode, err.Error())
+		logrus.Errorf("org:jd,"+PayEncryptErrMessage+",order id %v,errCode:%v,err:%v", arg.TradeNum, PayEncryptErrCode, err.Error())
 		return form, PayEncryptErrCode, errors.New(PayEncryptErrMessage)
 	}
 

@@ -17,7 +17,7 @@ github.com/facebookgo/stack
 github.com/facebookgo/stats
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
-# github.com/gdchenli/pay v1.0.0
+# github.com/gdchenli/pay v1.0.1
 github.com/gdchenli/pay/dialects/alipay/payment
 github.com/gdchenli/pay/dialects/alipay/util
 github.com/gdchenli/pay/dialects/allpay/payment

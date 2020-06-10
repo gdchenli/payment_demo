@@ -1,7 +1,8 @@
 package payment
 
 const (
-	Version = "V2.0" //京东支付版本
+	Version              = "V2.0" //京东支付版本
+	DateTimeFormatLayout = "2006-01-02 15:04:05"
 )
 
 const (

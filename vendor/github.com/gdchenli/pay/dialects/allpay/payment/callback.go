@@ -3,6 +3,8 @@ package payment
 import (
 	"errors"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gdchenli/pay/dialects/allpay/util"
 )
 
@@ -20,6 +22,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
+		logrus.Errorf("org:allpay,"+NotifyQueryFormatErrMessage+",errCode:%v,err:%v", NotifyQueryFormatErrCode, err.Error())
 		return callbackRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
@@ -37,6 +40,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 		delete(queryMap, "signature")
 	}
 	if !callback.checkSign(queryMap, md5Key, sign) {
+		logrus.Errorf("org:allpay,"+NotifySignErrMessage+",order id %v,errCode:%v", callbackRsp.OrderId, NotifySignErrCode)
 		return callbackRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 

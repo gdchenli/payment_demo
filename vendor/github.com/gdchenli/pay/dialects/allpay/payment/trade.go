@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gdchenli/pay/dialects/allpay/util"
 	"github.com/gdchenli/pay/pkg/curl"
 )
@@ -51,11 +53,14 @@ type TradeResult struct {
 }
 
 type TradeRsp struct {
-	Status  string `json:"status"`   //交易状态
-	OrderId string `json:"order_id"` //订单号
-	TradeNo string `json:"trade_no"` //支付机构交易流水号
-	Res     string `json:"res"`
-	Rsp     string `json:"rsp"`
+	Status  string  `json:"status"`   //交易状态
+	OrderId string  `json:"order_id"` //订单号
+	TradeNo string  `json:"trade_no"` //支付机构交易流水号
+	PaidAt  string  `json:"paid_at"`  //支付gmt时间
+	RmbFee  float64 `json:"rmb_fee"`  //人民币金额
+	Rate    float64 `json:"rate"`     //汇率
+	Res     string  `json:"res"`
+	Rsp     string  `json:"rsp"`
 }
 
 func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err error) {
@@ -79,11 +84,13 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	fmt.Println("values.Encode()", arg.PayWay+"?"+values.Encode())
 	returnBytes, err := curl.GetJSONReturnByte(arg.PayWay + "?" + values.Encode())
 	if err != nil {
+		logrus.Errorf("org:allpay,"+SearchTradeNetErrMessage+",order id %v,errCode:%v,err:%v", arg.OrderNum, SearchTradeNetErrCode, err.Error())
 		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
 	}
 	rspMap := make(map[string]string)
 	err = json.Unmarshal(returnBytes, &rspMap)
 	if err != nil {
+		logrus.Errorf("org:allpay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.OrderNum, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 	fmt.Printf("%+v\n", rspMap)
@@ -92,6 +99,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	sign := rspMap["signature"]
 	delete(rspMap, "signature")
 	if !trade.checkSign(rspMap, arg.Md5Key, sign) {
+		logrus.Errorf("org:allpay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v", arg.OrderNum, SearchTradeResponseDataFormatErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
 
@@ -101,6 +109,9 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 		tradeRsp.Status = SearchTradeProcess
 		tradeRsp.TradeNo = rspMap["transID"]
 	}
+
+	//allpay不返回支付成功时间，取当前异步通知时的服务器时间
+	tradeRsp.PaidAt = time.Now().UTC().Format(DateTimeFormatLayout)
 
 	return tradeRsp, 0, nil
 }

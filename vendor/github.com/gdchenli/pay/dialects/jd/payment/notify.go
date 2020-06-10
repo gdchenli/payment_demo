@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/gdchenli/pay/dialects/jd/util"
 	"github.com/sirupsen/logrus"
@@ -75,11 +76,13 @@ type NotifyPay struct {
 }
 
 type NotifyRsp struct {
-	OrderId    string `json:"order_id"`    //订单号
-	Status     bool   `json:"status"`      //交易状态，true交易成功 false交易失败
-	TradeNo    string `json:"trade_no"`    //支付机构交易流水号
-	EncryptRsp string `json:"encrypt_rsp"` //返回的加密数据
-	DecryptRsp string `json:"decrypt_rsp"` //返回的解密数据
+	OrderId    string  `json:"order_id"`    //订单号
+	Status     bool    `json:"status"`      //交易状态，true交易成功 false交易失败
+	TradeNo    string  `json:"trade_no"`    //支付机构交易流水号
+	PaidAt     string  `json:"paid_at"`     //支付gmt时间
+	RmbFee     float64 `json:"rmb_fee"`     //人民币金额
+	EncryptRsp string  `json:"encrypt_rsp"` //返回的加密数据
+	DecryptRsp string  `json:"decrypt_rsp"` //返回的解密数据
 }
 
 func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp, errCode int, err error) {
@@ -89,14 +92,14 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 	var notifyQuery NotifyQuery
 	err = xml.Unmarshal([]byte(query), &notifyQuery)
 	if err != nil {
-		logrus.Errorf(NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
 	//解密支付机构参数
 	decryptBytes, err := notify.decryptArg(notifyQuery, arg.DesKey)
 	if err != nil {
-		logrus.Errorf(NotifyDecryptFailedErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyDecryptFailedErrCode, err.Error())
+		logrus.Errorf("org:jd,"+NotifyDecryptFailedErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyDecryptFailedErrCode, err.Error())
 		return notifyRsp, NotifyDecryptFailedErrCode, errors.New(NotifyDecryptFailedErrMessage)
 	}
 	notifyRsp.DecryptRsp = string(decryptBytes)
@@ -105,26 +108,26 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 	var notifyDecrypt NotifyDecrypt
 	err = xml.Unmarshal(decryptBytes, &notifyDecrypt)
 	if err != nil {
-		logrus.Errorf(NotifyDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyDecryptFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+NotifyDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyDecryptFormatErrCode, err.Error())
 		return notifyRsp, NotifyDecryptFormatErrCode, errors.New(NotifyDecryptFormatErrMessage)
 	}
 
 	//判断请求结果
 	if notifyDecrypt.Result.Code != NotifySuccessCode {
-		logrus.Errorf(NotifyStatusErrMessage+",query:%v,errCode:%v", query, NotifyStatusErrCode)
+		logrus.Errorf("org:jd,"+NotifyStatusErrMessage+",query:%v,errCode:%v", query, NotifyStatusErrCode)
 		return notifyRsp, NotifyStatusErrCode, errors.New(NotifyStatusErrMessage)
 	}
 	notifyRsp.OrderId = notifyDecrypt.TradeNum
 
 	//校验签名
 	if !notify.checkSign(decryptBytes, notifyDecrypt.Sign, arg.PublicKey) {
-		logrus.Errorf(NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
+		logrus.Errorf("org:jd,"+NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
 	//交易状态
 	if notifyDecrypt.Status != NotifySuccessStatus {
-		logrus.Errorf(NotifyStatusErrMessage+",query:%v,errCode:%v", query, NotifyStatusErrCode)
+		logrus.Errorf("org:jd,"+NotifyStatusErrMessage+",query:%v,errCode:%v", query, NotifyStatusErrCode)
 		return notifyRsp, NotifyStatusErrCode, errors.New(NotifyStatusErrMessage)
 	}
 	notifyRsp.Status = true
@@ -133,6 +136,12 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 		//若未返回交易流水号，使用请求交易时的订单号
 		notifyRsp.TradeNo = notifyDecrypt.TradeNum
 	}
+
+	//jd不返回支付成功时间，取当前异步通知时的服务器时间
+	notifyRsp.PaidAt = time.Now().UTC().Format(DateTimeFormatLayout)
+
+	//人民币金额
+	notifyRsp.RmbFee = float64(notifyDecrypt.Amount / 100)
 
 	return notifyRsp, 0, nil
 }

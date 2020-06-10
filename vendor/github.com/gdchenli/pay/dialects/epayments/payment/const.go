@@ -1,11 +1,12 @@
 package payment
 
 const (
-	KRW           = "KRW"    //韩币种符号
-	JPY           = "JPY"    //日币符号
-	SignTypeMD5   = "MD5"    //MD5加密方式
-	ChannelWechat = "WECHAT" //微信支付
-	ChannelAlipay = "ALIPAY" //支付宝支付
+	KRW                  = "KRW"    //韩币种符号
+	JPY                  = "JPY"    //日币符号
+	SignTypeMD5          = "MD5"    //MD5加密方式
+	ChannelWechat        = "WECHAT" //微信支付
+	ChannelAlipay        = "ALIPAY" //支付宝支付
+	DateTimeFormatLayout = "2006-01-02 15:04:05"
 )
 
 const (

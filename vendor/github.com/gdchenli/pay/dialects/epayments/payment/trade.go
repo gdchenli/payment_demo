@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
+	"time"
 
 	"github.com/gdchenli/pay/dialects/epayments/util"
 	"github.com/gdchenli/pay/pkg/curl"
@@ -43,11 +45,14 @@ type TradeArg struct {
 }
 
 type TradeRsp struct {
-	Status  string `json:"status"`   //交易状态
-	OrderId string `json:"order_id"` //订单号
-	TradeNo string `json:"trade_no"` //支付机构交易流水号
-	Res     string `json:"res"`
-	Rsp     string `json:"rsp"`
+	Status  string  `json:"status"`   //交易状态
+	OrderId string  `json:"order_id"` //订单号
+	TradeNo string  `json:"trade_no"` //支付机构交易流水号
+	PaidAt  string  `json:"paid_at"`  //支付gmt时间
+	RmbFee  float64 `json:"rmb_fee"`  //人民币金额
+	Rate    float64 `json:"rate"`     //汇率
+	Res     string  `json:"res"`
+	Rsp     string  `json:"rsp"`
 }
 
 func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err error) {
@@ -74,7 +79,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	rspMap := make(map[string]interface{})
 	err = json.Unmarshal(returnBytes, &rspMap)
 	if err != nil {
-		logrus.Errorf(SearchTradeResponseDataFormatErrMessage+",query:%v,errCode:%v,err:%v", sortString, SearchTradeResponseDataFormatErrCode, err.Error())
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", arg.IncrementId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 	tradeRsp.OrderId = arg.IncrementId
@@ -89,7 +94,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 		tradeRspMap[k] = fmt.Sprintf("%v", v)
 	}
 	if !trade.checkSign(tradeRspMap, arg.Md5Key, sign) {
-		logrus.Errorf(SearchTradeResponseDataSignErrMessage+",query:%v,errCode:%v", sortString, SearchTradeResponseDataSignErrCode)
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataSignErrMessage+",orderId:%v,query:%v,errCode:%v", arg.IncrementId, sortString, SearchTradeResponseDataSignErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
 
@@ -112,6 +117,35 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	case TradeRefund:
 		tradeRsp.Status = SearchTradeRefund
 	}
+
+	//支付时间
+	parseTime, err := time.Parse(DateTimeFormatLayout, tradeRspMap["gmt_payment"])
+	if err != nil {
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", arg.IncrementId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
+		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
+	}
+	tradeRsp.PaidAt = parseTime.UTC().Format(DateTimeFormatLayout)
+
+	//汇率
+	tradeRsp.Rate, err = strconv.ParseFloat(tradeRspMap["rate"], 64)
+	if err != nil {
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", arg.IncrementId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
+		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
+	}
+
+	//人民币金额
+	grandTotal, err := strconv.ParseFloat(tradeRspMap["grandtotal"], 64)
+	if err != nil {
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", arg.IncrementId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
+		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
+	}
+	rmbFee := grandTotal * tradeRsp.Rate
+	rmbFee, err = strconv.ParseFloat(fmt.Sprintf("%.2f", rmbFee), 64)
+	if err != nil {
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", arg.IncrementId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
+		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
+	}
+	tradeRsp.RmbFee = rmbFee
 
 	return tradeRsp, 0, nil
 }

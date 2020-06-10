@@ -5,6 +5,9 @@ import (
 	"errors"
 	"net/url"
 	"strconv"
+	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gdchenli/pay/dialects/alipay/util"
 	"github.com/gdchenli/pay/pkg/curl"
@@ -81,11 +84,13 @@ type TradeXml struct {
 }
 
 type TradeRsp struct {
-	Status  string `json:"status"`   //交易状态
-	OrderId string `json:"order_id"` //订单号
-	TradeNo string `json:"trade_no"` //支付机构交易流水号
-	Res     string `json:"res"`
-	Rsp     string `json:"rsp"`
+	Status  string  `json:"status"`   //交易状态
+	OrderId string  `json:"order_id"` //订单号
+	TradeNo string  `json:"trade_no"` //支付机构交易流水号
+	PaidAt  string  `json:"paid_at"`  //支付gmt时间
+	RmbFee  float64 `json:"rmb_fee"`  //人民币金额
+	Res     string  `json:"res"`
+	Rsp     string  `json:"rsp"`
 }
 
 func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err error) {
@@ -106,15 +111,18 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	tradeRsp.Res = values.Encode()
 	returnBytes, err := curl.GetJSONReturnByte(arg.TradeWay + "?" + values.Encode())
 	if err != nil {
+		logrus.Errorf("org:alipay,"+SearchTradeNetErrMessage+",order id %v,errCode:%v,err:%v", arg.OutTradeNo, SearchTradeNetErrCode, err.Error())
 		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
 	}
 	tradeRsp.Rsp = string(returnBytes)
 
 	var searchResult SearchResult
 	if err = xml.Unmarshal(returnBytes, &searchResult); err != nil {
+		logrus.Errorf("org:alipay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.OutTradeNo, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 	if !trade.checkSign(searchResult, arg.Md5Key) {
+		logrus.Errorf("org:alipay,"+SearchTradeResponseDataSignErrMessage+",order id %v,errCode:%v", arg.OutTradeNo, SearchTradeResponseDataSignErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
 
@@ -130,6 +138,19 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 		tradeRsp.Status = SearchTradeClosed
 	}
 	tradeRsp.TradeNo = searchResult.Response.TradeXml.TradeNo
+
+	parseTime, err := time.Parse(DateTimeFormatLayout, searchResult.Response.TradeXml.GmtPayment)
+	if err != nil {
+		logrus.Errorf("org:alipay,"+SearchTradeNetErrMessage+",order id %v,errCode:%v,err:%v", arg.OutTradeNo, SearchTradeNetErrCode, err.Error())
+		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
+	}
+	tradeRsp.PaidAt = parseTime.UTC().Format(DateTimeFormatLayout)
+
+	tradeRsp.RmbFee, err = strconv.ParseFloat(searchResult.Response.TradeXml.TotalFee, 64)
+	if err != nil {
+		logrus.Errorf("org:alipay,"+SearchTradeNetErrMessage+",order id %v,errCode:%v,err:%v", arg.OutTradeNo, SearchTradeNetErrCode, err.Error())
+		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
+	}
 
 	return tradeRsp, 0, nil
 }

@@ -2,8 +2,9 @@ package payment
 
 import (
 	"encoding/json"
-	"github.com/gdchenli/pay/dialects/alipay/util"
 	"strconv"
+
+	"github.com/gdchenli/pay/dialects/alipay/util"
 )
 
 const (
@@ -46,7 +47,7 @@ type TradeInformation struct {
 	TotalQuantity int    `json:"total_quantity"`
 }
 
-func (payment *Payment) getParamMap(arg PayArg) (paramMap map[string]string, errCode int, err error) {
+func (payment *Payment) getParamMap(arg PayArg) (paramMap map[string]string) {
 	paramMap = map[string]string{
 		"service":           payment.getServiceType(arg.UserAgentType),
 		"partner":           arg.Merchant,
@@ -82,23 +83,17 @@ func (payment *Payment) getParamMap(arg PayArg) (paramMap map[string]string, err
 	paramMap["sign"] = util.Md5(payString + arg.Md5Key)
 	paramMap["sign_type"] = SignTypeMD5
 
-	return paramMap, 0, nil
+	return paramMap
 }
 
 func (payment *Payment) CreateAmpPayStr(arg PayArg) (payString string, errCode int, err error) {
-	paramMap, errCode, err := payment.getParamMap(arg)
-	if err != nil {
-		return payString, errCode, err
-	}
+	paramMap := payment.getParamMap(arg)
 
 	return util.GetSortString(paramMap), 0, nil
 }
 
 func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
-	paramMap, errCode, err := payment.getParamMap(arg)
-	if err != nil {
-		return form, errCode, err
-	}
+	paramMap := payment.getParamMap(arg)
 
 	//生成form表单
 	form = payment.buildForm(paramMap, arg.GateWay)

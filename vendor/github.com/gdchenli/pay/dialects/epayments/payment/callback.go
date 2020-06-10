@@ -22,7 +22,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
-		logrus.Errorf(NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
+		logrus.Errorf("org:epayments,"+NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
 		return callbackRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
@@ -38,7 +38,7 @@ func (callback *Callback) Validate(query, md5Key string) (callbackRsp CallbackRs
 	}
 
 	if !callback.checkSign(queryMap, md5Key, sign) {
-		logrus.Errorf(NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
+		logrus.Errorf("org:epayments,"+NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return callbackRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
