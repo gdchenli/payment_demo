@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"payment_demo/app/cashier"
+	"payment_demo/controller/cashier"
 	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/log"
 	"payment_demo/pkg/ginprometheus"
