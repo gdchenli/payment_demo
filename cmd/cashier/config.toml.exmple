@@ -63,12 +63,10 @@ timeout="3h"
 front_url="http://localhost:8090/payment/verify/allpay/alipay_payment"
 # 异步通知地址
 back_url="http://localhost:8090/payment/notify/allpay/alipay_payment"
-# 发起支付网关地址
-pay_way="https://api.allpayx.com/api/unifiedorder"
-# 查询交易网关地址
-trade_way="https://api.allpayx.com/api/orderquery"
+# 发起支付网\查询交易关地址
+gate_way="https://api.allpayx.com"
 # 查询汇率网关地址
-sapi_way="https://sapi.allpayx.com/sapi/v1/get_exchange_rate"
+sapi_way="https://sapi.allpayx.com"
 
 [alipay]
 # alipay商户Id

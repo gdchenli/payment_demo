@@ -19,9 +19,8 @@ const (
 	AllpayMerchant = "allpay.merchant"
 	AllpayAcqId    = "allpay.acq_id"
 	AllpayMd5Key   = "allpay.md5_key"
-	AllpayPayWay   = "allpay.pay_way"
+	AllpayGateWay  = "allpay.gate_way"
 	AllpayTimeout  = "allpay.timeout"
-	AllpayTradeWay = "allpay.trade_way"
 	AllpaySapiWay  = "allpay.sapi_way"
 )
 
@@ -186,11 +185,11 @@ func (allpay *Allpay) getTradeFrom(methodCode string, userAgentType int) string 
 func (allpay *Allpay) getPayWay(userAgentType int) string {
 	switch userAgentType {
 	case 1:
-		return config.GetInstance().GetString(AllpayPayWay)
+		return config.GetInstance().GetString(AllpayGateWay)
 	case 2:
-		return config.GetInstance().GetString(AllpayPayWay)
+		return config.GetInstance().GetString(AllpayGateWay)
 	}
-	return config.GetInstance().GetString(AllpayPayWay)
+	return config.GetInstance().GetString(AllpayGateWay)
 }
 
 func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
@@ -290,7 +289,7 @@ func (allpay *Allpay) Trade(orderId, methodCode, currency string, totalFee float
 		return tradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
-	tradeGateWay := config.GetInstance().GetString(AllpayTradeWay)
+	tradeGateWay := config.GetInstance().GetString(AllpayGateWay)
 	if tradeGateWay == "" {
 		logrus.Errorf("org:allpay,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
 		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
