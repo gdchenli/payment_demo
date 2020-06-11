@@ -101,26 +101,17 @@ func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode 
 	return payArg, 0, nil
 }
 
-func (alipay *Alipay) AmpSubmit(arg defs.Order) (form string, errCode int, err error) {
+func (alipay *Alipay) Pay(arg defs.Order) (form string, errCode int, err error) {
 	payArg, errCode, err := alipay.getPayArg(arg)
 	if err != nil {
 		return form, errCode, err
 	}
 
-	return new(payment.Payment).CreateAmpPayStr(payArg)
-}
-
-func (alipay *Alipay) OrderSubmit(arg defs.Order) (form string, errCode int, err error) {
-	payArg, errCode, err := alipay.getPayArg(arg)
-	if err != nil {
-		return form, errCode, err
+	if arg.UserAgentType == code.AlipayMiniProgramUserAgentType {
+		return new(payment.Payment).CreateAmpPayStr(payArg)
+	} else {
+		return new(payment.Payment).CreateForm(payArg)
 	}
-	form, errCode, err = new(payment.Payment).CreateForm(payArg)
-	if err != nil {
-		return form, errCode, err
-	}
-
-	return form, 0, nil
 }
 
 func (alipay *Alipay) getUserAgentType(userAgentType int) string {

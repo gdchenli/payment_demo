@@ -123,32 +123,17 @@ func (allpay *Allpay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode 
 	return payArg, 0, nil
 }
 
-func (allpay *Allpay) OrderSubmit(arg defs.Order) (form string, errCode int, err error) {
+func (allpay *Allpay) Pay(arg defs.Order) (form string, errCode int, err error) {
 	payArg, errCode, err := allpay.getPayArg(arg)
 	if err != nil {
 		return form, errCode, err
 	}
 
-	form, errCode, err = new(payment.Payment).CreateForm(payArg)
-	if err != nil {
-		return form, errCode, err
+	if arg.UserAgentType == code.AlipayMiniProgramUserAgentType {
+		return new(payment.Payment).CreateAmpPayStr(payArg)
+	} else {
+		return new(payment.Payment).CreateForm(payArg)
 	}
-
-	return form, 0, nil
-}
-
-func (allpay *Allpay) AmpSubmit(arg defs.Order) (payStr string, errCode int, err error) {
-	payArg, errCode, err := allpay.getPayArg(arg)
-	if err != nil {
-		return payStr, errCode, err
-	}
-
-	payStr, errCode, err = new(payment.Payment).CreateAmpPayStr(payArg)
-	if err != nil {
-		return payStr, errCode, err
-	}
-
-	return payStr, 0, nil
 }
 
 func (allpay *Allpay) getPaymentSchema(methodCode string) (string, int, error) {

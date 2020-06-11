@@ -22,11 +22,6 @@ const (
 
 type Epayments struct{}
 
-func (e *Epayments) AmpSubmit(arg defs.Order) (form string, errCode int, err error) {
-	logrus.Errorf("org:jd,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
-	return "", 0, nil
-}
-
 func (e *Epayments) getPayArg(order defs.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(EpaymentsMerchant)
 	if merchant == "" {
@@ -84,21 +79,17 @@ func (e *Epayments) getPayArg(order defs.Order) (payArg payment.PayArg, errCode 
 	return payArg, 0, nil
 }
 
-func (e *Epayments) OrderSubmit(order defs.Order) (form string, errCode int, err error) {
-	payArg, errCode, err := e.getPayArg(order)
-	if err != nil {
-		return form, errCode, err
-	}
-	return new(payment.Payment).CreateForm(payArg)
-}
-
-func (e *Epayments) OrderQrCode(order defs.Order) (form string, errCode int, err error) {
+func (e *Epayments) Pay(order defs.Order) (form string, errCode int, err error) {
 	payArg, errCode, err := e.getPayArg(order)
 	if err != nil {
 		return form, errCode, err
 	}
 
-	return new(payment.Payment).CreateQrCode(payArg)
+	if order.UserAgentType == code.MobileUserAgentType {
+		return new(payment.Payment).CreateQrCode(payArg)
+	} else {
+		return new(payment.Payment).CreateForm(payArg)
+	}
 }
 
 //获取支付通道

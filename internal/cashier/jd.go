@@ -35,18 +35,8 @@ const (
 
 type Jd struct{}
 
-func (jd *Jd) OrderQrCode(arg defs.Order) (form string, errCode int, err error) {
-	logrus.Errorf("org:jd,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
-	return "", 0, nil
-}
-
-func (jd *Jd) AmpSubmit(arg defs.Order) (form string, errCode int, err error) {
-	logrus.Errorf("org:jd,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
-	return "", 0, nil
-}
-
 //发起支付
-func (jd *Jd) OrderSubmit(arg defs.Order) (form string, errCode int, err error) {
+func (jd *Jd) Pay(arg defs.Order) (form string, errCode int, err error) {
 	//金额转为分
 	totalFee := arg.TotalFee * 100
 	//金额字段类型转换

@@ -2,7 +2,6 @@ package cashier
 
 import (
 	"net/http"
-	"payment_demo/internal/cashier"
 	"payment_demo/internal/common/defs"
 
 	"github.com/gin-gonic/gin"
@@ -20,26 +19,21 @@ func (trade *Trade) Router(router *gin.Engine) {
 }
 
 func (trade *Trade) search(ctx *gin.Context) {
-	var errCode int
-	var err error
-	var tradeRsp defs.TradeRsp
-
 	t := new(defs.Trade)
 	ctx.ShouldBind(t)
 
-	if errCode, err = t.Validate(); err != nil {
+	if errCode, err := t.Validate(); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	org := ctx.Query("org_code")
-	payMethod := getPayMethod(org)
-	if payMethod == nil {
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
+	tradeHandle := getTradeHandler(ctx.Query("org_code"))
+	if tradeHandle == nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
 		return
 	}
 
-	tradeRsp, errCode, err = payMethod.Trade(t.OrderId, t.MethodCode, t.Currency, t.TotalFee)
+	tradeRsp, errCode, err := tradeHandle(t.OrderId, t.MethodCode, t.Currency, t.TotalFee)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
@@ -61,23 +55,17 @@ func (trade *Trade) closed(ctx *gin.Context) {
 		return
 	}
 
-	org := ctx.Query("org_code")
-
-	payMethod := getPayMethod(org)
-	if payMethod == nil {
+	closeHandle := getClosedHandler(ctx.Query("org_code"))
+	if closeHandle == nil {
 		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
 		return
 	}
 
-	closedRsp, errCode, err = payMethod.Closed(*closed)
+	closedRsp, errCode, err = closeHandle(*closed)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, closedRsp)
-}
-
-func (trade *Trade) jdClosed(closed defs.Closed) (closedRsp defs.ClosedRsp, errCode int, err error) {
-	return new(cashier.Jd).Closed(closed)
 }

@@ -26,89 +26,27 @@ type Pay struct{}
 func (pay *Pay) Router(router *gin.Engine) {
 	r := router.Group("/payment")
 	{
-		r.POST("/order/submit", pay.orderSubmit) //发起支付
-		r.POST("/amp/submit", pay.ampSubmit)     //支付宝小程序，支付参数
-		r.POST("/order/qrcode", pay.qrCode)      //二维码
+		r.POST("/order/pay", pay.Pay) //发起支付
 	}
-}
-
-func (pay *Pay) qrCode(ctx *gin.Context) {
-	var errCode int
-	var err error
-	var payStr string
-	order := new(defs.Order)
-	ctx.ShouldBind(order)
-	order.UserAgentType = 7
-
-	if errCode, err = order.Validate(); err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
-		return
-	}
-
-	payMethod := getPayMethod(order.OrgCode)
-	if payMethod == nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
-		return
-	}
-	payStr, errCode, err = payMethod.OrderQrCode(*order)
-
-	if errCode, err = order.Validate(); err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": payStr})
 }
 
 //发起支付
-func (pay *Pay) ampSubmit(ctx *gin.Context) {
-	var errCode int
-	var err error
-	var payStr string
+func (pay *Pay) Pay(ctx *gin.Context) {
 	order := new(defs.Order)
 	ctx.ShouldBind(order)
-	order.UserAgentType = 7
 
-	if errCode, err = order.Validate(); err != nil {
+	if errCode, err := order.Validate(); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	payMethod := getPayMethod(order.OrgCode)
-	if payMethod == nil {
+	payHandle := getPayHandler(order.OrgCode)
+	if payHandle == nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
 		return
 	}
 
-	payStr, errCode, err = payMethod.AmpSubmit(*order)
-	if errCode, err = order.Validate(); err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": payStr})
-}
-
-//发起支付
-func (pay *Pay) orderSubmit(ctx *gin.Context) {
-	var errCode int
-	var err error
-	var form string
-	order := new(defs.Order)
-	ctx.ShouldBind(order)
-
-	if errCode, err = order.Validate(); err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
-		return
-	}
-
-	payMethod := getPayMethod(order.OrgCode)
-	if payMethod == nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
-		return
-	}
-
-	form, errCode, err = payMethod.OrderSubmit(*order)
+	form, errCode, err := payHandle(*order)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
