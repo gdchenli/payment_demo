@@ -15,12 +15,6 @@ const (
 	AlipayOrg    = "alipay"
 )
 
-const (
-	NotSupportPaymentOrgCode = "10101"
-	NotSupportPaymentOrgMsg  = "不支持该支付机构"
-	NotifyFailMsg            = "fail"
-)
-
 type Pay struct{}
 
 func (pay *Pay) Router(router *gin.Engine) {
