@@ -1,10 +1,10 @@
-package cashier
+package service
 
 import (
 	"errors"
 	"payment_demo/internal/common/code"
-	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/defs"
+	"payment_demo/internal/config"
 
 	"github.com/gdchenli/pay/dialects/alipay/payment"
 	"github.com/sirupsen/logrus"
@@ -24,17 +24,6 @@ const (
 	AlipayPayWay        = "alipay.pay_way"
 	AlipayTransCurrency = "alipay.trans_currency"
 )
-
-func (alipay *Alipay) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, err error) {
-	logrus.Errorf("org:alipay,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
-	closedRsp.Status = true
-	return closedRsp, 0, nil
-}
-
-func (alipay *Alipay) OrderQrCode(arg defs.Order) (form string, errCode int, err error) {
-	logrus.Errorf("org:jd,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
-	return "", 0, nil
-}
 
 func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AlipayMerchant)
@@ -169,7 +158,7 @@ func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp
 	return notifyRsp, 0, nil
 }
 
-func (alipay *Alipay) Callback(query, methodCode string) (callbackRsp defs.CallbackRsp, errCode int, err error) {
+func (alipay *Alipay) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp, errCode int, err error) {
 	var alipayCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -180,21 +169,21 @@ func (alipay *Alipay) Callback(query, methodCode string) (callbackRsp defs.Callb
 	md5key := config.GetInstance().GetString(AlipayMd5Key)
 	if md5key == "" {
 		logrus.Errorf("org:alipay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
-		return callbackRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+		return verifyRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	alipayCallbackRsp, errCode, err = new(payment.Callback).Validate(query, md5key)
 	if err != nil {
-		return callbackRsp, errCode, err
+		return verifyRsp, errCode, err
 	}
 
-	callbackRsp.Status = alipayCallbackRsp.Status
-	callbackRsp.OrderId = alipayCallbackRsp.OrderId
+	verifyRsp.Status = alipayCallbackRsp.Status
+	verifyRsp.OrderId = alipayCallbackRsp.OrderId
 
-	return callbackRsp, 0, nil
+	return verifyRsp, 0, nil
 }
 
-func (alipay *Alipay) Trade(orderId, methodCode, currency string, totalFee float64) (tradeRsp defs.TradeRsp, errCode int, err error) {
+func (alipay *Alipay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (tradeSearchRsp defs.SearchRsp, errCode int, err error) {
 	var alipayTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -205,18 +194,18 @@ func (alipay *Alipay) Trade(orderId, methodCode, currency string, totalFee float
 	merchant := config.GetInstance().GetString(AlipayMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:alipay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
-		return tradeRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+		return tradeSearchRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 	md5key := config.GetInstance().GetString(AlipayMd5Key)
 	if md5key == "" {
 		logrus.Errorf("org:alipay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
-		return tradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+		return tradeSearchRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	gateWay := config.GetInstance().GetString(AlipayGateWay)
 	if gateWay == "" {
 		logrus.Errorf("org:alipay,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
-		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+		return tradeSearchRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 
 	tradeArg := payment.TradeArg{
@@ -228,13 +217,13 @@ func (alipay *Alipay) Trade(orderId, methodCode, currency string, totalFee float
 	}
 	alipayTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
 	if err != nil {
-		return tradeRsp, 0, nil
+		return tradeSearchRsp, 0, nil
 	}
-	tradeRsp.Status = alipayTradeRsp.Status
-	tradeRsp.OrderId = alipayTradeRsp.OrderId
-	tradeRsp.TradeNo = alipayTradeRsp.TradeNo
-	tradeRsp.Rate = alipayTradeRsp.Rate
-	tradeRsp.RmbFee = alipayTradeRsp.RmbFee
+	tradeSearchRsp.Status = alipayTradeRsp.Status
+	tradeSearchRsp.OrderId = alipayTradeRsp.OrderId
+	tradeSearchRsp.TradeNo = alipayTradeRsp.TradeNo
+	tradeSearchRsp.Rate = alipayTradeRsp.Rate
+	tradeSearchRsp.RmbFee = alipayTradeRsp.RmbFee
 
-	return tradeRsp, 0, nil
+	return tradeSearchRsp, 0, nil
 }

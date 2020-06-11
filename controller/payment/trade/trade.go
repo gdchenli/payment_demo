@@ -1,7 +1,8 @@
-package cashier
+package trade
 
 import (
 	"net/http"
+	"payment_demo/controller/payment/common"
 	"payment_demo/internal/common/defs"
 
 	"github.com/gin-gonic/gin"
@@ -13,13 +14,13 @@ type Trade struct{}
 func (trade *Trade) Router(router *gin.Engine) {
 	r := router.Group("/payment")
 	{
-		r.GET("/trade", trade.search)  //交易查询
-		r.GET("/closed", trade.closed) //关闭交易
+		r.GET("/trade/search", trade.search) //交易查询
+		r.GET("/trade/close", trade.close)   //关闭交易
 	}
 }
 
 func (trade *Trade) search(ctx *gin.Context) {
-	t := new(defs.Trade)
+	t := new(SearchReq)
 	ctx.ShouldBind(t)
 
 	if errCode, err := t.Validate(); err != nil {
@@ -27,9 +28,9 @@ func (trade *Trade) search(ctx *gin.Context) {
 		return
 	}
 
-	tradeHandle := getTradeHandler(ctx.Query("org_code"))
+	tradeHandle := common.GetTradeHandler(ctx.Query("org_code"))
 	if tradeHandle == nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
+		ctx.JSON(http.StatusOK, gin.H{"code": common.NotSupportPaymentOrgCode, "message": common.NotSupportPaymentOrgMsg})
 		return
 	}
 
@@ -42,26 +43,29 @@ func (trade *Trade) search(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, tradeRsp)
 }
 
-func (trade *Trade) closed(ctx *gin.Context) {
-	var errCode int
-	var err error
-	var closedRsp defs.ClosedRsp
+func (trade *Trade) close(ctx *gin.Context) {
+	close := new(CloseReq)
+	ctx.ShouldBind(close)
 
-	closed := new(defs.Closed)
-	ctx.ShouldBind(closed)
-
-	if errCode, err = closed.Validate(); err != nil {
+	if errCode, err := close.Validate(); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	closeHandle := getClosedHandler(ctx.Query("org_code"))
+	closeHandle := common.GetCloseHandler(ctx.Query("org_cod"))
 	if closeHandle == nil {
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
+		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(common.NotSupportPaymentOrgMsg))
 		return
 	}
 
-	closedRsp, errCode, err = closeHandle(*closed)
+	closeReq := defs.CloseReq{
+		OrderId:    close.OrderId,
+		TotalFee:   close.TotalFee,
+		Currency:   close.Currency,
+		MethodCode: close.MethodCode,
+		OrgCode:    close.OrgCode,
+	}
+	closedRsp, errCode, err := closeHandle(closeReq)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return

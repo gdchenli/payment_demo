@@ -1,11 +1,11 @@
-package cashier
+package service
 
 import (
 	"errors"
 	"fmt"
 	"payment_demo/internal/common/code"
-	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/defs"
+	"payment_demo/internal/config"
 	"time"
 
 	"github.com/gdchenli/pay/dialects/allpay/payment"
@@ -35,17 +35,6 @@ const (
 )
 
 type Allpay struct{}
-
-func (allpay *Allpay) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, err error) {
-	logrus.Errorf("org:allpay,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
-	closedRsp.Status = true
-	return closedRsp, 0, nil
-}
-
-func (allpay *Allpay) OrderQrCode(arg defs.Order) (form string, errCode int, err error) {
-	logrus.Errorf("org:jd,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
-	return "", 0, nil
-}
 
 func (allpay *Allpay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AllpayMerchant)
@@ -223,7 +212,7 @@ func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp
 	return notifyRsp, 0, nil
 }
 
-func (allpay *Allpay) Callback(query, methodCode string) (callbackRsp defs.CallbackRsp, errCode int, err error) {
+func (allpay *Allpay) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp, errCode int, err error) {
 	var allpayCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -234,21 +223,21 @@ func (allpay *Allpay) Callback(query, methodCode string) (callbackRsp defs.Callb
 	md5key := config.GetInstance().GetString(AllpayMd5Key)
 	if md5key == "" {
 		logrus.Errorf("org:allpay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
-		return callbackRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+		return verifyRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	allpayCallbackRsp, errCode, err = new(payment.Callback).Validate(query, md5key)
 	if err != nil {
-		return callbackRsp, errCode, err
+		return verifyRsp, errCode, err
 	}
 
-	callbackRsp.Status = allpayCallbackRsp.Status
-	callbackRsp.OrderId = allpayCallbackRsp.OrderId
+	verifyRsp.Status = allpayCallbackRsp.Status
+	verifyRsp.OrderId = allpayCallbackRsp.OrderId
 
-	return callbackRsp, 0, nil
+	return verifyRsp, 0, nil
 }
 
-func (allpay *Allpay) Trade(orderId, methodCode, currency string, totalFee float64) (tradeRsp defs.TradeRsp, errCode int, err error) {
+func (allpay *Allpay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (tradeSearchRsp defs.SearchRsp, errCode int, err error) {
 	var allpayTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -259,36 +248,36 @@ func (allpay *Allpay) Trade(orderId, methodCode, currency string, totalFee float
 	merchant := config.GetInstance().GetString(AllpayMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:allpay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
-		return tradeRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+		return tradeSearchRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 
 	acqId := config.GetInstance().GetString(AllpayAcqId)
 	if acqId == "" {
 		logrus.Errorf("org:allpay,"+code.AcqIdNotExistsErrMessage+",errCode:%v,err:%v", code.AcqIdNotExistsErrCode)
-		return tradeRsp, code.AcqIdNotExistsErrCode, errors.New(code.AcqIdNotExistsErrMessage)
+		return tradeSearchRsp, code.AcqIdNotExistsErrCode, errors.New(code.AcqIdNotExistsErrMessage)
 	}
 
 	md5key := config.GetInstance().GetString(AllpayMd5Key)
 	if md5key == "" {
 		logrus.Errorf("org:allpay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
-		return tradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+		return tradeSearchRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	tradeGateWay := config.GetInstance().GetString(AllpayGateWay)
 	if tradeGateWay == "" {
 		logrus.Errorf("org:allpay,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
-		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+		return tradeSearchRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 
 	sapiGateWay := config.GetInstance().GetString(AllpaySapiWay)
 	if sapiGateWay == "" {
 		logrus.Errorf("org:allpay,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
-		return tradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+		return tradeSearchRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 
 	paymentSchema, errCode, err := allpay.getPaymentSchema(methodCode)
 	if err != nil {
-		return tradeRsp, errCode, err
+		return tradeSearchRsp, errCode, err
 	}
 
 	tradeArg := payment.TradeArg{
@@ -304,13 +293,13 @@ func (allpay *Allpay) Trade(orderId, methodCode, currency string, totalFee float
 	}
 	allpayTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
 	if err != nil {
-		return tradeRsp, errCode, err
+		return tradeSearchRsp, errCode, err
 	}
-	tradeRsp.OrderId = allpayTradeRsp.OrderId
-	tradeRsp.TradeNo = allpayTradeRsp.TradeNo
-	tradeRsp.Status = allpayTradeRsp.Status
-	tradeRsp.Rate = allpayTradeRsp.Rate
-	tradeRsp.RmbFee = allpayTradeRsp.RmbFee
+	tradeSearchRsp.OrderId = allpayTradeRsp.OrderId
+	tradeSearchRsp.TradeNo = allpayTradeRsp.TradeNo
+	tradeSearchRsp.Status = allpayTradeRsp.Status
+	tradeSearchRsp.Rate = allpayTradeRsp.Rate
+	tradeSearchRsp.RmbFee = allpayTradeRsp.RmbFee
 
-	return tradeRsp, 0, nil
+	return tradeSearchRsp, 0, nil
 }

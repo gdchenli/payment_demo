@@ -1,4 +1,4 @@
-package cashier
+package service
 
 import (
 	"errors"
@@ -7,8 +7,8 @@ import (
 	"os"
 	"path"
 	"payment_demo/internal/common/code"
-	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/defs"
+	"payment_demo/internal/config"
 	"strconv"
 	"time"
 
@@ -182,7 +182,7 @@ func (jd *Jd) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCod
 }
 
 //同步通知
-func (jd *Jd) Callback(query, methodCode string) (callbackRsp defs.CallbackRsp, errCode int, err error) {
+func (jd *Jd) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp, errCode int, err error) {
 	var jdCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -194,12 +194,12 @@ func (jd *Jd) Callback(query, methodCode string) (callbackRsp defs.CallbackRsp, 
 	file, err := os.Open(publicKeyPath)
 	if err != nil {
 		logrus.Errorf("org:jd,"+code.PublicKeyNotExistsErrMessage+",errCode:%v,err:%v", code.PublicKeyNotExistsErrCode, err.Error())
-		return callbackRsp, code.PublicKeyNotExistsErrCode, errors.New(code.PublicKeyNotExistsErrMessage)
+		return verifyRsp, code.PublicKeyNotExistsErrCode, errors.New(code.PublicKeyNotExistsErrMessage)
 	}
 	publicKeyBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		logrus.Errorf("org:jd,"+code.PublicKeyContentErrMessage+",errCode:%v,err:%v", code.PublicKeyContentErrCode, err.Error())
-		return callbackRsp, code.PublicKeyContentErrCode, errors.New(code.PublicKeyContentErrMessage)
+		return verifyRsp, code.PublicKeyContentErrCode, errors.New(code.PublicKeyContentErrMessage)
 	}
 	publicKey := string(publicKeyBytes)
 
@@ -209,17 +209,17 @@ func (jd *Jd) Callback(query, methodCode string) (callbackRsp defs.CallbackRsp, 
 	}
 	jdCallbackRsp, errCode, err = new(payment.Callback).Validate(query, callbackArg)
 	if err != nil {
-		return callbackRsp, errCode, err
+		return verifyRsp, errCode, err
 	}
 
-	callbackRsp.Status = jdCallbackRsp.Status
-	callbackRsp.OrderId = jdCallbackRsp.OrderId
+	verifyRsp.Status = jdCallbackRsp.Status
+	verifyRsp.OrderId = jdCallbackRsp.OrderId
 
-	return callbackRsp, 0, err
+	return verifyRsp, 0, err
 }
 
 //查询交易
-func (jd *Jd) Trade(orderId, methodCode, currency string, totalFee float64) (tradeRsp defs.TradeRsp, errCode int, err error) {
+func (jd *Jd) SearchTrade(orderId, methodCode, currency string, totalFee float64) (tradeRsp defs.SearchRsp, errCode int, err error) {
 	var jdTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -296,7 +296,7 @@ func (jd *Jd) Trade(orderId, methodCode, currency string, totalFee float64) (tra
 }
 
 //关闭交易
-func (jd *Jd) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, err error) {
+func (jd *Jd) CloseTrade(arg defs.CloseReq) (tradeClosedRsp defs.CloseRsp, errCode int, err error) {
 	var jdClosedRsp payment.ClosedRsp
 	defer func() {
 		//记录日志
@@ -311,19 +311,19 @@ func (jd *Jd) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, er
 	amount, err := strconv.ParseInt(fmt.Sprintf("%.f", totalFee), 10, 64)
 	if err != nil {
 		logrus.Errorf("org:jd,"+code.AmountFormatErrMessage+",errCode:%v,err:%v", code.AmountFormatErrCode, err.Error())
-		return closedRsp, code.AmountFormatErrCode, errors.New(code.AmountFormatErrMessage)
+		return tradeClosedRsp, code.AmountFormatErrCode, errors.New(code.AmountFormatErrMessage)
 	}
 
 	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPrivateKey))
 	privateFile, err := os.Open(privateKeyPath)
 	if err != nil {
 		logrus.Errorf("org:jd,"+code.PrivateKeyNotExistsErrMessage+",errCode:%v,err:%v", code.PrivateKeyNotExistsErrCode, err.Error())
-		return closedRsp, code.PrivateKeyNotExistsErrCode, errors.New(code.PrivateKeyNotExistsErrMessage)
+		return tradeClosedRsp, code.PrivateKeyNotExistsErrCode, errors.New(code.PrivateKeyNotExistsErrMessage)
 	}
 	privateKeyBytes, err := ioutil.ReadAll(privateFile)
 	if err != nil {
 		logrus.Errorf("org:jd,"+code.PrivateKeyContentErrMessage+",errCode:%v,err:%v", code.PrivateKeyContentErrCode, err.Error())
-		return closedRsp, code.PrivateKeyContentErrCode, errors.New(code.PrivateKeyContentErrMessage)
+		return tradeClosedRsp, code.PrivateKeyContentErrCode, errors.New(code.PrivateKeyContentErrMessage)
 	}
 	privateKey := string(privateKeyBytes)
 
@@ -331,31 +331,31 @@ func (jd *Jd) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, er
 	file, err := os.Open(publicKeyPath)
 	if err != nil {
 		logrus.Errorf("org:jd,"+code.PublicKeyNotExistsErrMessage+",errCode:%v,err:%v", code.PublicKeyNotExistsErrCode, err.Error())
-		return closedRsp, code.PublicKeyNotExistsErrCode, errors.New(code.PublicKeyNotExistsErrMessage)
+		return tradeClosedRsp, code.PublicKeyNotExistsErrCode, errors.New(code.PublicKeyNotExistsErrMessage)
 	}
 	publicKeyBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		logrus.Errorf("org:jd,"+code.PublicKeyContentErrMessage+",errCode:%v,err:%v", code.PublicKeyContentErrCode, err.Error())
-		return closedRsp, code.PublicKeyContentErrCode, errors.New(code.PublicKeyContentErrMessage)
+		return tradeClosedRsp, code.PublicKeyContentErrCode, errors.New(code.PublicKeyContentErrMessage)
 	}
 	publicKey := string(publicKeyBytes)
 
 	merchant := config.GetInstance().GetString(JdMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:jd,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
-		return closedRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+		return tradeClosedRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 
 	desKey := config.GetInstance().GetString(JdDesKey)
 	if desKey == "" {
 		logrus.Errorf("org:jd,"+code.DesKeyNotExistsErrMessage+",errCode:%v,err:%v", code.DesKeyNotExistsErrCode)
-		return closedRsp, code.DesKeyNotExistsErrCode, errors.New(code.DesKeyNotExistsErrMessage)
+		return tradeClosedRsp, code.DesKeyNotExistsErrCode, errors.New(code.DesKeyNotExistsErrMessage)
 	}
 
 	gateWay := config.GetInstance().GetString(JdClosedWay)
 	if gateWay == "" {
 		logrus.Errorf("org:jd,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
-		return closedRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+		return tradeClosedRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 
 	closedArg := payment.ClosedArg{
@@ -371,23 +371,17 @@ func (jd *Jd) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, er
 	}
 	jdClosedRsp, errCode, err = new(payment.Closed).Trade(closedArg)
 	if err != nil {
-		return closedRsp, errCode, err
+		return tradeClosedRsp, errCode, err
 	}
 
-	closedRsp.OrderId = jdClosedRsp.OrderId
-	closedRsp.Status = jdClosedRsp.Status
+	tradeClosedRsp.OrderId = jdClosedRsp.OrderId
+	tradeClosedRsp.Status = jdClosedRsp.Status
 
-	return closedRsp, 0, nil
-}
-
-type JdLogisticsArg struct {
-	OrderId          string `json:"order_id"`          //订单编号
-	LogisticsNo      string `json:"logistics_no"`      //物流单号
-	LogisticsCompany string `json:"logistics_company"` //物流公司名称
+	return tradeClosedRsp, 0, nil
 }
 
 //物流信息上传
-func (jd *Jd) LogisticsUpload(arg JdLogisticsArg) (logisticsRsp defs.LogisticsRsp, errCode int, err error) {
+func (jd *Jd) UploadLogistics(arg defs.LogisticsReq) (logisticsRsp defs.LogisticsRsp, errCode int, err error) {
 	var jdLogisticsRsp payment.LogisticsRsp
 	defer func() {
 		//记录日志

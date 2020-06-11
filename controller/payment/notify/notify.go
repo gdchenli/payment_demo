@@ -1,8 +1,9 @@
-package cashier
+package notify
 
 import (
 	"io/ioutil"
 	"net/http"
+	"payment_demo/controller/payment/common"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +20,7 @@ func (notify *Notify) Router(router *gin.Engine) {
 func (notify *Notify) notify(ctx *gin.Context) {
 	notifyBytes, err := ioutil.ReadAll(ctx.Request.Body)
 	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": err.Error()})
+		ctx.JSON(http.StatusOK, gin.H{"code": common.NotSupportPaymentOrgCode, "message": err.Error()})
 		return
 	}
 	defer func() {
@@ -27,9 +28,9 @@ func (notify *Notify) notify(ctx *gin.Context) {
 	}()
 	query := string(notifyBytes)
 
-	notifyHandle := getNotifyHandler(ctx.Param("org"))
+	notifyHandle := common.GetNotifyHandler(ctx.Param("org"))
 	if notifyHandle == nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
+		ctx.JSON(http.StatusOK, gin.H{"code": common.NotSupportPaymentOrgCode, "message": common.NotSupportPaymentOrgMsg})
 		return
 	}
 
