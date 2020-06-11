@@ -21,19 +21,19 @@ func (logistics *Logistics) upload(ctx *gin.Context) {
 	l := new(Req)
 	ctx.ShouldBind(l)
 
-	logisticsHandle := common.GetLogisticsHandler(l.OrgCode)
-	if logisticsHandle == nil {
+	uploadLogisticsHandle := common.GetUploadLogisticsHandler(l.OrgCode)
+	if uploadLogisticsHandle == nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": common.NotSupportPaymentOrgCode, "message": common.NotSupportPaymentOrgMsg})
 		return
 	}
 
-	req := defs.LogisticsReq{
+	req := defs.UploadLogisticsReq{
 		OrderId:          l.OrderId,
 		LogisticsNo:      l.LogisticsNo,
 		LogisticsCompany: l.LogisticsCompany,
 		OrgCode:          l.OrgCode,
 	}
-	logisticsRsp, errCode, err := logisticsHandle(req)
+	logisticsRsp, errCode, err := uploadLogisticsHandle(req)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return

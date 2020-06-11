@@ -5,19 +5,19 @@ import (
 	"payment_demo/internal/service"
 )
 
-type PayChain func(defs.Order) (string, int, error)                                      //发起支付
-type NotifyChain func(string, string) (defs.NotifyRsp, int, error)                       //异步通知
-type VerifyChain func(string, string) (defs.VerifyRsp, int, error)                       //同步通知
-type SearchTradeChain func(string, string, string, float64) (defs.SearchRsp, int, error) //交易查询
-type CloseTradeChain func(defs.CloseReq) (defs.CloseRsp, int, error)                     //关闭交易
-type LogisticsChain func(defs.LogisticsReq) (defs.LogisticsRsp, int, error)              //上传物流
+type PayChain func(defs.Order) (string, int, error)                                           //发起支付
+type NotifyChain func(string, string) (defs.NotifyRsp, int, error)                            //异步通知
+type VerifyChain func(string, string) (defs.VerifyRsp, int, error)                            //同步通知
+type SearchTradeChain func(string, string, string, float64) (defs.SearchTradeRsp, int, error) //交易查询
+type CloseTradeChain func(defs.CloseTradeReq) (defs.CloseTradeRsp, int, error)                //关闭交易
+type UploadLogisticsChain func(defs.UploadLogisticsReq) (defs.UploadLogisticsRsp, int, error) //上传物流
 
 var payMap map[string]PayChain
 var notifyMap map[string]NotifyChain
 var verifyMap map[string]VerifyChain
 var searchTradeMap map[string]SearchTradeChain
 var closeTradeMap map[string]CloseTradeChain
-var logisticsMap map[string]LogisticsChain
+var uploadLogisticsMap map[string]UploadLogisticsChain
 
 func init() {
 	payMap = map[string]PayChain{
@@ -53,7 +53,7 @@ func init() {
 		EpaymentsOrg: new(service.Epayments).CloseTrade,
 	}
 
-	logisticsMap = map[string]LogisticsChain{
+	uploadLogisticsMap = map[string]UploadLogisticsChain{
 		JdOrg: new(service.Jd).UploadLogistics,
 	}
 }
@@ -78,6 +78,6 @@ func GetCloseTradeHandler(org string) CloseTradeChain {
 	return closeTradeMap[org]
 }
 
-func GetLogisticsHandler(org string) LogisticsChain {
-	return logisticsMap[org]
+func GetUploadLogisticsHandler(org string) UploadLogisticsChain {
+	return uploadLogisticsMap[org]
 }

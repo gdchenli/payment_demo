@@ -155,7 +155,7 @@ func (e *Epayments) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp, 
 	return verifyRsp, 0, nil
 }
 
-func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee float64) (tradeSearchRsp defs.SearchRsp, errCode int, err error) {
+func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp defs.SearchTradeRsp, errCode int, err error) {
 	var epaymentsTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -166,18 +166,18 @@ func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee f
 	merchant := config.GetInstance().GetString(EpaymentsMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:epayments,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
-		return tradeSearchRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+		return searchtradeRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 	md5key := config.GetInstance().GetString(EpaymentsMd5Key)
 	if md5key == "" {
 		logrus.Errorf("org:epayments,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
-		return tradeSearchRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+		return searchtradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	gateWay := config.GetInstance().GetString(EpaymentsGateWay)
 	if gateWay == "" {
 		logrus.Errorf("org:epayments,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
-		return tradeSearchRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+		return searchtradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 
 	tradeArg := payment.TradeArg{
@@ -188,19 +188,19 @@ func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee f
 	}
 	epaymentsTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
 	if err != nil {
-		return tradeSearchRsp, 0, nil
+		return searchtradeRsp, 0, nil
 	}
-	tradeSearchRsp.Status = epaymentsTradeRsp.Status
-	tradeSearchRsp.OrderId = epaymentsTradeRsp.OrderId
-	tradeSearchRsp.TradeNo = epaymentsTradeRsp.TradeNo
-	tradeSearchRsp.RmbFee = epaymentsTradeRsp.RmbFee
-	tradeSearchRsp.Rate = epaymentsTradeRsp.Rate
+	searchtradeRsp.Status = epaymentsTradeRsp.Status
+	searchtradeRsp.OrderId = epaymentsTradeRsp.OrderId
+	searchtradeRsp.TradeNo = epaymentsTradeRsp.TradeNo
+	searchtradeRsp.RmbFee = epaymentsTradeRsp.RmbFee
+	searchtradeRsp.Rate = epaymentsTradeRsp.Rate
 
-	return tradeSearchRsp, 0, nil
+	return searchtradeRsp, 0, nil
 }
 
-func (e *Epayments) CloseTrade(arg defs.CloseReq) (tradeCloseRsp defs.CloseRsp, errCode int, err error) {
+func (e *Epayments) CloseTrade(arg defs.CloseTradeReq) (closeTradeRsp defs.CloseTradeRsp, errCode int, err error) {
 	logrus.Errorf("org:allpay,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
-	tradeCloseRsp.Status = true
-	return tradeCloseRsp, 0, nil
+	closeTradeRsp.Status = true
+	return closeTradeRsp, 0, nil
 }

@@ -34,13 +34,13 @@ func (trade *Trade) search(ctx *gin.Context) {
 		return
 	}
 
-	tradeRsp, errCode, err := searchTradeHandle(t.OrderId, t.MethodCode, t.Currency, t.TotalFee)
+	searchTradeRsp, errCode, err := searchTradeHandle(t.OrderId, t.MethodCode, t.Currency, t.TotalFee)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, tradeRsp)
+	ctx.JSON(http.StatusOK, searchTradeRsp)
 }
 
 func (trade *Trade) close(ctx *gin.Context) {
@@ -58,18 +58,18 @@ func (trade *Trade) close(ctx *gin.Context) {
 		return
 	}
 
-	closeReq := defs.CloseReq{
+	closeTradeReq := defs.CloseTradeReq{
 		OrderId:    close.OrderId,
 		TotalFee:   close.TotalFee,
 		Currency:   close.Currency,
 		MethodCode: close.MethodCode,
 		OrgCode:    close.OrgCode,
 	}
-	closedRsp, errCode, err := closeTradeHandle(closeReq)
+	closeTradeRsp, errCode, err := closeTradeHandle(closeTradeReq)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, closedRsp)
+	ctx.JSON(http.StatusOK, closeTradeRsp)
 }

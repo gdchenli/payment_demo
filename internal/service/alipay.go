@@ -183,7 +183,7 @@ func (alipay *Alipay) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp
 	return verifyRsp, 0, nil
 }
 
-func (alipay *Alipay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (tradeSearchRsp defs.SearchRsp, errCode int, err error) {
+func (alipay *Alipay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp defs.SearchTradeRsp, errCode int, err error) {
 	var alipayTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -194,18 +194,18 @@ func (alipay *Alipay) SearchTrade(orderId, methodCode, currency string, totalFee
 	merchant := config.GetInstance().GetString(AlipayMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:alipay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
-		return tradeSearchRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
+		return searchtradeRsp, code.MerchantNotExistsErrCode, errors.New(code.MerchantNotExistsErrMessage)
 	}
 	md5key := config.GetInstance().GetString(AlipayMd5Key)
 	if md5key == "" {
 		logrus.Errorf("org:alipay,"+code.Md5KeyNotExistsErrMessage+",errCode:%v,err:%v", code.Md5KeyNotExistsErrCode)
-		return tradeSearchRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
+		return searchtradeRsp, code.Md5KeyNotExistsErrCode, errors.New(code.Md5KeyNotExistsErrMessage)
 	}
 
 	gateWay := config.GetInstance().GetString(AlipayGateWay)
 	if gateWay == "" {
 		logrus.Errorf("org:alipay,"+code.GateWayNotExistsErrMessage+",errCode:%v,err:%v", code.GateWayNotExistsErrCode)
-		return tradeSearchRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
+		return searchtradeRsp, code.GateWayNotExistsErrCode, errors.New(code.GateWayNotExistsErrMessage)
 	}
 
 	tradeArg := payment.TradeArg{
@@ -217,13 +217,13 @@ func (alipay *Alipay) SearchTrade(orderId, methodCode, currency string, totalFee
 	}
 	alipayTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
 	if err != nil {
-		return tradeSearchRsp, 0, nil
+		return searchtradeRsp, 0, nil
 	}
-	tradeSearchRsp.Status = alipayTradeRsp.Status
-	tradeSearchRsp.OrderId = alipayTradeRsp.OrderId
-	tradeSearchRsp.TradeNo = alipayTradeRsp.TradeNo
-	tradeSearchRsp.Rate = alipayTradeRsp.Rate
-	tradeSearchRsp.RmbFee = alipayTradeRsp.RmbFee
+	searchtradeRsp.Status = alipayTradeRsp.Status
+	searchtradeRsp.OrderId = alipayTradeRsp.OrderId
+	searchtradeRsp.TradeNo = alipayTradeRsp.TradeNo
+	searchtradeRsp.Rate = alipayTradeRsp.Rate
+	searchtradeRsp.RmbFee = alipayTradeRsp.RmbFee
 
-	return tradeSearchRsp, 0, nil
+	return searchtradeRsp, 0, nil
 }
