@@ -26,11 +26,14 @@ const (
 )
 
 func (alipay *Alipay) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, err error) {
-	return closedRsp, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+	logrus.Errorf("org:alipay,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
+	closedRsp.Status = true
+	return closedRsp, 0, nil
 }
 
 func (alipay *Alipay) OrderQrCode(arg defs.Order) (form string, errCode int, err error) {
-	return form, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+	logrus.Errorf("org:jd,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
+	return "", 0, nil
 }
 
 func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
@@ -169,6 +172,8 @@ func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp
 	notifyRsp.Status = alipayNotifyRsp.Status
 	notifyRsp.OrderId = alipayNotifyRsp.OrderId
 	notifyRsp.Message = "success"
+	notifyRsp.RmbFee = alipayNotifyRsp.RmbFee
+	notifyRsp.Rate = alipayNotifyRsp.Rate
 
 	return notifyRsp, 0, nil
 }
@@ -198,7 +203,7 @@ func (alipay *Alipay) Callback(query, methodCode string) (callbackRsp defs.Callb
 	return callbackRsp, 0, nil
 }
 
-func (alipay *Alipay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode int, err error) {
+func (alipay *Alipay) Trade(orderId, methodCode, currency string, totalFee float64) (tradeRsp defs.TradeRsp, errCode int, err error) {
 	var alipayTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -228,6 +233,7 @@ func (alipay *Alipay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp,
 		OutTradeNo: orderId,
 		Md5Key:     md5key,
 		TradeWay:   gateWay,
+		TotalFee:   totalFee,
 	}
 	alipayTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
 	if err != nil {
@@ -236,6 +242,8 @@ func (alipay *Alipay) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp,
 	tradeRsp.Status = alipayTradeRsp.Status
 	tradeRsp.OrderId = alipayTradeRsp.OrderId
 	tradeRsp.TradeNo = alipayTradeRsp.TradeNo
+	tradeRsp.Rate = alipayTradeRsp.Rate
+	tradeRsp.RmbFee = alipayTradeRsp.RmbFee
 
 	return tradeRsp, 0, nil
 }

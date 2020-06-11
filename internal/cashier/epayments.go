@@ -23,7 +23,8 @@ const (
 type Epayments struct{}
 
 func (e *Epayments) AmpSubmit(arg defs.Order) (form string, errCode int, err error) {
-	return form, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+	logrus.Errorf("org:jd,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
+	return "", 0, nil
 }
 
 func (e *Epayments) getPayArg(order defs.Order) (payArg payment.PayArg, errCode int, err error) {
@@ -132,6 +133,8 @@ func (e *Epayments) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, 
 	notifyRsp.Status = epaymentsNotifyRsp.Status
 	notifyRsp.OrderId = epaymentsNotifyRsp.OrderId
 	notifyRsp.Message = "success"
+	notifyRsp.RmbFee = epaymentsNotifyRsp.RmbFee
+	notifyRsp.Rate = epaymentsNotifyRsp.Rate
 
 	return notifyRsp, 0, nil
 }
@@ -161,7 +164,7 @@ func (e *Epayments) Callback(query, methodCode string) (callbackRsp defs.Callbac
 	return callbackRsp, 0, nil
 }
 
-func (e *Epayments) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode int, err error) {
+func (e *Epayments) Trade(orderId, methodCode, currency string, totalFee float64) (tradeRsp defs.TradeRsp, errCode int, err error) {
 	var epaymentsTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -199,10 +202,14 @@ func (e *Epayments) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, e
 	tradeRsp.Status = epaymentsTradeRsp.Status
 	tradeRsp.OrderId = epaymentsTradeRsp.OrderId
 	tradeRsp.TradeNo = epaymentsTradeRsp.TradeNo
+	tradeRsp.RmbFee = epaymentsTradeRsp.RmbFee
+	tradeRsp.Rate = epaymentsTradeRsp.Rate
 
 	return tradeRsp, 0, nil
 }
 
 func (e *Epayments) Closed(arg defs.Closed) (closedRsp defs.ClosedRsp, errCode int, err error) {
-	return closedRsp, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+	logrus.Errorf("org:allpay,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
+	closedRsp.Status = true
+	return closedRsp, 0, nil
 }

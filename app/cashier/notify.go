@@ -10,7 +10,6 @@ import (
 	"payment_demo/internal/common/defs"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 type Notify struct{}
@@ -41,17 +40,13 @@ func (notify *Notify) notify(ctx *gin.Context) {
 		err = errors.New(NotSupportPaymentOrgMsg)
 	}
 
-	msg := NotifyFailMsg
 	if err != nil {
 		fmt.Println(errCode)
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(msg))
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	if notifyRsp.Status {
-		msg = notifyRsp.Message
-	}
-	ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(msg))
+	ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": notifyRsp})
 }
 
 func (notify *Notify) jdNotify(ctx *gin.Context) (notifyRsp defs.NotifyRsp, errCode int, err error) {

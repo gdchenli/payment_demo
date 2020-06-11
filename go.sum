@@ -66,10 +66,12 @@ github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239/go.mod h1:Gdwt2ce0
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
-github.com/gdchenli/pay v1.0.0 h1:E+9zVjeypRx9EEpf+xj1xgLIxLC2DFup4Vo242srDjA=
-github.com/gdchenli/pay v1.0.0/go.mod h1:G+i9F/MYDBAuy2mi63kk8NGMtSVQbjYWQ7VvP+bjsW0=
-github.com/gdchenli/pay v1.0.1 h1:dsaUWRcXKJltWcEBaU3aGoOfBs6kTljicl8AzV5ULqw=
-github.com/gdchenli/pay v1.0.1/go.mod h1:G+i9F/MYDBAuy2mi63kk8NGMtSVQbjYWQ7VvP+bjsW0=
+github.com/gdchenli/pay v1.0.9 h1:5Q+ESIGhLNmZRY8FSO9tL54XuWr8H1YjnHgnDgtHEdg=
+github.com/gdchenli/pay v1.0.9/go.mod h1:G+i9F/MYDBAuy2mi63kk8NGMtSVQbjYWQ7VvP+bjsW0=
+github.com/gdchenli/pay v1.0.10 h1:nmgdje4HyYmsm3rvhcfTUQ4eF2/N/kiP/CzDAkUy2yY=
+github.com/gdchenli/pay v1.0.10/go.mod h1:G+i9F/MYDBAuy2mi63kk8NGMtSVQbjYWQ7VvP+bjsW0=
+github.com/gdchenli/pay v1.0.11 h1:eJPz/IJt+hJBgW2RhvQVeyTD6nSa34TO9MHnDN2pZ/M=
+github.com/gdchenli/pay v1.0.11/go.mod h1:G+i9F/MYDBAuy2mi63kk8NGMtSVQbjYWQ7VvP+bjsW0=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/gin-contrib/sse v0.1.0 h1:Y/yl/+YNO8GZSjAhjMsSuLt29uWRFHdHYUb5lYOV9qE=
 github.com/gin-contrib/sse v0.1.0/go.mod h1:RHrZQHXnP2xjPF+u1gW/2HnVO7nvIa9PG3Gm+fLHvGI=

@@ -5,9 +5,8 @@ import (
 	"payment_demo/internal/cashier"
 	"payment_demo/internal/common/defs"
 
-	"github.com/gin-gonic/gin/binding"
-
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type Trade struct{}
@@ -40,7 +39,7 @@ func (trade *Trade) search(ctx *gin.Context) {
 		return
 	}
 
-	tradeRsp, errCode, err = payMethod.Trade(t.OrderId, t.MethodCode)
+	tradeRsp, errCode, err = payMethod.Trade(t.OrderId, t.MethodCode, t.Currency, t.TotalFee)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return

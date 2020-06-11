@@ -67,6 +67,8 @@ back_url="http://localhost:8090/payment/notify/allpay/alipay_payment"
 pay_way="https://api.allpayx.com/api/unifiedorder"
 # 查询交易网关地址
 trade_way="https://api.allpayx.com/api/orderquery"
+# 查询汇率网关地址
+sapi_way="https://sapi.allpayx.com/sapi/v1/get_exchange_rate"
 
 [alipay]
 # alipay商户Id

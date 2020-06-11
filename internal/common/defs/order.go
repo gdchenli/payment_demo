@@ -3,24 +3,30 @@ package defs
 import "errors"
 
 const (
-	RequiredPayOrderIdErrCode            = 10150
-	RequiredPayOrderIdErrMessage         = "请输入发起支付的订单编号"
-	RequiredPayTotalFeeErrCode           = 10151
-	RequiredPayTotalFeeErrMessage        = "请输入发起支付的订单金额"
-	RequiredPayCurrencyErrCode           = 10152
-	RequiredPayCurrencyErrMessage        = "请输入发起支付的订单币种"
-	RequiredPayMethodErrCode             = 10153
-	RequiredPayMethodMessage             = "请选择发起支付的支付方式"
-	RequiredPayOrgErrCode                = 10154
-	RequiredPayOrgErrMessage             = "请选择发起支付的支付机构"
-	RequiredUserIdErrCode                = 10155
-	RequiredUserIdErrMessage             = "请输入发起支付的用户Id"
+	RequiredPayOrderIdErrCode     = 10150
+	RequiredPayOrderIdErrMessage  = "请输入发起支付的订单编号"
+	RequiredPayTotalFeeErrCode    = 10151
+	RequiredPayTotalFeeErrMessage = "请输入发起支付的订单金额"
+	RequiredPayCurrencyErrCode    = 10152
+	RequiredPayCurrencyErrMessage = "请输入发起支付的订单币种"
+	RequiredPayMethodErrCode      = 10153
+	RequiredPayMethodMessage      = "请选择发起支付的支付方式"
+	RequiredPayOrgErrCode         = 10154
+	RequiredPayOrgErrMessage      = "请选择发起支付的支付机构"
+	RequiredUserIdErrCode         = 10155
+	RequiredUserIdErrMessage      = "请输入发起支付的用户Id"
+
 	RequiredSearchTradeOrderIdErrCode    = 10550
 	RequiredSearchTradeOrderIdErrMessage = "请输入需要查询交易的订单编号"
 	RequiredSearchTradeMethodErrCode     = 10551
 	RequiredSearchTradeMethodMessage     = "请选择需要查询交易的支付方式"
 	RequiredSearchTradeOrgErrCode        = 10552
 	RequiredSearchTradeOrgErrMessage     = "请选择需要查询交易的支付机构"
+	RequiredTradeTotalFeeErrCode         = 10553
+	RequiredTradeTotalFeeErrMessage      = "请输入查询交易的订单金额"
+	RequiredTradeCurrencyErrCode         = 10554
+	RequiredTradeCurrencyErrMessage      = "请输入查询交易的订单币种"
+
 	RequiredCloseTradeOrderIdErrCode     = 10450
 	RequiredCloseTradeOrderIdErrMessage  = "请输入需要关闭交易的订单编号"
 	RequiredCloseTradeTotalFeeErrCode    = 10451
@@ -51,6 +57,7 @@ func (order *Order) Validate() (errCode int, err error) {
 	if order.TotalFee == 0 {
 		return RequiredPayTotalFeeErrCode, errors.New(RequiredPayTotalFeeErrMessage)
 	}
+
 	if order.Currency == "" {
 		return RequiredPayCurrencyErrCode, errors.New(RequiredPayCurrencyErrMessage)
 	}
@@ -71,10 +78,12 @@ func (order *Order) Validate() (errCode int, err error) {
 }
 
 type NotifyRsp struct {
-	OrderId string `json:"order_id"` //订单号
-	Status  bool   `json:"status"`   //交易状态，true交易成功 false交易失败
-	TradeNo string `json:"trade_no"` //支付机构交易流水号
-	Message string `json:"message"`  //支付成功响应字符串
+	OrderId string  `json:"order_id"` //订单号
+	Status  bool    `json:"status"`   //交易状态，true交易成功 false交易失败
+	TradeNo string  `json:"trade_no"` //支付机构交易流水号
+	Message string  `json:"message"`  //支付成功响应字符串
+	RmbFee  float64 `json:"rmb_fee"`  //人民币金额
+	Rate    float64 `json:"rate"`
 }
 
 type CallbackRsp struct {
@@ -83,15 +92,19 @@ type CallbackRsp struct {
 }
 
 type TradeRsp struct {
-	Status  string `json:"status"`   //交易状态
-	OrderId string `json:"order_id"` //订单号
-	TradeNo string `json:"trade_no"` //支付机构交易流水号
+	Status  string  `json:"status"`   //交易状态
+	OrderId string  `json:"order_id"` //订单号
+	TradeNo string  `json:"trade_no"` //支付机构交易流水号
+	Rate    float64 `json:"rate"`     //汇率
+	RmbFee  float64 `json:"rmb_fee"`  //人民币金额
 }
 
 type Trade struct {
-	OrderId    string `form:"order_id" json:"order_id"`       //订单号
-	MethodCode string `form:"method_code" json:"method_code"` //支付方式
-	OrgCode    string `form:"org_code" json:"org_code"`       //支付机构
+	OrderId    string  `form:"order_id" json:"order_id"`       //订单号
+	MethodCode string  `form:"method_code" json:"method_code"` //支付方式
+	OrgCode    string  `form:"org_code" json:"org_code"`       //支付机构
+	Currency   string  `form:"currency" json:"currency"`       //币种
+	TotalFee   float64 `form:"total_fee" json:"total_fee"`     //金额
 }
 
 func (trade *Trade) Validate() (errCode int, err error) {
@@ -105,6 +118,14 @@ func (trade *Trade) Validate() (errCode int, err error) {
 
 	if trade.OrgCode == "" {
 		return RequiredSearchTradeOrgErrCode, errors.New(RequiredSearchTradeOrgErrMessage)
+	}
+
+	if trade.TotalFee == 0 {
+		return RequiredTradeTotalFeeErrCode, errors.New(RequiredTradeTotalFeeErrMessage)
+	}
+
+	if trade.Currency == "" {
+		return RequiredTradeCurrencyErrCode, errors.New(RequiredTradeCurrencyErrMessage)
 	}
 
 	return 0, nil

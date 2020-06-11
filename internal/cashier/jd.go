@@ -36,11 +36,13 @@ const (
 type Jd struct{}
 
 func (jd *Jd) OrderQrCode(arg defs.Order) (form string, errCode int, err error) {
-	return form, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+	logrus.Errorf("org:jd,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
+	return "", 0, nil
 }
 
 func (jd *Jd) AmpSubmit(arg defs.Order) (form string, errCode int, err error) {
-	return form, code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
+	logrus.Errorf("org:jd,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
+	return "", 0, nil
 }
 
 //发起支付
@@ -178,11 +180,13 @@ func (jd *Jd) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCod
 	if err != nil {
 		return notifyRsp, errCode, err
 	}
+	fmt.Printf("jdNotifyRsp：%+v\n", jdNotifyRsp)
 
 	notifyRsp.OrderId = jdNotifyRsp.OrderId
 	notifyRsp.Status = jdNotifyRsp.Status
 	notifyRsp.TradeNo = jdNotifyRsp.TradeNo
 	notifyRsp.Message = "success"
+	notifyRsp.RmbFee = jdNotifyRsp.RmbFee
 
 	return notifyRsp, 0, nil
 }
@@ -225,7 +229,7 @@ func (jd *Jd) Callback(query, methodCode string) (callbackRsp defs.CallbackRsp, 
 }
 
 //查询交易
-func (jd *Jd) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode int, err error) {
+func (jd *Jd) Trade(orderId, methodCode, currency string, totalFee float64) (tradeRsp defs.TradeRsp, errCode int, err error) {
 	var jdTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -286,6 +290,7 @@ func (jd *Jd) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode
 		PublicKey:  publicKey,
 		PrivateKey: privateKey,
 		GateWay:    gateWay,
+		TotalFee:   totalFee,
 	}
 	jdTradeRsp, errCode, err = new(payment.Trade).Search(tradeArg)
 	if err != nil {
@@ -295,6 +300,7 @@ func (jd *Jd) Trade(orderId, methodCode string) (tradeRsp defs.TradeRsp, errCode
 	tradeRsp.OrderId = jdTradeRsp.OrderId
 	tradeRsp.Status = jdTradeRsp.Status
 	tradeRsp.TradeNo = jdTradeRsp.TradeNo
+	tradeRsp.RmbFee = jdTradeRsp.RmbFee
 
 	return tradeRsp, 0, nil
 }
