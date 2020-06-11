@@ -28,13 +28,13 @@ func (trade *Trade) search(ctx *gin.Context) {
 		return
 	}
 
-	tradeHandle := common.GetTradeHandler(ctx.Query("org_code"))
-	if tradeHandle == nil {
+	searchTradeHandle := common.GetSearchTradeHandler(ctx.Query("org_code"))
+	if searchTradeHandle == nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": common.NotSupportPaymentOrgCode, "message": common.NotSupportPaymentOrgMsg})
 		return
 	}
 
-	tradeRsp, errCode, err := tradeHandle(t.OrderId, t.MethodCode, t.Currency, t.TotalFee)
+	tradeRsp, errCode, err := searchTradeHandle(t.OrderId, t.MethodCode, t.Currency, t.TotalFee)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
@@ -52,8 +52,8 @@ func (trade *Trade) close(ctx *gin.Context) {
 		return
 	}
 
-	closeHandle := common.GetCloseHandler(ctx.Query("org_cod"))
-	if closeHandle == nil {
+	closeTradeHandle := common.GetCloseTradeHandler(ctx.Query("org_cod"))
+	if closeTradeHandle == nil {
 		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(common.NotSupportPaymentOrgMsg))
 		return
 	}
@@ -65,7 +65,7 @@ func (trade *Trade) close(ctx *gin.Context) {
 		MethodCode: close.MethodCode,
 		OrgCode:    close.OrgCode,
 	}
-	closedRsp, errCode, err := closeHandle(closeReq)
+	closedRsp, errCode, err := closeTradeHandle(closeReq)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
