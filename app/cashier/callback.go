@@ -16,9 +16,6 @@ func (callback *Callback) Router(router *gin.Engine) {
 }
 
 func (callback *Callback) callback(ctx *gin.Context) {
-	var errCode int
-	var err error
-
 	ctx.Request.ParseForm()
 	query := ctx.Request.PostForm.Encode()
 	if query == "" {
