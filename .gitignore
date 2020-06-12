@@ -3,6 +3,5 @@
 cmd/jd_private_key.pem
 cmd/jd_public_key.pem
 cmd/config.toml
-logs
 cmd
 cmd.exe
