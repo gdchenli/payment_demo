@@ -3,9 +3,10 @@ package payment
 import (
 	"errors"
 	"fmt"
+	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
-	"payment_demo/internal/common/defs"
+	"payment_demo/internal/common/response"
 	"time"
 
 	"github.com/gdchenli/pay/dialects/allpay/payment"
@@ -36,7 +37,7 @@ const (
 
 type Allpay struct{}
 
-func (allpay *Allpay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
+func (allpay *Allpay) getPayArg(arg validate.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AllpayMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:allpay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
@@ -112,7 +113,7 @@ func (allpay *Allpay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode 
 	return payArg, 0, nil
 }
 
-func (allpay *Allpay) Pay(arg defs.Order) (form string, errCode int, err error) {
+func (allpay *Allpay) Pay(arg validate.Order) (form string, errCode int, err error) {
 	payArg, errCode, err := allpay.getPayArg(arg)
 	if err != nil {
 		return form, errCode, err
@@ -166,7 +167,7 @@ func (allpay *Allpay) getPayWay(userAgentType int) string {
 	return config.GetInstance().GetString(AllpayGateWay)
 }
 
-func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	var allpayNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
@@ -212,7 +213,7 @@ func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp
 	return notifyRsp, 0, nil
 }
 
-func (allpay *Allpay) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp, errCode int, err error) {
+func (allpay *Allpay) Verify(query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
 	var allpayCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -237,7 +238,7 @@ func (allpay *Allpay) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp
 	return verifyRsp, 0, nil
 }
 
-func (allpay *Allpay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp defs.SearchTradeRsp, errCode int, err error) {
+func (allpay *Allpay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp response.SearchTradeRsp, errCode int, err error) {
 	var allpayTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志

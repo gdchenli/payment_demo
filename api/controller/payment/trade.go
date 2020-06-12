@@ -1,9 +1,9 @@
-package trade
+package payment
 
 import (
 	"net/http"
-	"payment_demo/controller/common"
-	"payment_demo/internal/common/defs"
+	"payment_demo/api/controller/common"
+	"payment_demo/api/validate"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -20,7 +20,7 @@ func (trade *Trade) Router(router *gin.Engine) {
 }
 
 func (trade *Trade) search(ctx *gin.Context) {
-	t := new(SearchReq)
+	t := new(validate.SearchTradeReq)
 	ctx.ShouldBind(t)
 
 	if errCode, err := t.Validate(); err != nil {
@@ -44,10 +44,10 @@ func (trade *Trade) search(ctx *gin.Context) {
 }
 
 func (trade *Trade) close(ctx *gin.Context) {
-	close := new(CloseReq)
-	ctx.ShouldBind(close)
+	closeTradeReq := new(validate.CloseTradeReq)
+	ctx.ShouldBind(closeTradeReq)
 
-	if errCode, err := close.Validate(); err != nil {
+	if errCode, err := closeTradeReq.Validate(); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
@@ -58,14 +58,7 @@ func (trade *Trade) close(ctx *gin.Context) {
 		return
 	}
 
-	closeTradeReq := defs.CloseTradeReq{
-		OrderId:    close.OrderId,
-		TotalFee:   close.TotalFee,
-		Currency:   close.Currency,
-		MethodCode: close.MethodCode,
-		OrgCode:    close.OrgCode,
-	}
-	closeTradeRsp, errCode, err := closeTradeHandle(closeTradeReq)
+	closeTradeRsp, errCode, err := closeTradeHandle(*closeTradeReq)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return

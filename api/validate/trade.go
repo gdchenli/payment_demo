@@ -1,4 +1,4 @@
-package trade
+package validate
 
 import "errors"
 
@@ -15,7 +15,7 @@ const (
 	RequiredTradeCurrencyErrMessage      = "请输入查询交易的订单币种"
 )
 
-type SearchReq struct {
+type SearchTradeReq struct {
 	OrderId    string  `form:"order_id" json:"order_id"`       //订单号
 	MethodCode string  `form:"method_code" json:"method_code"` //支付方式
 	OrgCode    string  `form:"org_code" json:"org_code"`       //支付机构
@@ -23,31 +23,31 @@ type SearchReq struct {
 	TotalFee   float64 `form:"total_fee" json:"total_fee"`     //金额
 }
 
-func (searchReq *SearchReq) Validate() (errCode int, err error) {
-	if searchReq.OrderId == "" {
+func (searchTradeReq *SearchTradeReq) Validate() (errCode int, err error) {
+	if searchTradeReq.OrderId == "" {
 		return RequiredSearchTradeOrderIdErrCode, errors.New(RequiredSearchTradeOrderIdErrMessage)
 	}
 
-	if searchReq.MethodCode == "" {
+	if searchTradeReq.MethodCode == "" {
 		return RequiredSearchTradeMethodErrCode, errors.New(RequiredSearchTradeMethodMessage)
 	}
 
-	if searchReq.OrgCode == "" {
+	if searchTradeReq.OrgCode == "" {
 		return RequiredSearchTradeOrgErrCode, errors.New(RequiredSearchTradeOrgErrMessage)
 	}
 
-	if searchReq.TotalFee == 0 {
+	if searchTradeReq.TotalFee == 0 {
 		return RequiredTradeTotalFeeErrCode, errors.New(RequiredTradeTotalFeeErrMessage)
 	}
 
-	if searchReq.Currency == "" {
+	if searchTradeReq.Currency == "" {
 		return RequiredTradeCurrencyErrCode, errors.New(RequiredTradeCurrencyErrMessage)
 	}
 
 	return 0, nil
 }
 
-type CloseReq struct {
+type CloseTradeReq struct {
 	OrderId    string  `form:"order_id" json:"order_id"`       //订单号
 	TotalFee   float64 `form:"total_fee" json:"total_fee"`     //订单金额
 	Currency   string  `form:"currency" json:"currency"`       //订单币种
@@ -68,24 +68,24 @@ const (
 	RequiredCloseTradeOrgErrMessage      = "请选择需要关闭交易的支付机构"
 )
 
-func (closeReq *CloseReq) Validate() (errCode int, err error) {
-	if closeReq.OrderId == "" {
+func (closeTradeReq *CloseTradeReq) Validate() (errCode int, err error) {
+	if closeTradeReq.OrderId == "" {
 		return RequiredCloseTradeOrderIdErrCode, errors.New(RequiredCloseTradeOrderIdErrMessage)
 	}
 
-	if closeReq.OrgCode == "jd" && closeReq.TotalFee == 0 {
+	if closeTradeReq.OrgCode == "jd" && closeTradeReq.TotalFee == 0 {
 		return RequiredCloseTradeTotalFeeErrCode, errors.New(RequiredCloseTradeTotalFeeErrMessage)
 	}
 
-	if closeReq.OrgCode == "jd" && closeReq.Currency == "" {
+	if closeTradeReq.OrgCode == "jd" && closeTradeReq.Currency == "" {
 		return RequiredCloseTradeCurrencyErrCode, errors.New(RequiredCloseTradeCurrencyErrMessage)
 	}
 
-	if closeReq.MethodCode == "" {
+	if closeTradeReq.MethodCode == "" {
 		return RequiredCloseTradeMethodErrCode, errors.New(RequiredCloseTradeMethodErrMessage)
 	}
 
-	if closeReq.OrgCode == "" {
+	if closeTradeReq.OrgCode == "" {
 		return RequiredCloseTradeOrgErrCode, errors.New(RequiredCloseTradeOrgErrMessage)
 	}
 

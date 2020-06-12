@@ -1,4 +1,4 @@
-package defs
+package response
 
 type SearchTradeRsp struct {
 	Status  string  `json:"status"`   //交易状态

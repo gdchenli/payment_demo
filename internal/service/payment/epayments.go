@@ -2,9 +2,10 @@ package payment
 
 import (
 	"errors"
+	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
-	"payment_demo/internal/common/defs"
+	"payment_demo/internal/common/response"
 
 	"github.com/gdchenli/pay/dialects/epayments/payment"
 	"github.com/sirupsen/logrus"
@@ -22,7 +23,7 @@ const (
 
 type Epayments struct{}
 
-func (e *Epayments) getPayArg(order defs.Order) (payArg payment.PayArg, errCode int, err error) {
+func (e *Epayments) getPayArg(order validate.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(EpaymentsMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:epayments,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
@@ -79,7 +80,7 @@ func (e *Epayments) getPayArg(order defs.Order) (payArg payment.PayArg, errCode 
 	return payArg, 0, nil
 }
 
-func (e *Epayments) Pay(order defs.Order) (form string, errCode int, err error) {
+func (e *Epayments) Pay(order validate.Order) (form string, errCode int, err error) {
 	payArg, errCode, err := e.getPayArg(order)
 	if err != nil {
 		return form, errCode, err
@@ -102,7 +103,7 @@ func (e *Epayments) getPaymentChannels(methodCode string) (paymentChannels strin
 	return paymentChannels
 }
 
-func (e *Epayments) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+func (e *Epayments) Notify(query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	var epaymentsNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
@@ -130,7 +131,7 @@ func (e *Epayments) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, 
 	return notifyRsp, 0, nil
 }
 
-func (e *Epayments) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp, errCode int, err error) {
+func (e *Epayments) Verify(query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
 	var epaymentsCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -155,7 +156,7 @@ func (e *Epayments) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp, 
 	return verifyRsp, 0, nil
 }
 
-func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp defs.SearchTradeRsp, errCode int, err error) {
+func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp response.SearchTradeRsp, errCode int, err error) {
 	var epaymentsTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -199,7 +200,7 @@ func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee f
 	return searchtradeRsp, 0, nil
 }
 
-func (e *Epayments) CloseTrade(arg defs.CloseTradeReq) (closeTradeRsp defs.CloseTradeRsp, errCode int, err error) {
+func (e *Epayments) CloseTrade(arg validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
 	logrus.Errorf("org:allpay,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
 	closeTradeRsp.Status = true
 	return closeTradeRsp, 0, nil

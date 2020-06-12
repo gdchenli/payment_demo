@@ -1,4 +1,4 @@
-package defs
+package response
 
 type Order struct {
 	OrderId       string  `form:"order_id" json:"order_id"`               //订单编号

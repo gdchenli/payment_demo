@@ -1,9 +1,9 @@
-package notify
+package payment
 
 import (
 	"io/ioutil"
 	"net/http"
-	"payment_demo/controller/common"
+	"payment_demo/api/controller/common"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,4 +1,4 @@
-package defs
+package response
 
 type VerifyRsp struct {
 	OrderId string `json:"order_id"` //订单号

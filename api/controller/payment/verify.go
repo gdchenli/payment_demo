@@ -1,8 +1,8 @@
-package verify
+package payment
 
 import (
 	"net/http"
-	"payment_demo/controller/common"
+	"payment_demo/api/controller/common"
 
 	"github.com/gin-gonic/gin"
 )

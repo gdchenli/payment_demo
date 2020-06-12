@@ -3,11 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"payment_demo/controller/payment/logistics"
-	"payment_demo/controller/payment/notify"
-	"payment_demo/controller/payment/pay"
-	"payment_demo/controller/payment/trade"
-	"payment_demo/controller/payment/verify"
+	"payment_demo/api/controller/payment"
 	"payment_demo/internal/common/config"
 	"payment_demo/pkg/ginprometheus"
 	"payment_demo/pkg/grace"
@@ -59,11 +55,11 @@ func main() {
 }
 
 func registerRouter(router *gin.Engine) {
-	new(pay.Pay).Router(router)
-	new(notify.Notify).Router(router)
-	new(verify.Verify).Router(router)
-	new(trade.Trade).Router(router)
-	new(logistics.Logistics).Router(router)
+	new(payment.Pay).Router(router)
+	new(payment.Notify).Router(router)
+	new(payment.Verify).Router(router)
+	new(payment.Trade).Router(router)
+	new(payment.Logistics).Router(router)
 }
 
 func registerMonitor(router *gin.Engine) {

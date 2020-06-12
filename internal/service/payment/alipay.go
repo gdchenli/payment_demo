@@ -2,9 +2,10 @@ package payment
 
 import (
 	"errors"
+	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
-	"payment_demo/internal/common/defs"
+	"payment_demo/internal/common/response"
 
 	"github.com/gdchenli/pay/dialects/alipay/payment"
 	"github.com/sirupsen/logrus"
@@ -25,7 +26,7 @@ const (
 	AlipayTransCurrency = "alipay.trans_currency"
 )
 
-func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode int, err error) {
+func (alipay *Alipay) getPayArg(arg validate.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AlipayMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:alipay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
@@ -90,7 +91,7 @@ func (alipay *Alipay) getPayArg(arg defs.Order) (payArg payment.PayArg, errCode 
 	return payArg, 0, nil
 }
 
-func (alipay *Alipay) Pay(arg defs.Order) (form string, errCode int, err error) {
+func (alipay *Alipay) Pay(arg validate.Order) (form string, errCode int, err error) {
 	payArg, errCode, err := alipay.getPayArg(arg)
 	if err != nil {
 		return form, errCode, err
@@ -116,7 +117,7 @@ func (alipay *Alipay) getUserAgentType(userAgentType int) string {
 	return ""
 }
 
-func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp, errCode int, err error) {
+func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	var alipayNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
@@ -158,7 +159,7 @@ func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp defs.NotifyRsp
 	return notifyRsp, 0, nil
 }
 
-func (alipay *Alipay) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp, errCode int, err error) {
+func (alipay *Alipay) Verify(query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
 	var alipayCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -183,7 +184,7 @@ func (alipay *Alipay) Verify(query, methodCode string) (verifyRsp defs.VerifyRsp
 	return verifyRsp, 0, nil
 }
 
-func (alipay *Alipay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp defs.SearchTradeRsp, errCode int, err error) {
+func (alipay *Alipay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp response.SearchTradeRsp, errCode int, err error) {
 	var alipayTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志

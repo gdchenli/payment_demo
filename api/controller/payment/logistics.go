@@ -1,9 +1,9 @@
-package logistics
+package payment
 
 import (
 	"net/http"
-	"payment_demo/controller/common"
-	"payment_demo/internal/common/defs"
+	"payment_demo/api/controller/common"
+	"payment_demo/api/validate"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +18,7 @@ func (logistics *Logistics) Router(router *gin.Engine) {
 }
 
 func (logistics *Logistics) upload(ctx *gin.Context) {
-	l := new(Req)
+	l := new(validate.UploadLogisticsReq)
 	ctx.ShouldBind(l)
 
 	uploadLogisticsHandle := common.GetUploadLogisticsHandler(l.OrgCode)
@@ -27,13 +27,7 @@ func (logistics *Logistics) upload(ctx *gin.Context) {
 		return
 	}
 
-	req := defs.UploadLogisticsReq{
-		OrderId:          l.OrderId,
-		LogisticsNo:      l.LogisticsNo,
-		LogisticsCompany: l.LogisticsCompany,
-		OrgCode:          l.OrgCode,
-	}
-	logisticsRsp, errCode, err := uploadLogisticsHandle(req)
+	logisticsRsp, errCode, err := uploadLogisticsHandle(*l)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
