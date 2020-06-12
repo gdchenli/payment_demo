@@ -9,7 +9,7 @@ import (
 	payment2 "payment_demo/api/validate/payment"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
-	"payment_demo/internal/common/response"
+	payment3 "payment_demo/internal/common/response/payment"
 	"strconv"
 	"time"
 
@@ -142,7 +142,7 @@ func (jd *Jd) getPayWay(userAgentType int) string {
 }
 
 //异步通知
-func (jd *Jd) Notify(query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (jd *Jd) Notify(query, methodCode string) (notifyRsp payment3.NotifyRsp, errCode int, err error) {
 	var jdNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
@@ -183,7 +183,7 @@ func (jd *Jd) Notify(query, methodCode string) (notifyRsp response.NotifyRsp, er
 }
 
 //同步通知
-func (jd *Jd) Verify(query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+func (jd *Jd) Verify(query, methodCode string) (verifyRsp payment3.VerifyRsp, errCode int, err error) {
 	var jdCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -220,7 +220,7 @@ func (jd *Jd) Verify(query, methodCode string) (verifyRsp response.VerifyRsp, er
 }
 
 //查询交易
-func (jd *Jd) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (jd *Jd) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchTradeRsp payment3.SearchTradeRsp, errCode int, err error) {
 	var jdTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -297,7 +297,7 @@ func (jd *Jd) SearchTrade(orderId, methodCode, currency string, totalFee float64
 }
 
 //关闭交易
-func (jd *Jd) CloseTrade(arg payment2.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (jd *Jd) CloseTrade(arg payment2.CloseTradeReq) (closeTradeRsp payment3.CloseTradeRsp, errCode int, err error) {
 	var jdClosedRsp payment.ClosedRsp
 	defer func() {
 		//记录日志
@@ -382,7 +382,7 @@ func (jd *Jd) CloseTrade(arg payment2.CloseTradeReq) (closeTradeRsp response.Clo
 }
 
 //物流信息上传
-func (jd *Jd) UploadLogistics(arg payment2.UploadLogisticsReq) (uploadLogisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (jd *Jd) UploadLogistics(arg payment2.UploadLogisticsReq) (uploadLogisticsRsp payment3.UploadLogisticsRsp, errCode int, err error) {
 	var jdLogisticsRsp payment.LogisticsRsp
 	defer func() {
 		//记录日志

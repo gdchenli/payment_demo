@@ -6,7 +6,7 @@ import (
 	payment2 "payment_demo/api/validate/payment"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
-	"payment_demo/internal/common/response"
+	payment3 "payment_demo/internal/common/response/payment"
 	"time"
 
 	"github.com/gdchenli/pay/dialects/allpay/payment"
@@ -167,7 +167,7 @@ func (allpay *Allpay) getPayWay(userAgentType int) string {
 	return config.GetInstance().GetString(AllpayGateWay)
 }
 
-func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp payment3.NotifyRsp, errCode int, err error) {
 	var allpayNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
@@ -213,7 +213,7 @@ func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp response.Notif
 	return notifyRsp, 0, nil
 }
 
-func (allpay *Allpay) Verify(query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+func (allpay *Allpay) Verify(query, methodCode string) (verifyRsp payment3.VerifyRsp, errCode int, err error) {
 	var allpayCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -238,7 +238,7 @@ func (allpay *Allpay) Verify(query, methodCode string) (verifyRsp response.Verif
 	return verifyRsp, 0, nil
 }
 
-func (allpay *Allpay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (allpay *Allpay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp payment3.SearchTradeRsp, errCode int, err error) {
 	var allpayTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志

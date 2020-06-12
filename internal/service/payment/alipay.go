@@ -5,7 +5,7 @@ import (
 	payment2 "payment_demo/api/validate/payment"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
-	"payment_demo/internal/common/response"
+	payment3 "payment_demo/internal/common/response/payment"
 
 	"github.com/gdchenli/pay/dialects/alipay/payment"
 	"github.com/sirupsen/logrus"
@@ -117,7 +117,7 @@ func (alipay *Alipay) getUserAgentType(userAgentType int) string {
 	return ""
 }
 
-func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp payment3.NotifyRsp, errCode int, err error) {
 	var alipayNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
@@ -159,7 +159,7 @@ func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp response.Notif
 	return notifyRsp, 0, nil
 }
 
-func (alipay *Alipay) Verify(query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+func (alipay *Alipay) Verify(query, methodCode string) (verifyRsp payment3.VerifyRsp, errCode int, err error) {
 	var alipayCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -184,7 +184,7 @@ func (alipay *Alipay) Verify(query, methodCode string) (verifyRsp response.Verif
 	return verifyRsp, 0, nil
 }
 
-func (alipay *Alipay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (alipay *Alipay) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp payment3.SearchTradeRsp, errCode int, err error) {
 	var alipayTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志

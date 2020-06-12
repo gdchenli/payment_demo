@@ -5,7 +5,7 @@ import (
 	payment2 "payment_demo/api/validate/payment"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
-	"payment_demo/internal/common/response"
+	payment3 "payment_demo/internal/common/response/payment"
 
 	"github.com/gdchenli/pay/dialects/epayments/payment"
 	"github.com/sirupsen/logrus"
@@ -103,7 +103,7 @@ func (e *Epayments) getPaymentChannels(methodCode string) (paymentChannels strin
 	return paymentChannels
 }
 
-func (e *Epayments) Notify(query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (e *Epayments) Notify(query, methodCode string) (notifyRsp payment3.NotifyRsp, errCode int, err error) {
 	var epaymentsNotifyRsp payment.NotifyRsp
 	defer func() {
 		//记录日志
@@ -131,7 +131,7 @@ func (e *Epayments) Notify(query, methodCode string) (notifyRsp response.NotifyR
 	return notifyRsp, 0, nil
 }
 
-func (e *Epayments) Verify(query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+func (e *Epayments) Verify(query, methodCode string) (verifyRsp payment3.VerifyRsp, errCode int, err error) {
 	var epaymentsCallbackRsp payment.CallbackRsp
 	defer func() {
 		//记录日志
@@ -156,7 +156,7 @@ func (e *Epayments) Verify(query, methodCode string) (verifyRsp response.VerifyR
 	return verifyRsp, 0, nil
 }
 
-func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee float64) (searchtradeRsp payment3.SearchTradeRsp, errCode int, err error) {
 	var epaymentsTradeRsp payment.TradeRsp
 	defer func() {
 		//记录日志
@@ -200,7 +200,7 @@ func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee f
 	return searchtradeRsp, 0, nil
 }
 
-func (e *Epayments) CloseTrade(arg payment2.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (e *Epayments) CloseTrade(arg payment2.CloseTradeReq) (closeTradeRsp payment3.CloseTradeRsp, errCode int, err error) {
 	logrus.Errorf("org:allpay,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
 	closeTradeRsp.Status = true
 	return closeTradeRsp, 0, nil
