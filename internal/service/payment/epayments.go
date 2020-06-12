@@ -2,7 +2,7 @@ package payment
 
 import (
 	"errors"
-	"payment_demo/api/validate"
+	payment2 "payment_demo/api/validate/payment"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/response"
@@ -23,7 +23,7 @@ const (
 
 type Epayments struct{}
 
-func (e *Epayments) getPayArg(order validate.Order) (payArg payment.PayArg, errCode int, err error) {
+func (e *Epayments) getPayArg(order payment2.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(EpaymentsMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:epayments,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
@@ -80,7 +80,7 @@ func (e *Epayments) getPayArg(order validate.Order) (payArg payment.PayArg, errC
 	return payArg, 0, nil
 }
 
-func (e *Epayments) Pay(order validate.Order) (form string, errCode int, err error) {
+func (e *Epayments) Pay(order payment2.Order) (form string, errCode int, err error) {
 	payArg, errCode, err := e.getPayArg(order)
 	if err != nil {
 		return form, errCode, err
@@ -200,7 +200,7 @@ func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee f
 	return searchtradeRsp, 0, nil
 }
 
-func (e *Epayments) CloseTrade(arg validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (e *Epayments) CloseTrade(arg payment2.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
 	logrus.Errorf("org:allpay,"+code.NotSupportPaymentMethodErrMessage+",errCode:%v,err:%v", code.NotSupportPaymentMethodErrCode)
 	closeTradeRsp.Status = true
 	return closeTradeRsp, 0, nil

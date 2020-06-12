@@ -1,4 +1,4 @@
-package validate
+package payment
 
 import "errors"
 

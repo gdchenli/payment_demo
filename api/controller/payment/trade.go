@@ -3,7 +3,7 @@ package payment
 import (
 	"net/http"
 	"payment_demo/api/controller/common"
-	"payment_demo/api/validate"
+	"payment_demo/api/validate/payment"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -20,7 +20,7 @@ func (trade *Trade) Router(router *gin.Engine) {
 }
 
 func (trade *Trade) search(ctx *gin.Context) {
-	t := new(validate.SearchTradeReq)
+	t := new(payment.SearchTradeReq)
 	ctx.ShouldBind(t)
 
 	if errCode, err := t.Validate(); err != nil {
@@ -44,7 +44,7 @@ func (trade *Trade) search(ctx *gin.Context) {
 }
 
 func (trade *Trade) close(ctx *gin.Context) {
-	closeTradeReq := new(validate.CloseTradeReq)
+	closeTradeReq := new(payment.CloseTradeReq)
 	ctx.ShouldBind(closeTradeReq)
 
 	if errCode, err := closeTradeReq.Validate(); err != nil {

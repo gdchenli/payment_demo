@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"payment_demo/api/validate"
+	payment2 "payment_demo/api/validate/payment"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/response"
@@ -37,7 +37,7 @@ const (
 type Jd struct{}
 
 //发起支付
-func (jd *Jd) Pay(arg validate.Order) (form string, errCode int, err error) {
+func (jd *Jd) Pay(arg payment2.Order) (form string, errCode int, err error) {
 	//金额转为分
 	totalFee := arg.TotalFee * 100
 	//金额字段类型转换
@@ -297,7 +297,7 @@ func (jd *Jd) SearchTrade(orderId, methodCode, currency string, totalFee float64
 }
 
 //关闭交易
-func (jd *Jd) CloseTrade(arg validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (jd *Jd) CloseTrade(arg payment2.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
 	var jdClosedRsp payment.ClosedRsp
 	defer func() {
 		//记录日志
@@ -382,7 +382,7 @@ func (jd *Jd) CloseTrade(arg validate.CloseTradeReq) (closeTradeRsp response.Clo
 }
 
 //物流信息上传
-func (jd *Jd) UploadLogistics(arg validate.UploadLogisticsReq) (uploadLogisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (jd *Jd) UploadLogistics(arg payment2.UploadLogisticsReq) (uploadLogisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
 	var jdLogisticsRsp payment.LogisticsRsp
 	defer func() {
 		//记录日志

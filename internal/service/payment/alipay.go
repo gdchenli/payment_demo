@@ -2,7 +2,7 @@ package payment
 
 import (
 	"errors"
-	"payment_demo/api/validate"
+	payment2 "payment_demo/api/validate/payment"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/response"
@@ -26,7 +26,7 @@ const (
 	AlipayTransCurrency = "alipay.trans_currency"
 )
 
-func (alipay *Alipay) getPayArg(arg validate.Order) (payArg payment.PayArg, errCode int, err error) {
+func (alipay *Alipay) getPayArg(arg payment2.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AlipayMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:alipay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
@@ -91,7 +91,7 @@ func (alipay *Alipay) getPayArg(arg validate.Order) (payArg payment.PayArg, errC
 	return payArg, 0, nil
 }
 
-func (alipay *Alipay) Pay(arg validate.Order) (form string, errCode int, err error) {
+func (alipay *Alipay) Pay(arg payment2.Order) (form string, errCode int, err error) {
 	payArg, errCode, err := alipay.getPayArg(arg)
 	if err != nil {
 		return form, errCode, err
