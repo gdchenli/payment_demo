@@ -1,9 +1,21 @@
-package common
+package controller
 
 import (
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
 	"payment_demo/internal/service/payment"
+)
+
+const (
+	NotSupportPaymentOrgCode = "10101"
+	NotSupportPaymentOrgMsg  = "不支持该支付机构"
+)
+
+const (
+	JdOrg        = "jd"
+	AllpayOrg    = "allpay"
+	EpaymentsOrg = "epayments"
+	AlipayOrg    = "alipay"
 )
 
 type PayHandler func(arg validate.Order) (form string, errCode int, err error)                                                                       //发起支付
