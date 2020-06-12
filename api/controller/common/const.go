@@ -8,7 +8,6 @@ const (
 const (
 	JdOrg        = "jd"
 	AllpayOrg    = "allpay"
-	WechatOrg    = "wechat"
 	EpaymentsOrg = "epayments"
 	AlipayOrg    = "alipay"
 )
