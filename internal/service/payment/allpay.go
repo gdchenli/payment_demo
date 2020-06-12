@@ -3,7 +3,7 @@ package payment
 import (
 	"errors"
 	"fmt"
-	"payment_demo/api/validate"
+	payment2 "payment_demo/api/validate/payment"
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/response"
@@ -37,7 +37,7 @@ const (
 
 type Allpay struct{}
 
-func (allpay *Allpay) getPayArg(arg validate.Order) (payArg payment.PayArg, errCode int, err error) {
+func (allpay *Allpay) getPayArg(arg payment2.Order) (payArg payment.PayArg, errCode int, err error) {
 	merchant := config.GetInstance().GetString(AllpayMerchant)
 	if merchant == "" {
 		logrus.Errorf("org:allpay,"+code.MerchantNotExistsErrMessage+",errCode:%v,err:%v", code.MerchantNotExistsErrCode)
@@ -113,7 +113,7 @@ func (allpay *Allpay) getPayArg(arg validate.Order) (payArg payment.PayArg, errC
 	return payArg, 0, nil
 }
 
-func (allpay *Allpay) Pay(arg validate.Order) (form string, errCode int, err error) {
+func (allpay *Allpay) Pay(arg payment2.Order) (form string, errCode int, err error) {
 	payArg, errCode, err := allpay.getPayArg(arg)
 	if err != nil {
 		return form, errCode, err

@@ -1,17 +1,17 @@
 package common
 
 import (
-	"payment_demo/api/validate"
+	payment2 "payment_demo/api/validate/payment"
 	"payment_demo/internal/common/response"
 	"payment_demo/internal/service/payment"
 )
 
-type PayHandler func(arg validate.Order) (form string, errCode int, err error)                                                                       //发起支付
+type PayHandler func(arg payment2.Order) (form string, errCode int, err error)                                                                       //发起支付
 type NotifyHandler func(query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error)                                             //异步通知
 type VerifyHandler func(query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error)                                             //同步通知
 type SearchTradeHandler func(orderId, methodCode, curreny string, totalFee float64) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) //交易查询
-type CloseTradeHandler func(arg validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error)                               //关闭交易
-type UploadLogisticsHandler func(arg validate.UploadLogisticsReq) (uploadLogisticsRsp response.UploadLogisticsRsp, errCode int, err error)           //上传物流
+type CloseTradeHandler func(arg payment2.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error)                               //关闭交易
+type UploadLogisticsHandler func(arg payment2.UploadLogisticsReq) (uploadLogisticsRsp response.UploadLogisticsRsp, errCode int, err error)           //上传物流
 
 var payMap map[string]PayHandler
 var notifyMap map[string]NotifyHandler
