@@ -56,6 +56,8 @@ func main() {
 
 func registerRouter(router *gin.Engine) {
 	new(controller.Payment).Router(router)
+	new(controller.Org).Router(router)
+	new(controller.Website).Router(router)
 }
 
 func registerMonitor(router *gin.Engine) {
