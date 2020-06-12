@@ -3,7 +3,7 @@ package payment
 import (
 	"net/http"
 	"payment_demo/api/controller/common"
-	"payment_demo/api/validate/payment"
+	"payment_demo/api/validate"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +18,7 @@ func (logistics *Logistics) Router(router *gin.Engine) {
 }
 
 func (logistics *Logistics) upload(ctx *gin.Context) {
-	l := new(payment.UploadLogisticsReq)
+	l := new(validate.UploadLogisticsReq)
 	ctx.ShouldBind(l)
 
 	uploadLogisticsHandle := common.GetUploadLogisticsHandler(l.OrgCode)
