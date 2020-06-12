@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"payment_demo/api/validate"
+	"payment_demo/internal/service"
 
 	"github.com/gin-gonic/gin/binding"
 
@@ -127,13 +128,7 @@ func (payment *Payment) Pay(ctx *gin.Context) {
 		return
 	}
 
-	payHandle := GetPayHandler(o.OrgCode)
-	if payHandle == nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
-		return
-	}
-
-	form, errCode, err := payHandle(*o)
+	form, errCode, err := new(service.Payment).Sumbit(*o)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
