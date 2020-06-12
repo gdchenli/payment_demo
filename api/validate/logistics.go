@@ -1,4 +1,4 @@
-package payment
+package validate
 
 type UploadLogisticsReq struct {
 	OrderId          string `form:"order_id" json:"order_id"`                   //订单号

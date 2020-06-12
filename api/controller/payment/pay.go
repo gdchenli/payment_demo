@@ -3,7 +3,7 @@ package payment
 import (
 	"net/http"
 	"payment_demo/api/controller/common"
-	"payment_demo/api/validate/payment"
+	"payment_demo/api/validate"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +19,7 @@ func (pay *Pay) Router(router *gin.Engine) {
 
 //发起支付
 func (pay *Pay) Pay(ctx *gin.Context) {
-	o := new(payment.Order)
+	o := new(validate.Order)
 	ctx.ShouldBind(o)
 
 	if errCode, err := o.Validate(); err != nil {
