@@ -4,7 +4,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"payment_demo/internal/config"
+	"payment_demo/internal/common/config"
 	"time"
 
 	logrus_stack "github.com/Gurpartap/logrus-stack"

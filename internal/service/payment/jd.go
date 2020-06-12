@@ -7,8 +7,8 @@ import (
 	"os"
 	"path"
 	"payment_demo/internal/common/code"
+	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/defs"
-	"payment_demo/internal/config"
 	"strconv"
 	"time"
 

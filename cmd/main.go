@@ -8,7 +8,7 @@ import (
 	"payment_demo/controller/payment/pay"
 	"payment_demo/controller/payment/trade"
 	"payment_demo/controller/payment/verify"
-	"payment_demo/internal/config"
+	"payment_demo/internal/common/config"
 	"payment_demo/pkg/ginprometheus"
 	"payment_demo/pkg/grace"
 	"payment_demo/pkg/log"

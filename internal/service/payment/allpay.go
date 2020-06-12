@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"payment_demo/internal/common/code"
+	"payment_demo/internal/common/config"
 	"payment_demo/internal/common/defs"
-	"payment_demo/internal/config"
 	"time"
 
 	"github.com/gdchenli/pay/dialects/allpay/payment"
