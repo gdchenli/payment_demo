@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"payment_demo/api/controller/payment"
-	"payment_demo/internal/common/config"
+	"payment_demo/pkg/config"
 	"payment_demo/pkg/ginprometheus"
 	"payment_demo/pkg/grace"
 	"payment_demo/pkg/log"

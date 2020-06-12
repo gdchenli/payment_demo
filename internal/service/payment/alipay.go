@@ -2,10 +2,11 @@ package payment
 
 import (
 	"errors"
+	"payment_demo/api/response"
 	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
-	"payment_demo/internal/common/config"
-	"payment_demo/internal/common/response"
+	"payment_demo/internal/common/consts"
+	"payment_demo/pkg/config"
 
 	"github.com/gdchenli/pay/dialects/alipay/payment"
 	"github.com/sirupsen/logrus"
@@ -97,7 +98,7 @@ func (alipay *Alipay) Pay(arg validate.Order) (form string, errCode int, err err
 		return form, errCode, err
 	}
 
-	if arg.UserAgentType == code.AlipayMiniProgramUserAgentType {
+	if arg.UserAgentType == consts.AlipayMiniProgramUserAgentType {
 		return new(payment.Payment).CreateAmpPayStr(payArg)
 	} else {
 		return new(payment.Payment).CreateForm(payArg)
@@ -106,11 +107,11 @@ func (alipay *Alipay) Pay(arg validate.Order) (form string, errCode int, err err
 
 func (alipay *Alipay) getUserAgentType(userAgentType int) string {
 	switch userAgentType {
-	case code.WebUserAgentType:
+	case consts.WebUserAgentType:
 		return payment.Web
-	case code.MobileUserAgentType:
+	case consts.MobileUserAgentType:
 		return payment.MobileWeb
-	case code.AlipayMiniProgramUserAgentType:
+	case consts.AlipayMiniProgramUserAgentType:
 		return payment.Amp
 	}
 
@@ -122,7 +123,7 @@ func (alipay *Alipay) Notify(query, methodCode string) (notifyRsp response.Notif
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,notify data:%+v",
-			alipayNotifyRsp.OrderId, code.AlipayOrg, methodCode, alipayNotifyRsp.Rsp)
+			alipayNotifyRsp.OrderId, consts.AlipayOrg, methodCode, alipayNotifyRsp.Rsp)
 	}()
 
 	merchant := config.GetInstance().GetString(AlipayMerchant)
@@ -164,7 +165,7 @@ func (alipay *Alipay) Verify(query, methodCode string) (verifyRsp response.Verif
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,callback data:%+v",
-			alipayCallbackRsp.OrderId, code.AlipayOrg, methodCode, alipayCallbackRsp.Rsp)
+			alipayCallbackRsp.OrderId, consts.AlipayOrg, methodCode, alipayCallbackRsp.Rsp)
 	}()
 
 	md5key := config.GetInstance().GetString(AlipayMd5Key)
@@ -189,7 +190,7 @@ func (alipay *Alipay) SearchTrade(orderId, methodCode, currency string, totalFee
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,callback data:%+v",
-			alipayTradeRsp.OrderId, code.AlipayOrg, methodCode, alipayTradeRsp.Rsp)
+			alipayTradeRsp.OrderId, consts.AlipayOrg, methodCode, alipayTradeRsp.Rsp)
 	}()
 
 	merchant := config.GetInstance().GetString(AlipayMerchant)

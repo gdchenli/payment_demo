@@ -1,4 +1,4 @@
-package code
+package consts
 
 //支付方式code
 const (

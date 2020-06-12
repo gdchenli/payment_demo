@@ -1,8 +1,8 @@
 package common
 
 import (
+	"payment_demo/api/response"
 	"payment_demo/api/validate"
-	"payment_demo/internal/common/response"
 	"payment_demo/internal/service/payment"
 )
 

@@ -3,10 +3,11 @@ package payment
 import (
 	"errors"
 	"fmt"
+	"payment_demo/api/response"
 	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
-	"payment_demo/internal/common/config"
-	"payment_demo/internal/common/response"
+	"payment_demo/internal/common/consts"
+	"payment_demo/pkg/config"
 	"time"
 
 	"github.com/gdchenli/pay/dialects/allpay/payment"
@@ -119,7 +120,7 @@ func (allpay *Allpay) Pay(arg validate.Order) (form string, errCode int, err err
 		return form, errCode, err
 	}
 
-	if arg.UserAgentType == code.AlipayMiniProgramUserAgentType {
+	if arg.UserAgentType == consts.AlipayMiniProgramUserAgentType {
 		return new(payment.Payment).CreateAmpPayStr(payArg)
 	} else {
 		return new(payment.Payment).CreateForm(payArg)
@@ -128,29 +129,29 @@ func (allpay *Allpay) Pay(arg validate.Order) (form string, errCode int, err err
 
 func (allpay *Allpay) getPaymentSchema(methodCode string) (string, int, error) {
 	switch methodCode {
-	case code.AlipayMethod:
+	case consts.AlipayMethod:
 		return AlipayPaymentSchema, 0, nil
-	case code.UnionpayMethod:
+	case consts.UnionpayMethod:
 		return UpPaymentSchema, 0, nil
 	}
 	return "", code.NotSupportPaymentMethodErrCode, errors.New(code.NotSupportPaymentMethodErrMessage)
 }
 
 func (allpay *Allpay) getTradeFrom(methodCode string, userAgentType int) string {
-	if methodCode == code.AlipayMethod {
+	if methodCode == consts.AlipayMethod {
 		switch userAgentType {
-		case code.WebUserAgentType:
+		case consts.WebUserAgentType:
 			return AlipayWebTradeFrom
-		case code.MobileUserAgentType:
+		case consts.MobileUserAgentType:
 			return AlipayMobileTradeFrom
-		case code.AlipayMiniProgramUserAgentType:
+		case consts.AlipayMiniProgramUserAgentType:
 			return AlipayMiniProgramTradeFrom
-		case code.AndroidAppUserAgentType, code.IOSAppUserAgentType:
+		case consts.AndroidAppUserAgentType, consts.IOSAppUserAgentType:
 			return AppTradeFrom
 		}
 	}
 
-	if methodCode == code.UnionpayMethod {
+	if methodCode == consts.UnionpayMethod {
 		return UpTradeFrom
 	}
 
@@ -172,7 +173,7 @@ func (allpay *Allpay) Notify(query, methodCode string) (notifyRsp response.Notif
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,notify data:%+v",
-			allpayNotifyRsp.OrderId, code.AllpayOrg, methodCode, allpayNotifyRsp.Rsp)
+			allpayNotifyRsp.OrderId, consts.AllpayOrg, methodCode, allpayNotifyRsp.Rsp)
 	}()
 
 	md5key := config.GetInstance().GetString(AllpayMd5Key)
@@ -218,7 +219,7 @@ func (allpay *Allpay) Verify(query, methodCode string) (verifyRsp response.Verif
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,callback data:%+v",
-			allpayCallbackRsp.OrderId, code.AllpayOrg, methodCode, allpayCallbackRsp.Rsp)
+			allpayCallbackRsp.OrderId, consts.AllpayOrg, methodCode, allpayCallbackRsp.Rsp)
 	}()
 
 	md5key := config.GetInstance().GetString(AllpayMd5Key)
@@ -243,7 +244,7 @@ func (allpay *Allpay) SearchTrade(orderId, methodCode, currency string, totalFee
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,trade data:%+v",
-			allpayTradeRsp.OrderId, code.AllpayOrg, methodCode, allpayTradeRsp.Rsp)
+			allpayTradeRsp.OrderId, consts.AllpayOrg, methodCode, allpayTradeRsp.Rsp)
 	}()
 
 	merchant := config.GetInstance().GetString(AllpayMerchant)
