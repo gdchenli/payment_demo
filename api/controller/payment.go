@@ -12,8 +12,6 @@ import (
 
 type Payment struct{}
 
-type Logistics struct{}
-
 func (payment *Payment) Router(router *gin.Engine) {
 	r := router.Group("/payment")
 	{
