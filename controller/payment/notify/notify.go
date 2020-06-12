@@ -3,7 +3,7 @@ package notify
 import (
 	"io/ioutil"
 	"net/http"
-	"payment_demo/controller/payment/common"
+	"payment_demo/controller/common"
 
 	"github.com/gin-gonic/gin"
 )

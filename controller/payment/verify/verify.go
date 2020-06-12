@@ -2,7 +2,7 @@ package verify
 
 import (
 	"net/http"
-	"payment_demo/controller/payment/common"
+	"payment_demo/controller/common"
 
 	"github.com/gin-gonic/gin"
 )

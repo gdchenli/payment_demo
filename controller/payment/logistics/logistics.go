@@ -2,7 +2,7 @@ package logistics
 
 import (
 	"net/http"
-	"payment_demo/controller/payment/common"
+	"payment_demo/controller/common"
 	"payment_demo/internal/common/defs"
 
 	"github.com/gin-gonic/gin"
