@@ -2,7 +2,7 @@ package common
 
 import (
 	"payment_demo/internal/common/defs"
-	"payment_demo/internal/service"
+	"payment_demo/internal/service/payment"
 )
 
 type PayChain func(defs.Order) (string, int, error)                                           //发起支付
@@ -21,40 +21,40 @@ var uploadLogisticsMap map[string]UploadLogisticsChain
 
 func init() {
 	payMap = map[string]PayChain{
-		JdOrg:        new(service.Jd).Pay,
-		AllpayOrg:    new(service.Allpay).Pay,
-		AlipayOrg:    new(service.Alipay).Pay,
-		EpaymentsOrg: new(service.Epayments).Pay,
+		JdOrg:        new(payment.Jd).Pay,
+		AllpayOrg:    new(payment.Allpay).Pay,
+		AlipayOrg:    new(payment.Alipay).Pay,
+		EpaymentsOrg: new(payment.Epayments).Pay,
 	}
 
 	notifyMap = map[string]NotifyChain{
-		JdOrg:        new(service.Jd).Notify,
-		AllpayOrg:    new(service.Allpay).Notify,
-		AlipayOrg:    new(service.Alipay).Notify,
-		EpaymentsOrg: new(service.Epayments).Notify,
+		JdOrg:        new(payment.Jd).Notify,
+		AllpayOrg:    new(payment.Allpay).Notify,
+		AlipayOrg:    new(payment.Alipay).Notify,
+		EpaymentsOrg: new(payment.Epayments).Notify,
 	}
 
 	verifyMap = map[string]VerifyChain{
-		JdOrg:        new(service.Jd).Verify,
-		AllpayOrg:    new(service.Allpay).Verify,
-		AlipayOrg:    new(service.Alipay).Verify,
-		EpaymentsOrg: new(service.Epayments).Verify,
+		JdOrg:        new(payment.Jd).Verify,
+		AllpayOrg:    new(payment.Allpay).Verify,
+		AlipayOrg:    new(payment.Alipay).Verify,
+		EpaymentsOrg: new(payment.Epayments).Verify,
 	}
 
 	searchTradeMap = map[string]SearchTradeChain{
-		JdOrg:        new(service.Jd).SearchTrade,
-		AllpayOrg:    new(service.Allpay).SearchTrade,
-		AlipayOrg:    new(service.Alipay).SearchTrade,
-		EpaymentsOrg: new(service.Epayments).SearchTrade,
+		JdOrg:        new(payment.Jd).SearchTrade,
+		AllpayOrg:    new(payment.Allpay).SearchTrade,
+		AlipayOrg:    new(payment.Alipay).SearchTrade,
+		EpaymentsOrg: new(payment.Epayments).SearchTrade,
 	}
 
 	closeTradeMap = map[string]CloseTradeChain{
-		JdOrg:        new(service.Jd).CloseTrade,
-		EpaymentsOrg: new(service.Epayments).CloseTrade,
+		JdOrg:        new(payment.Jd).CloseTrade,
+		EpaymentsOrg: new(payment.Epayments).CloseTrade,
 	}
 
 	uploadLogisticsMap = map[string]UploadLogisticsChain{
-		JdOrg: new(service.Jd).UploadLogistics,
+		JdOrg: new(payment.Jd).UploadLogistics,
 	}
 }
 
