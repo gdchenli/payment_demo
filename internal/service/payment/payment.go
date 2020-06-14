@@ -194,7 +194,7 @@ func (payment *Payment) UploadLogistics(req validate.UploadLogisticsReq) (upload
 		return uploadLogisticsTradeRsp, errCode, err
 	}
 
-	//关闭支付交易处理
+	//上传物流信息处理
 	uploadLogisticsTradeHandle := getUploadLogisticsHandler(req.OrgCode)
 	if uploadLogisticsTradeHandle == nil {
 		return uploadLogisticsTradeRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
