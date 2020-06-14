@@ -24,15 +24,15 @@ auth_password = ""
 # 京东支付商户id
 merchant=""
 # 京东商户名称
-merchant_name=""
+merchantName=""
 # 同步通知地址
-callback_url="http://localhost:8090/payment/notify/jd/jd_payment"
+callbackUrl="http://localhost:8090/payment/notify/jd/jd_payment"
 # 异步通知地址
-notify_url="http://localhost:8090/payment/callback/jd/jd_payment"
+notifyUrl="http://localhost:8090/payment/callback/jd/jd_payment"
 # 订单交易过期时间，单位：秒
-expire_time="3000"
+expireTime="3000"
 # 订单结算币种
-settle_currency="CNY"
+settleCurrency=""
 # 商户des key
 des_key=""
 # 商户私钥文件名称，私钥格式：PKCS#1
@@ -46,23 +46,23 @@ h5_pay_way="https://h5pay.jd.com/jdpay/saveOrder"
 # 订单查询网关地址
 trade_way="https://paygate.jd.com/service/query"
 # 关闭订单交易网关地址
-closed_way="https://paygate.jd.com/service/revoke"
+close_way="https://paygate.jd.com/service/revoke"
 # 物流信息上传网关地址
 logistics_way ="https://paygate.jd.com/service/afterPayInfoNotify"
 
 [allpay]
 # 支付机构allpay商户Id
-merchant=""
+merID=""
 # 支付机构allpay收单行
-acq_id=""
+acqID=""
 # 支付机构allpay商户md5 key
-md5_key= ""
+md5_Key= ""
 # 订单交易过期时间，取值：5m、10m、15m、30m、1h、2h、3h、5h、10h、12h、1d；单位说明：m分钟，h小时,d天
 timeout="3h"
 # 同步通知地址
-front_url="http://localhost:8090/payment/verify/allpay/alipay_payment"
+frontURL="http://localhost:8090/payment/verify/allpay/alipay_payment"
 # 异步通知地址
-back_url="http://localhost:8090/payment/notify/allpay/alipay_payment"
+backURL="http://localhost:8090/payment/notify/allpay/alipay_payment"
 # 发起支付网\查询交易关地址
 gate_way="https://api.allpayx.com"
 # 查询汇率网关地址
@@ -70,15 +70,15 @@ sapi_way="https://sapi.allpayx.com"
 
 [alipay]
 # alipay商户Id
-merchant=""
+partner=""
 # alipay商户账号
 supplier=""
 # alipay结算币种
-trans_currency="AUD"
+currency=""
 # alipay商户md5 key
 md5_key= ""
 # 订单交易过期时间，取值：5m、10m、15m、30m、1h、2h、3h、5h、10h、12h、1d；单位说明：m分钟，h小时,d天
-timeout="1h"
+timeout_rule="1h"
 # 异步通知地址
 notify_url="http://localhost:8090/payment/notify/alipay/alipay_payment"
 # 同步通知地址
@@ -92,13 +92,13 @@ pay_way="2"
 
 [epayments]
 # epayments商户Id
-merchant=""
+merchant_id=""
 # epayments结算币种
-trans_currency="AUD"
+currency=""
 # epayments商户md5 key
 md5_key= ""
 # 订单交易过期时间，单位为分钟
-timeout="300"
+valid_mins="1440"
 # 异步通知地址
 notify_url="http://localhost:8090/payment/notify/alipay/alipay_payment"
 # 同步通知地址
