@@ -8,11 +8,10 @@ import (
 	"fmt"
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
+	"payment_demo/pkg/curl"
 	"regexp"
 	"strings"
 
-	"github.com/gdchenli/pay/dialects/jd/util"
-	"github.com/gdchenli/pay/pkg/curl"
 	"github.com/sirupsen/logrus"
 )
 
@@ -133,8 +132,8 @@ func (l *Logistics) Upload(configParamMap map[string]string, req validate.Upload
 	//fmt.Println("without sign xml", xmlStr)
 
 	//生成签名
-	sha256 := util.HaSha256(xmlStr)
-	signBytes, err := util.SignPKCS1v15([]byte(sha256), []byte(configParamMap["private_key"]), crypto.Hash(0))
+	sha256 := HaSha256(xmlStr)
+	signBytes, err := SignPKCS1v15([]byte(sha256), []byte(configParamMap["private_key"]), crypto.Hash(0))
 	if err != nil {
 		logrus.Errorf(LogisticsUploadBuildSignErrMessage+",request:%+v,errCode:%v,err:%v", req, LogisticsUploadBuildSignErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadBuildSignErrCode, errors.New(LogisticsUploadBuildSignErrMessage)
@@ -158,12 +157,12 @@ func (l *Logistics) Upload(configParamMap map[string]string, req validate.Upload
 		logrus.Errorf(LogisticsUploadDesKeyFormatErrMessage+",request:%+v,errCode:%v,err:%v", req, LogisticsUploadDesKeyFormatErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadDesKeyFormatErrCode, errors.New(LogisticsUploadDesKeyFormatErrMessage)
 	}
-	encryptBytes, err := util.TripleEcbDesEncrypt([]byte(xmlStr), desKey)
+	encryptBytes, err := TripleEcbDesEncrypt([]byte(xmlStr), desKey)
 	if err != nil {
 		logrus.Errorf(LogisticsUploadRequestDataEncryptFailedErrMessage+",query:%+v,errCode:%v,err:%v", req, LogisticsUploadRequestDataEncryptFailedErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadRequestDataEncryptFailedErrCode, errors.New(LogisticsUploadRequestDataEncryptFailedErrMessage)
 	}
-	reqEncrypt := util.DecimalByteSlice2HexString(encryptBytes)
+	reqEncrypt := DecimalByteSlice2HexString(encryptBytes)
 	reqEncrypt = base64.StdEncoding.EncodeToString([]byte(reqEncrypt))
 	logisticsWithEncrypt := LogisticsWithEncrypt{
 		Version:  Version,
@@ -196,8 +195,8 @@ func (l *Logistics) Upload(configParamMap map[string]string, req validate.Upload
 		logrus.Errorf(LogisticsUploadResponseDataDecryptFailedErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", req, logisticsResult, LogisticsUploadResponseDataDecryptFailedErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadResponseDataDecryptFailedErrCode, errors.New(LogisticsUploadResponseDataDecryptFailedErrMessage)
 	}
-	rspEncryptBytes, err = util.HexString2Bytes(string(rspEncryptBytes))
-	rspDecryptBytes, err := util.TripleEcbDesDecrypt(rspEncryptBytes, desKey)
+	rspEncryptBytes, err = HexString2Bytes(string(rspEncryptBytes))
+	rspDecryptBytes, err := TripleEcbDesDecrypt(rspEncryptBytes, desKey)
 	if err != nil {
 		logrus.Errorf(LogisticsUploadResponseDataDecryptFailedErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", req, logisticsResult, LogisticsUploadResponseDataDecryptFailedErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadResponseDataDecryptFailedErrCode, errors.New(LogisticsUploadResponseDataDecryptFailedErrMessage)
@@ -244,8 +243,8 @@ func (l *Logistics) checkSignature(sign, decryptRsp, publicKey string) bool {
 	if err != nil {
 		return false
 	}
-	sha256 := util.HaSha256(originXml)
-	verifySign := util.VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey), crypto.Hash(0))
+	sha256 := HaSha256(originXml)
+	verifySign := VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey), crypto.Hash(0))
 	if !verifySign {
 		fmt.Println("签名校验不通过")
 	}

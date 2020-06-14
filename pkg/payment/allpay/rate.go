@@ -7,8 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/gdchenli/pay/dialects/allpay/util"
-	"github.com/gdchenli/pay/pkg/curl"
+	"payment_demo/pkg/curl"
 )
 
 const (
@@ -41,8 +40,8 @@ func (rate *Rate) Search(arg RateArg) (float64, int, error) {
 		"conversion_currency": arg.ConversionCurrencyCode,
 		"sign_type":           SignTypeSHA256,
 	}
-	sortString := util.GetSortString(paramMap)
-	paramMap["sign"] = util.Hsha256(sortString + arg.Md5Key)
+	sortString := GetSortString(paramMap)
+	paramMap["sign"] = Hsha256(sortString + arg.Md5Key)
 
 	values := url.Values{}
 	for k, v := range paramMap {

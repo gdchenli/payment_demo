@@ -7,12 +7,11 @@ import (
 	"net/url"
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
+	"payment_demo/pkg/curl"
 	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/gdchenli/pay/pkg/curl"
 )
 
 const (
