@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"payment_demo/api/response"
+	"payment_demo/api/validate"
 	"strconv"
 	"time"
 
@@ -37,41 +39,25 @@ const (
 
 type Trade struct{}
 
-type TradeArg struct {
-	Merchant    string `json:"merchant"`
-	IncrementId string `json:"increment_id"`
-	Md5Key      string `json:"md5_key"`
-	TradeWay    string `json:"trade_way"`
-}
+func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+	md5Key := paramMap["md5_key"]
+	delete(paramMap, "md5_key")
+	gateWay := paramMap["gate_way"]
+	delete(paramMap, "gate_way")
 
-type TradeRsp struct {
-	Status  string  `json:"status"`   //交易状态
-	OrderId string  `json:"order_id"` //订单号
-	TradeNo string  `json:"trade_no"` //支付机构交易流水号
-	PaidAt  string  `json:"paid_at"`  //支付gmt时间
-	RmbFee  float64 `json:"rmb_fee"`  //人民币金额
-	Rate    float64 `json:"rate"`     //汇率
-	Res     string  `json:"res"`
-	Rsp     string  `json:"rsp"`
-}
-
-func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err error) {
-	paramMap := map[string]string{
-		"merchant_id":  arg.Merchant,
-		"increment_id": arg.IncrementId,
-		"nonce_str":    util.GetRandomString(20),
-		"service":      SearchServiceType,
-	}
-	sortString := util.GetSortString(paramMap)
-	paramMap["signature"] = util.Md5(sortString + arg.Md5Key)
+	paramMap["service"] = SearchServiceType
+	paramMap["increment_id"] = req.OrderId
+	paramMap["nonce_str"] = GetRandomString(20)
+	sortString := GetSortString(paramMap)
+	paramMap["signature"] = Md5(sortString + md5Key)
 	paramMap["sign_type"] = SignTypeMD5
 	values := url.Values{}
 	for k, v := range paramMap {
 		values.Add(k, v)
 	}
 
-	fmt.Println(arg.TradeWay + "?" + values.Encode())
-	returnBytes, err := curl.GetJSONReturnByte(arg.TradeWay + "?" + values.Encode())
+	fmt.Println(gateWay + "?" + values.Encode())
+	returnBytes, err := curl.GetJSONReturnByte(gateWay + "?" + values.Encode())
 	if err != nil {
 		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
 	}
@@ -79,10 +65,10 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	rspMap := make(map[string]interface{})
 	err = json.Unmarshal(returnBytes, &rspMap)
 	if err != nil {
-		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", arg.IncrementId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", req.OrderId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
-	tradeRsp.OrderId = arg.IncrementId
+	tradeRsp.OrderId = req.OrderId
 
 	//校验签名
 	sign := rspMap["signature"].(string)
@@ -93,8 +79,8 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 		}
 		tradeRspMap[k] = fmt.Sprintf("%v", v)
 	}
-	if !trade.checkSign(tradeRspMap, arg.Md5Key, sign) {
-		logrus.Errorf("org:epayments,"+SearchTradeResponseDataSignErrMessage+",orderId:%v,query:%v,errCode:%v", arg.IncrementId, sortString, SearchTradeResponseDataSignErrCode)
+	if !trade.checkSign(tradeRspMap, md5Key, sign) {
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataSignErrMessage+",orderId:%v,query:%v,errCode:%v", req.OrderId, sortString, SearchTradeResponseDataSignErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
 
@@ -121,7 +107,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	//支付时间
 	parseTime, err := time.Parse(DateTimeFormatLayout, tradeRspMap["gmt_payment"])
 	if err != nil {
-		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", arg.IncrementId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", req.OrderId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 	tradeRsp.PaidAt = parseTime.UTC().Format(DateTimeFormatLayout)
@@ -129,20 +115,20 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	//汇率
 	tradeRsp.Rate, err = strconv.ParseFloat(tradeRspMap["rate"], 64)
 	if err != nil {
-		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", arg.IncrementId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", req.OrderId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 
 	//人民币金额
 	grandTotal, err := strconv.ParseFloat(tradeRspMap["grandtotal"], 64)
 	if err != nil {
-		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", arg.IncrementId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", req.OrderId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 	rmbFee := grandTotal * tradeRsp.Rate
 	rmbFee, err = strconv.ParseFloat(fmt.Sprintf("%.2f", rmbFee), 64)
 	if err != nil {
-		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", arg.IncrementId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
+		logrus.Errorf("org:epayments,"+SearchTradeResponseDataFormatErrMessage+",orderId:%v,query:%v,errCode:%v,err:%v", req.OrderId, sortString, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 	tradeRsp.RmbFee = rmbFee
@@ -154,4 +140,11 @@ func (trade *Trade) checkSign(rspMap map[string]string, md5Key, sign string) boo
 	sortString := util.GetSortString(rspMap)
 	calculateSign := util.Md5(sortString + md5Key)
 	return calculateSign == sign
+}
+
+func (trade *Trade) GetConfigCode() []string {
+	return []string{
+		"merchant_id",
+		"md5_key", "gate_way",
+	}
 }

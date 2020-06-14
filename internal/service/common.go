@@ -6,6 +6,7 @@ import (
 	"payment_demo/pkg/payment/alipay"
 	"payment_demo/pkg/payment/allpay"
 	"payment_demo/pkg/payment/consts"
+	"payment_demo/pkg/payment/epayments"
 )
 
 //发起支付
@@ -27,6 +28,7 @@ type ConfigCodeHandler func() []string
 
 //发起支付
 var submitMap map[string]SumbitHandler
+var qrCodeSubmitMap map[string]SumbitHandler
 var ampSubmitMap map[string]SumbitHandler
 var wmpSubmitMap map[string]WmpSumbitHandler
 var appSubmitMap map[string]AppSumbitHandler
@@ -54,6 +56,11 @@ func init() {
 	allpayVerify := new(allpay.Verify)
 	allpayTrade := new(allpay.Trade)
 
+	epaymentsPayment := new(epayments.Payment)
+	epaymentsNotify := new(epayments.Notify)
+	epaymentsVerify := new(epayments.Verify)
+	epaymentsTrade := new(epayments.Trade)
+
 	configCodeMap = map[string]ConfigCodeHandler{
 		consts.AlipayOrg + ".payment": alipayPayment.GetConfigCode, //发起支付配置
 		consts.AlipayOrg + ".notify":  alipayNotify.GetConfigCode,  //异步通知配置
@@ -64,11 +71,21 @@ func init() {
 		consts.AllpayOrg + ".notify":  allpayNotify.GetConfigCode,  //异步通知配置
 		consts.AllpayOrg + ".verify":  allpayVerify.GetConfigCode,  //同步通知
 		consts.AllpayOrg + ".trade":   allpayTrade.GetConfigCode,   //交易查询
+
+		consts.EpaymentsOrg + ".payment": epaymentsPayment.GetConfigCode, //发起支付配置
+		consts.EpaymentsOrg + ".notify":  epaymentsNotify.GetConfigCode,  //异步通知配置
+		consts.EpaymentsOrg + ".verify":  epaymentsVerify.GetConfigCode,  //同步通知
+		consts.EpaymentsOrg + ".trade":   epaymentsTrade.GetConfigCode,   //交易查询
 	}
 
 	submitMap = map[string]SumbitHandler{
-		consts.AlipayOrg: alipayPayment.CreatePayUrl,
-		consts.AllpayOrg: allpayPayment.CreatePayUrl,
+		consts.AlipayOrg:    alipayPayment.CreatePayUrl,
+		consts.AllpayOrg:    allpayPayment.CreatePayUrl,
+		consts.EpaymentsOrg: epaymentsPayment.CreatePayUrl,
+	}
+
+	qrCodeSubmitMap = map[string]SumbitHandler{
+		consts.EpaymentsOrg: epaymentsPayment.CreateQrCode,
 	}
 
 	ampSubmitMap = map[string]SumbitHandler{
@@ -81,18 +98,21 @@ func init() {
 	}
 
 	notifyMap = map[string]NotifyHandler{
-		consts.AlipayOrg: alipayNotify.Validate,
-		consts.AllpayOrg: allpayNotify.Validate,
+		consts.AlipayOrg:    alipayNotify.Validate,
+		consts.AllpayOrg:    allpayNotify.Validate,
+		consts.EpaymentsOrg: epaymentsNotify.Validate,
 	}
 
 	verifyMap = map[string]VerifyHandler{
-		consts.AlipayOrg: alipayVerify.Validate,
-		consts.AllpayOrg: allpayVerify.Validate,
+		consts.AlipayOrg:    alipayVerify.Validate,
+		consts.AllpayOrg:    allpayVerify.Validate,
+		consts.EpaymentsOrg: epaymentsVerify.Validate,
 	}
 
 	searchTradeMap = map[string]SearchTradeHandler{
-		consts.AlipayOrg: alipayTrade.Search,
-		consts.AllpayOrg: allpayTrade.Search,
+		consts.AlipayOrg:    alipayTrade.Search,
+		consts.AllpayOrg:    allpayTrade.Search,
+		consts.EpaymentsOrg: epaymentsTrade.Search,
 	}
 
 }
@@ -100,7 +120,12 @@ func init() {
 //发起支付
 func getSubmitHandler(orgCode string, userAgentType int) SumbitHandler {
 	switch userAgentType {
-	case consts.WebUserAgentType, consts.MobileUserAgentType:
+	case consts.WebUserAgentType:
+		if orgCode == consts.EpaymentsOrg {
+			return qrCodeSubmitMap[orgCode]
+		}
+		return submitMap[orgCode]
+	case consts.MobileUserAgentType:
 		return submitMap[orgCode]
 	case consts.AlipayMiniProgramUserAgentType:
 		return ampSubmitMap[orgCode]

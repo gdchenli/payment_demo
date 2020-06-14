@@ -3,6 +3,7 @@ package epayments
 import (
 	"errors"
 	"fmt"
+	"payment_demo/api/response"
 	"strconv"
 	"time"
 
@@ -29,9 +30,7 @@ type NotifyRsp struct {
 	Rsp     string  `json:"rsp"`      //返回的数据
 }
 
-func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCode int, err error) {
-	notifyRsp.Rsp = query
-
+func (notify *Notify) Validate(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
@@ -50,7 +49,7 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 		delete(queryMap, "sign_type")
 	}
 
-	if !notify.checkSign(queryMap, md5Key, sign) {
+	if !notify.checkSign(queryMap, configParamMap["md5_key"], sign) {
 		logrus.Errorf("org:epayments,"+NotifySignErrMessage+",orderId%v,query:%v,errCode:%v", notifyRsp.OrderId, query, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
@@ -91,6 +90,7 @@ func (notify *Notify) Validate(query, md5Key string) (notifyRsp NotifyRsp, errCo
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 	notifyRsp.RmbFee = rmbFee
+	notifyRsp.Message = "success"
 
 	return notifyRsp, 0, nil
 }
@@ -99,4 +99,10 @@ func (notify *Notify) checkSign(queryMap map[string]string, md5Key, sign string)
 	sortString := util.GetSortString(queryMap)
 	calculateSign := util.Md5(sortString + md5Key)
 	return calculateSign == sign
+}
+
+func (notify *Notify) GetConfigCode() []string {
+	return []string{
+		"md5_key",
+	}
 }

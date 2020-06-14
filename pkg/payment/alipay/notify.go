@@ -96,6 +96,6 @@ func (notify *Notify) checkSign(queryMap map[string]string, md5Key, sign string)
 
 func (notify *Notify) GetConfigCode() []string {
 	return []string{
-		"pay_way", "md5_key", "gate_way", "partner",
+		"md5_key", "gate_way", "partner",
 	}
 }

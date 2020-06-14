@@ -80,7 +80,7 @@ func (payment *Payment) Notify(query, orgCode, methodCode string) (notifyRsp res
 
 func (payment *Payment) Verify(query, orgCode, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
 	//获取配置项code
-	getConfigCodehandle := getConfigCodeHandler(orgCode + ".notify")
+	getConfigCodehandle := getConfigCodeHandler(orgCode + ".verify")
 	if getConfigCodehandle == nil {
 		return verifyRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}

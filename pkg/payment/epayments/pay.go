@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/url"
+	"payment_demo/api/validate"
+	"payment_demo/pkg/payment/consts"
 	"strconv"
 
 	"github.com/gdchenli/pay/dialects/epayments/util"
@@ -41,51 +43,43 @@ type PayArg struct {
 	PaymentChannels string  `json:"payment_channels"`
 }
 
-func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
+func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.Order) (payUrl string, errCode int, err error) {
+	gateWay := paramMap["gate_way"]
+	delete(paramMap, "gate_way")
+
+	md5Key := paramMap["md5_key"]
+	delete(paramMap, "md5_key")
+
 	//支付金额处理
 	var grandTotal string
-	if arg.Currency == KRW || arg.Currency == JPY {
-		grandTotal = strconv.FormatFloat(arg.GrandTotal, 'f', 0, 64)
+	if order.Currency == KRW || order.Currency == JPY {
+		grandTotal = strconv.FormatFloat(order.TotalFee, 'f', 0, 64)
 	} else {
-		grandTotal = strconv.FormatFloat(arg.GrandTotal, 'f', 2, 64)
+		grandTotal = strconv.FormatFloat(order.TotalFee, 'f', 2, 64)
 	}
 
-	paramMap := map[string]string{
-		"service":          createSmartPay,
-		"merchant_id":      arg.MerchantId,
-		"notify_url":       arg.NotifyUrl,
-		"return_url":       arg.ReturnUrl,
-		"subject":          arg.IncrementId,
-		"grandtotal":       grandTotal,
-		"increment_id":     arg.IncrementId,
-		"currency":         arg.TransCurrency,
-		"payment_channels": arg.PaymentChannels,
-		"describe":         arg.IncrementId,
-		"nonce_str":        util.GetRandomString(20),
-	}
-
-	//超时时间
-	if arg.ValidMins != "" {
-		paramMap["valid_mins"] = arg.ValidMins
-	}
-
+	paramMap["service"] = createSmartPay
+	paramMap["subject"] = order.OrderId
+	paramMap["grandtotal"] = grandTotal
+	paramMap["increment_id"] = order.OrderId
+	paramMap["payment_channels"] = payment.getPaymentChannels(order.MethodCode)
+	paramMap["describe"] = order.OrderId
+	paramMap["nonce_str"] = GetRandomString(20)
 	sortString := util.GetSortString(paramMap)
-	paramMap["signature"] = util.Md5(sortString)
+	paramMap["signature"] = util.Md5(sortString + md5Key)
 	paramMap["sign_type"] = SignTypeMD5
 
-	//生成form表单
-	form = payment.buildForm(paramMap, arg.GateWay)
+	payUrl = payment.buildPayUrl(paramMap, gateWay)
 
-	return form, 0, nil
+	return payUrl, 0, nil
 }
 
-func (payment *Payment) buildForm(paramMap map[string]string, gateWay string) (form string) {
-	payUrl := "<form action='" + gateWay + "' method='post' id='pay_form'>"
+func (payment *Payment) buildPayUrl(paramMap map[string]string, gateWay string) (payUrl string) {
+	values := url.Values{}
 	for k, v := range paramMap {
-		payUrl += "<input value='" + v + "' name='" + k + "' type='hidden'/>"
+		values.Add(k, v)
 	}
-	payUrl += "</form>"
-	payUrl += "<script>var form = document.getElementById('pay_form');form.submit()</script>"
+	payUrl = gateWay + "?" + values.Encode()
 	return payUrl
 }
 
@@ -100,42 +94,39 @@ type QrCodeResult struct {
 	SignType    string `json:"sign_type"`    //签名类型
 }
 
-func (payment *Payment) CreateQrCode(arg PayArg) (qrCodeUrl string, errCode int, err error) {
+func (payment *Payment) CreateQrCode(paramMap map[string]string, order validate.Order) (qrCodeUrl string, errCode int, err error) {
+	gateWay := paramMap["gate_way"]
+	delete(paramMap, "gate_way")
+
+	md5Key := paramMap["md5_key"]
+	delete(paramMap, "md5_key")
+
+	delete(paramMap, "return_url")
+
 	//支付金额处理
 	var grandTotal string
-	if arg.Currency == KRW || arg.Currency == JPY {
-		grandTotal = strconv.FormatFloat(arg.GrandTotal, 'f', 0, 64)
+	if order.Currency == KRW || order.Currency == JPY {
+		grandTotal = strconv.FormatFloat(order.TotalFee, 'f', 0, 64)
 	} else {
-		grandTotal = strconv.FormatFloat(arg.GrandTotal, 'f', 2, 64)
+		grandTotal = strconv.FormatFloat(order.TotalFee, 'f', 2, 64)
 	}
 
-	paramMap := map[string]string{
-		"service":          AggregateCodePay,
-		"merchant_id":      arg.MerchantId,
-		"notify_url":       arg.NotifyUrl,
-		"subject":          arg.IncrementId,
-		"grandtotal":       grandTotal,
-		"increment_id":     arg.IncrementId,
-		"currency":         arg.TransCurrency,
-		"payment_channels": arg.PaymentChannels,
-		"describe":         arg.IncrementId,
-		"nonce_str":        util.GetRandomString(20),
-	}
-
-	//超时时间
-	if arg.ValidMins != "" {
-		paramMap["valid_mins"] = arg.ValidMins
-	}
-
+	paramMap["service"] = AggregateCodePay
+	paramMap["subject"] = order.OrderId
+	paramMap["grandtotal"] = grandTotal
+	paramMap["increment_id"] = order.OrderId
+	paramMap["payment_channels"] = payment.getPaymentChannels(order.MethodCode)
+	paramMap["describe"] = order.OrderId
+	paramMap["nonce_str"] = GetRandomString(20)
 	sortString := util.GetSortString(paramMap)
-	paramMap["signature"] = util.Md5(sortString + arg.Md5Key)
+	paramMap["signature"] = util.Md5(sortString + md5Key)
 	paramMap["sign_type"] = SignTypeMD5
 
 	values := url.Values{}
 	for k, v := range paramMap {
 		values.Add(k, v)
 	}
-	returnBytes, err := curl.GetJSONReturnByte(arg.GateWay + "?" + values.Encode())
+	returnBytes, err := curl.GetJSONReturnByte(gateWay + "?" + values.Encode())
 	if err != nil {
 		return qrCodeUrl, PayNetErrCode, errors.New(PayNetErrMessage)
 	}
@@ -157,4 +148,21 @@ func (payment *Payment) CreateQrCode(arg PayArg) (qrCodeUrl string, errCode int,
 	}
 	imgStr := "data:image/png;base64," + util.BASE64EncodeStr(qrCodeBytes)
 	return imgStr, 0, nil
+}
+
+//获取支付通道
+func (payment *Payment) getPaymentChannels(methodCode string) (paymentChannels string) {
+	if methodCode == consts.WechatMethod {
+		paymentChannels = ChannelWechat
+	} else if methodCode == consts.AlipayMethod {
+		paymentChannels = ChannelAlipay
+	}
+	return paymentChannels
+}
+
+func (payment *Payment) GetConfigCode() []string {
+	return []string{
+		"merchant_id", "notify_url", "return_url", "currency", "valid_mins",
+		"md5_key", "gate_way",
+	}
 }

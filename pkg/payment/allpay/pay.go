@@ -50,18 +50,18 @@ type DetailInfo struct {
 	Quantity  int    `json:"quantity"`
 }
 
-func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order validate.Order) (form string, errCode int, err error) {
+func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order validate.Order) (payUrl string, errCode int, err error) {
 	gateWay := payment.getGateWay(configParamMap["gate_way"])
 	delete(configParamMap, "gata_way")
 
 	paramMap, errCode, err := payment.getPayParamMap(configParamMap, order)
 	if err != nil {
-		return form, errCode, err
+		return payUrl, errCode, err
 	}
 
-	form = payment.buildPayUrl(paramMap, gateWay)
+	payUrl = payment.buildPayUrl(paramMap, gateWay)
 
-	return form, 0, nil
+	return payUrl, 0, nil
 }
 
 func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order validate.Order) (payStr string, errCode int, err error) {
@@ -77,7 +77,7 @@ func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order 
 		values.Add(k, v)
 	}
 	var ampProgramRsp AmpProgramRsp
-	fmt.Println("gateWay", gateWay)
+
 	err = curl.PostJSON(gateWay, &ampProgramRsp, strings.NewReader(values.Encode()))
 	if err != nil {
 		logrus.Errorf("org:allpay,"+PayNetErrMessage+",order id %v,errCode:%v,err:%v", order.OrderId, PayNetErrCode, err.Error())
