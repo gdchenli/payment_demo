@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
+	"payment_demo/pkg/curl"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/gdchenli/pay/pkg/curl"
 	"github.com/sirupsen/logrus"
 )
 

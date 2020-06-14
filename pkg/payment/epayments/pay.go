@@ -5,10 +5,10 @@ import (
 	"errors"
 	"net/url"
 	"payment_demo/api/validate"
+	"payment_demo/pkg/curl"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 
-	"github.com/gdchenli/pay/pkg/curl"
 	"github.com/skip2/go-qrcode"
 )
 

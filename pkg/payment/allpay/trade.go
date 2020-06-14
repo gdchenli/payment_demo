@@ -7,13 +7,12 @@ import (
 	"net/url"
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
-	consts2 "payment_demo/pkg/payment/consts"
+	"payment_demo/pkg/curl"
+	"payment_demo/pkg/payment/consts"
 	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/gdchenli/pay/pkg/curl"
 )
 
 const (
@@ -167,9 +166,9 @@ func (trade *Trade) getGateWay(gateWay string) string {
 
 func (trade *Trade) getPaymentSchema(methodCode string) string {
 	switch methodCode {
-	case consts2.AlipayMethod:
+	case consts.AlipayMethod:
 		return ApSchema
-	case consts2.UnionpayMethod:
+	case consts.UnionpayMethod:
 		return UpSchema
 	default:
 		return ""
