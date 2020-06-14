@@ -6,6 +6,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"payment_demo/api/response"
+	"payment_demo/api/validate"
 	"regexp"
 	"strings"
 
@@ -108,16 +110,16 @@ type LogisticsRsp struct {
 	DecryptRes string `json:"decrypt_res"` //请求的未加密数据
 }
 
-func (l *Logistics) Upload(arg LogisticsArg) (logisticsRsp LogisticsRsp, errCode int, err error) {
-	logisticsRsp.OrderId = arg.OrderId
+func (l *Logistics) Upload(configParamMap map[string]string, req validate.UploadLogisticsReq) (logisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
+	logisticsRsp.OrderId = req.OrderId
 
 	logisticsWithoutSignRequest := LogisticsWithoutSignRequest{
 		Version:          Version,
-		Merchant:         arg.Merchant,
-		TradeNum:         arg.OrderId,
-		MerchantName:     arg.MerchantName,
-		LogisticsNo:      arg.LogisticsNo,
-		LogisticsCompany: arg.LogisticsCompany,
+		Merchant:         configParamMap["merchant"],
+		TradeNum:         req.OrderId,
+		MerchantName:     configParamMap["merchantName"],
+		LogisticsNo:      req.LogisticsNo,
+		LogisticsCompany: req.LogisticsCompany,
 	}
 	xmlBytes, err := xml.Marshal(logisticsWithoutSignRequest)
 	xmlStr := xml.Header + string(xmlBytes)
@@ -132,9 +134,9 @@ func (l *Logistics) Upload(arg LogisticsArg) (logisticsRsp LogisticsRsp, errCode
 
 	//生成签名
 	sha256 := util.HaSha256(xmlStr)
-	signBytes, err := util.SignPKCS1v15([]byte(sha256), []byte(arg.PrivateKey), crypto.Hash(0))
+	signBytes, err := util.SignPKCS1v15([]byte(sha256), []byte(configParamMap["private_key"]), crypto.Hash(0))
 	if err != nil {
-		logrus.Errorf(LogisticsUploadBuildSignErrMessage+",request:%+v,errCode:%v,err:%v", arg, LogisticsUploadBuildSignErrCode, err.Error())
+		logrus.Errorf(LogisticsUploadBuildSignErrMessage+",request:%+v,errCode:%v,err:%v", req, LogisticsUploadBuildSignErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadBuildSignErrCode, errors.New(LogisticsUploadBuildSignErrMessage)
 	}
 	sign := base64.StdEncoding.EncodeToString(signBytes)
@@ -151,21 +153,21 @@ func (l *Logistics) Upload(arg LogisticsArg) (logisticsRsp LogisticsRsp, errCode
 	xmlStr = strings.TrimRight(xml.Header, "\n") + string(xmlBytes)
 	//fmt.Println("with sign xml", xmlStr)
 
-	desKey, err := base64.StdEncoding.DecodeString(arg.DesKey)
+	desKey, err := base64.StdEncoding.DecodeString(configParamMap["des_key"])
 	if err != nil {
-		logrus.Errorf(LogisticsUploadDesKeyFormatErrMessage+",request:%+v,errCode:%v,err:%v", arg, LogisticsUploadDesKeyFormatErrCode, err.Error())
+		logrus.Errorf(LogisticsUploadDesKeyFormatErrMessage+",request:%+v,errCode:%v,err:%v", req, LogisticsUploadDesKeyFormatErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadDesKeyFormatErrCode, errors.New(LogisticsUploadDesKeyFormatErrMessage)
 	}
 	encryptBytes, err := util.TripleEcbDesEncrypt([]byte(xmlStr), desKey)
 	if err != nil {
-		logrus.Errorf(LogisticsUploadRequestDataEncryptFailedErrMessage+",query:%+v,errCode:%v,err:%v", arg, LogisticsUploadRequestDataEncryptFailedErrCode, err.Error())
+		logrus.Errorf(LogisticsUploadRequestDataEncryptFailedErrMessage+",query:%+v,errCode:%v,err:%v", req, LogisticsUploadRequestDataEncryptFailedErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadRequestDataEncryptFailedErrCode, errors.New(LogisticsUploadRequestDataEncryptFailedErrMessage)
 	}
 	reqEncrypt := util.DecimalByteSlice2HexString(encryptBytes)
 	reqEncrypt = base64.StdEncoding.EncodeToString([]byte(reqEncrypt))
 	logisticsWithEncrypt := LogisticsWithEncrypt{
 		Version:  Version,
-		Merchant: arg.Merchant,
+		Merchant: configParamMap["merchant"],
 		Encrypt:  reqEncrypt,
 	}
 	xmlBytes, err = xml.Marshal(logisticsWithEncrypt)
@@ -174,45 +176,45 @@ func (l *Logistics) Upload(arg LogisticsArg) (logisticsRsp LogisticsRsp, errCode
 
 	var logisticsResult LogisticsResult
 	playLoad := strings.NewReader(xmlStr)
-	err = curl.PostXML(arg.GateWay, &logisticsResult, playLoad)
+	err = curl.PostXML(configParamMap["logistics_way"], &logisticsResult, playLoad)
 	if err != nil {
 		//fmt.Println("err", err)
-		logrus.Errorf(LogisticsUploadNetErrMessage+",request:%+v,errCode:%v,err:%v", arg, LogisticsUploadNetErrCode, err.Error())
+		logrus.Errorf(LogisticsUploadNetErrMessage+",request:%+v,errCode:%v,err:%v", req, LogisticsUploadNetErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadNetErrCode, errors.New(LogisticsUploadNetErrMessage)
 	}
 
-	logisticsResultBytes, err := xml.Marshal(logisticsResult)
+	/*logisticsResultBytes, err := xml.Marshal(logisticsResult)
 	if err != nil {
-		logrus.Errorf(LogisticsUploadResponseDataEncryptFormatErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, logisticsResult, LogisticsUploadResponseDataEncryptFormatErrCode, err.Error())
+		logrus.Errorf(LogisticsUploadResponseDataEncryptFormatErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", req, logisticsResult, LogisticsUploadResponseDataEncryptFormatErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadResponseDataEncryptFormatErrCode, errors.New(LogisticsUploadResponseDataEncryptFormatErrMessage)
-	}
-	logisticsRsp.EncryptRsp = string(logisticsResultBytes)
+	}*/
+	//logisticsRsp.EncryptRsp = string(logisticsResultBytes)
 
 	//解密数据
 	rspEncryptBytes, err := base64.StdEncoding.DecodeString(logisticsResult.Encrypt)
 	if err != nil {
-		logrus.Errorf(LogisticsUploadResponseDataDecryptFailedErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, logisticsResult, LogisticsUploadResponseDataDecryptFailedErrCode, err.Error())
+		logrus.Errorf(LogisticsUploadResponseDataDecryptFailedErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", req, logisticsResult, LogisticsUploadResponseDataDecryptFailedErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadResponseDataDecryptFailedErrCode, errors.New(LogisticsUploadResponseDataDecryptFailedErrMessage)
 	}
 	rspEncryptBytes, err = util.HexString2Bytes(string(rspEncryptBytes))
 	rspDecryptBytes, err := util.TripleEcbDesDecrypt(rspEncryptBytes, desKey)
 	if err != nil {
-		logrus.Errorf(LogisticsUploadResponseDataDecryptFailedErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, logisticsResult, LogisticsUploadResponseDataDecryptFailedErrCode, err.Error())
+		logrus.Errorf(LogisticsUploadResponseDataDecryptFailedErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", req, logisticsResult, LogisticsUploadResponseDataDecryptFailedErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadResponseDataDecryptFailedErrCode, errors.New(LogisticsUploadResponseDataDecryptFailedErrMessage)
 	}
 	//fmt.Println("logistics rsp", string(rspDecrypt))
-	logisticsRsp.DecryptRsp = string(rspDecryptBytes)
+	//logisticsRsp.DecryptRsp = string(rspDecryptBytes)
 
 	var logisticsDecryptRsp LogisticsDecryptRsp
 	err = xml.Unmarshal(rspDecryptBytes, &logisticsDecryptRsp)
 	if err != nil {
-		logrus.Errorf(LogisticsUploadResponseDataDecryptFormatErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, logisticsResult, LogisticsUploadResponseDataDecryptFormatErrCode, err.Error())
+		logrus.Errorf(LogisticsUploadResponseDataDecryptFormatErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", req, logisticsResult, LogisticsUploadResponseDataDecryptFormatErrCode, err.Error())
 		return logisticsRsp, LogisticsUploadResponseDataDecryptFormatErrCode, errors.New(LogisticsUploadResponseDataDecryptFormatErrMessage)
 	}
 
 	//签名校验
-	if !l.checkSignature(logisticsDecryptRsp.Sign, logisticsRsp.DecryptRsp, arg.PublicKey) {
-		logrus.Errorf(LogisticsUploadResponseDataSignErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", arg, logisticsRsp, LogisticsUploadResponseDataSignErrCode)
+	if !l.checkSignature(logisticsDecryptRsp.Sign, string(rspDecryptBytes), configParamMap["public_key"]) {
+		logrus.Errorf(LogisticsUploadResponseDataSignErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", req, logisticsRsp, LogisticsUploadResponseDataSignErrCode)
 		return logisticsRsp, LogisticsUploadResponseDataSignErrCode, errors.New(LogisticsUploadResponseDataSignErrMessage)
 	}
 
@@ -248,4 +250,11 @@ func (l *Logistics) checkSignature(sign, decryptRsp, publicKey string) bool {
 		fmt.Println("签名校验不通过")
 	}
 	return verifySign
+}
+
+func (l *Logistics) GetConfigCode() []string {
+	return []string{
+		"merchant", "merchantName",
+		"des_key", "private_key", "public_key", "logistics_way",
+	}
 }

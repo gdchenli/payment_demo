@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
+	"payment_demo/api/response"
 	"strings"
 	"time"
 
-	"github.com/gdchenli/pay/dialects/jd/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,11 +31,6 @@ const (
 )
 
 type Notify struct{}
-
-type NotifyArg struct {
-	PublicKey string `json:"public_key"` //公钥
-	DesKey    string `json:"des_key"`    //des密钥
-}
 
 type NotifyQuery struct {
 	XMLName  xml.Name     `xml:"jdpay" json:"-"`
@@ -85,8 +80,8 @@ type NotifyRsp struct {
 	DecryptRsp string  `json:"decrypt_rsp"` //返回的解密数据
 }
 
-func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp, errCode int, err error) {
-	notifyRsp.EncryptRsp = query
+func (notify *Notify) Validate(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+	//notifyRsp.EncryptRsp = query
 
 	//解析加密的支付机构参数为结构体
 	var notifyQuery NotifyQuery
@@ -97,12 +92,12 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 	}
 
 	//解密支付机构参数
-	decryptBytes, err := notify.decryptArg(notifyQuery, arg.DesKey)
+	decryptBytes, err := notify.decryptArg(notifyQuery, configParamMap["des_key"])
 	if err != nil {
 		logrus.Errorf("org:jd,"+NotifyDecryptFailedErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyDecryptFailedErrCode, err.Error())
 		return notifyRsp, NotifyDecryptFailedErrCode, errors.New(NotifyDecryptFailedErrMessage)
 	}
-	notifyRsp.DecryptRsp = string(decryptBytes)
+	//notifyRsp.DecryptRsp = string(decryptBytes)
 
 	//解析解密后的支付机构参数为结构体
 	var notifyDecrypt NotifyDecrypt
@@ -121,7 +116,7 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 	notifyRsp.OrderId = notifyDecrypt.TradeNum
 
 	//校验签名
-	if !notify.checkSign(decryptBytes, notifyDecrypt.Sign, arg.PublicKey) {
+	if !notify.checkSign(decryptBytes, notifyDecrypt.Sign, configParamMap["public_key"]) {
 		logrus.Errorf("org:jd,"+NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
@@ -144,6 +139,8 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 	//人民币金额
 	notifyRsp.RmbFee = float64(notifyDecrypt.Amount) / 100
 
+	notifyRsp.Message = "success"
+
 	return notifyRsp, 0, nil
 }
 
@@ -156,11 +153,11 @@ func (notify *Notify) decryptArg(notifyQuery NotifyQuery, desKey string) (decryp
 	if err != nil {
 		return nil, err
 	}
-	encryptBytes, err = util.HexString2Bytes(string(encryptBytes))
+	encryptBytes, err = HexString2Bytes(string(encryptBytes))
 	if err != nil {
 		return nil, err
 	}
-	decryptBytes, err = util.TripleEcbDesDecrypt(encryptBytes, desKeyBytes)
+	decryptBytes, err = TripleEcbDesDecrypt(encryptBytes, desKeyBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +182,14 @@ func (notify *Notify) checkSign(decryptBytes []byte, sign, publicKey string) boo
 		return false
 	}
 
-	sha256 := util.HaSha256(originXml)
+	sha256 := HaSha256(originXml)
 
-	return util.VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey), crypto.Hash(0))
+	return VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey), crypto.Hash(0))
+}
+
+func (notify *Notify) GetConfigCode() []string {
+	return []string{
+		"merchant",
+		"des_key", "public_key",
+	}
 }

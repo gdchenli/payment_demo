@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"payment_demo/api/validate"
+	"payment_demo/pkg/payment/consts"
+	"strconv"
 	"time"
 
-	"github.com/gdchenli/pay/dialects/jd/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -62,59 +64,68 @@ type KjInfo struct {
 	GoodsUnderBonded      string `json:"goodsUnderBonded"`      //是否保税货物项下付款Y/N
 }
 
-func (payment *Payment) CreateForm(arg PayArg) (form string, errCode int, err error) {
-	goodsInfoBytes, err := json.Marshal(arg.GoodsInfo)
+func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.Order) (form string, errCode int, err error) {
+	privateKey := paramMap["private_key"]
+	delete(paramMap, "private_key")
+	desKey := paramMap["des_key"]
+	delete(paramMap, "des_key")
+
+	var payWay string
+	if order.UserAgentType == consts.WebUserAgentType {
+		payWay = paramMap["pc_pay_way"]
+	} else {
+		payWay = paramMap["h5_pay_way"]
+	}
+	delete(paramMap, "pc_pay_way")
+	delete(paramMap, "h5_pay_way")
+
+	totalFee := fmt.Sprintf("%.f", order.TotalFee*100)
+	totalFeeInt, _ := strconv.ParseInt(totalFee, 10, 64)
+	date := time.Now().Format(TimeLayout)
+	goodsInfoBytes, err := json.Marshal([]GoodsInfo{{Id: "test" + date, Name: "test" + date, Price: totalFeeInt, Num: 1}})
 	if err != nil {
-		logrus.Errorf("org:jd,"+PayGoodsInfoFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.TradeNum, PayGoodsInfoFormatErrCode, err.Error())
+		logrus.Errorf("org:jd,"+PayGoodsInfoFormatErrMessage+",order id %v,errCode:%v,err:%v", order.OrderId, PayGoodsInfoFormatErrCode, err.Error())
 		return form, PayGoodsInfoFormatErrCode, errors.New(PayGoodsInfoFormatErrMessage)
 	}
-	kjInfoBytes, err := json.Marshal(arg.KjInfo)
+	kjInfoBytes, err := json.Marshal(KjInfo{GoodsSubmittedCustoms: "N", GoodsUnderBonded: "N"})
 	if err != nil {
 		logrus.Errorf("org:jd,"+PayKjInfoFormatErrMessage+",errCode:%v,err:%v", PayKjInfoFormatErrCode, err.Error())
 		return form, PayKjInfoFormatErrCode, errors.New(PayKjInfoFormatErrMessage)
 	}
-
-	paramMap := map[string]string{
-		"version":        Version,
-		"merchant":       arg.Merchant,
-		"tradeNum":       arg.TradeNum,
-		"tradeName":      arg.TradeName,
-		"tradeTime":      time.Now().Format(TimeLayout),
-		"amount":         fmt.Sprintf("%v", arg.Amount),
-		"orderType":      Practicality,
-		"currency":       arg.Currency,
-		"callbackUrl":    arg.CallbackUrl,
-		"notifyUrl":      arg.NotifyUrl,
-		"userId":         arg.UserId,
-		"expireTime":     fmt.Sprintf("%v", arg.ExpireTime),
-		"goodsInfo":      string(goodsInfoBytes),
-		"kjInfo":         string(kjInfoBytes),
-		"bizTp":          BusinessServiceConsumeCode,
-		"settleCurrency": arg.TransCurrency,
-	}
+	paramMap["version"] = Version
+	paramMap["tradeNum"] = order.OrderId
+	paramMap["tradeName"] = order.OrderId
+	paramMap["tradeTime"] = time.Now().Format(TimeLayout)
+	paramMap["amount"] = totalFee
+	paramMap["orderType"] = Practicality
+	paramMap["currency"] = order.Currency
+	paramMap["userId"] = order.UserId
+	paramMap["goodsInfo"] = string(goodsInfoBytes)
+	paramMap["kjInfo"] = string(kjInfoBytes)
+	paramMap["bizTp"] = BusinessServiceConsumeCode
 
 	//签名
-	paramMap["sign"], err = payment.getSign(paramMap, arg.PrivateKey)
+	paramMap["sign"], err = payment.getSign(paramMap, privateKey)
 	if err != nil {
-		logrus.Errorf("org:jd,"+PaySignErrMessage+",order id %v,errCode:%v,err:%v", arg.TradeNum, PaySignErrCode, err.Error())
+		logrus.Errorf("org:jd,"+PaySignErrMessage+",order id %v,errCode:%v,err:%v", order.OrderId, PaySignErrCode, err.Error())
 		return form, PaySignErrCode, errors.New(PaySignErrMessage)
 	}
 
 	//加密
-	paramMap, err = payment.encrypt3DES(paramMap, arg.DesKey)
+	paramMap, err = payment.encrypt3DES(paramMap, desKey)
 	if err != nil {
-		logrus.Errorf("org:jd,"+PayEncryptErrMessage+",order id %v,errCode:%v,err:%v", arg.TradeNum, PayEncryptErrCode, err.Error())
+		logrus.Errorf("org:jd,"+PayEncryptErrMessage+",order id %v,errCode:%v,err:%v", order.OrderId, PayEncryptErrCode, err.Error())
 		return form, PayEncryptErrCode, errors.New(PayEncryptErrMessage)
 	}
 
 	//生成form表单
-	form = payment.buildForm(paramMap, arg.PayWay)
+	form = payment.buildPayUrl(paramMap, payWay)
 
 	return form, 0, nil
 }
 
-func (payment *Payment) buildForm(paramMap map[string]string, gateWay string) string {
-	payUrl := "<form action='" + gateWay + "' method='post' id='pay_form'>"
+func (payment *Payment) buildPayUrl(paramMap map[string]string, gateWay string) (payUrl string) {
+	payUrl = "<form action='" + gateWay + "' method='post' id='pay_form'>"
 	for k, v := range paramMap {
 		payUrl += "<input value='" + v + "' name='" + k + "' type='hidden'/>"
 	}
@@ -124,28 +135,35 @@ func (payment *Payment) buildForm(paramMap map[string]string, gateWay string) st
 }
 
 func (payment *Payment) encrypt3DES(paramMap map[string]string, desKey string) (map[string]string, error) {
-	desKey = util.BASE64DecodeStr(desKey)
+	desKey = BASE64DecodeStr(desKey)
 	for k, v := range paramMap {
 		if k == "sign" || k == "merchant" || k == "version" {
 			continue
 		}
-		encrypt, err := util.TripleEcbDesEncrypt([]byte(v), []byte(desKey))
+		encrypt, err := TripleEcbDesEncrypt([]byte(v), []byte(desKey))
 		if err != nil {
 			return paramMap, err
 		}
-		paramMap[k] = util.DecimalByteSlice2HexString(encrypt)
+		paramMap[k] = DecimalByteSlice2HexString(encrypt)
 	}
 	return paramMap, nil
 }
 
 func (payment *Payment) getSign(paramMap map[string]string, privateKey string) (string, error) {
-	payString := util.GetSortString(paramMap)
-	sha256 := util.HaSha256(payString)
-	sign, err := util.SignPKCS1v15([]byte(sha256), []byte(privateKey), crypto.Hash(0))
+	payString := GetSortString(paramMap)
+	sha256 := HaSha256(payString)
+	sign, err := SignPKCS1v15([]byte(sha256), []byte(privateKey), crypto.Hash(0))
 	if err != nil {
 		return "", err
 	}
 	base64String := base64.StdEncoding.EncodeToString(sign)
 
 	return base64String, nil
+}
+
+func (payment *Payment) GetConfigCode() []string {
+	return []string{
+		"merchant", "callbackUrl", "notifyUrl", "settleCurrency", "expireTime",
+		"des_key", "pc_pay_way", "h5_pay_way", "private_key",
+	}
 }

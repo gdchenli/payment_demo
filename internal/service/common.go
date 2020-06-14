@@ -1,12 +1,14 @@
 package service
 
 import (
+	"fmt"
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
 	"payment_demo/pkg/payment/alipay"
 	"payment_demo/pkg/payment/allpay"
 	"payment_demo/pkg/payment/consts"
 	"payment_demo/pkg/payment/epayments"
+	"payment_demo/pkg/payment/jd"
 )
 
 //发起支付
@@ -20,8 +22,8 @@ type VerifyHandler func(configParamMap map[string]string, query, methodCode stri
 
 //交易信息
 type SearchTradeHandler func(configParamMap map[string]string, req validate.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error)                 //交易查询
-type CloseTradeHandler func(configParamMap map[string]string, arg validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error)                     //关闭交易
-type UploadLogisticsHandler func(configParamMap map[string]string, arg validate.UploadLogisticsReq) (uploadLogisticsRsp response.UploadLogisticsRsp, errCode int, err error) //上传物流
+type CloseTradeHandler func(configParamMap map[string]string, req validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error)                     //关闭交易
+type UploadLogisticsHandler func(configParamMap map[string]string, req validate.UploadLogisticsReq) (uploadLogisticsRsp response.UploadLogisticsRsp, errCode int, err error) //上传物流
 
 //配置
 type ConfigCodeHandler func() []string
@@ -61,6 +63,13 @@ func init() {
 	epaymentsVerify := new(epayments.Verify)
 	epaymentsTrade := new(epayments.Trade)
 
+	jdPayment := new(jd.Payment)
+	jdNotify := new(jd.Notify)
+	jdVerify := new(jd.Verify)
+	jdTrade := new(jd.Trade)
+	jdClose := new(jd.Close)
+	jdLogistics := new(jd.Logistics)
+
 	configCodeMap = map[string]ConfigCodeHandler{
 		consts.AlipayOrg + ".payment": alipayPayment.GetConfigCode, //发起支付配置
 		consts.AlipayOrg + ".notify":  alipayNotify.GetConfigCode,  //异步通知配置
@@ -76,12 +85,20 @@ func init() {
 		consts.EpaymentsOrg + ".notify":  epaymentsNotify.GetConfigCode,  //异步通知配置
 		consts.EpaymentsOrg + ".verify":  epaymentsVerify.GetConfigCode,  //同步通知
 		consts.EpaymentsOrg + ".trade":   epaymentsTrade.GetConfigCode,   //交易查询
+
+		consts.JdOrg + ".payment":   jdPayment.GetConfigCode,   //发起支付配置
+		consts.JdOrg + ".notify":    jdNotify.GetConfigCode,    //异步通知配置
+		consts.JdOrg + ".verify":    jdVerify.GetConfigCode,    //同步通知
+		consts.JdOrg + ".trade":     jdTrade.GetConfigCode,     //交易查询
+		consts.JdOrg + ".close":     jdClose.GetConfigCode,     //交易关闭
+		consts.JdOrg + ".logistics": jdLogistics.GetConfigCode, //物流上传
 	}
 
 	submitMap = map[string]SumbitHandler{
 		consts.AlipayOrg:    alipayPayment.CreatePayUrl,
 		consts.AllpayOrg:    allpayPayment.CreatePayUrl,
 		consts.EpaymentsOrg: epaymentsPayment.CreatePayUrl,
+		consts.JdOrg:        jdPayment.CreatePayUrl,
 	}
 
 	qrCodeSubmitMap = map[string]SumbitHandler{
@@ -101,24 +118,36 @@ func init() {
 		consts.AlipayOrg:    alipayNotify.Validate,
 		consts.AllpayOrg:    allpayNotify.Validate,
 		consts.EpaymentsOrg: epaymentsNotify.Validate,
+		consts.JdOrg:        jdNotify.Validate,
 	}
 
 	verifyMap = map[string]VerifyHandler{
 		consts.AlipayOrg:    alipayVerify.Validate,
 		consts.AllpayOrg:    allpayVerify.Validate,
 		consts.EpaymentsOrg: epaymentsVerify.Validate,
+		consts.JdOrg:        jdVerify.Validate,
 	}
 
 	searchTradeMap = map[string]SearchTradeHandler{
 		consts.AlipayOrg:    alipayTrade.Search,
 		consts.AllpayOrg:    allpayTrade.Search,
 		consts.EpaymentsOrg: epaymentsTrade.Search,
+		consts.JdOrg:        jdTrade.Search,
+	}
+
+	closeTradeMap = map[string]CloseTradeHandler{
+		consts.JdOrg: jdClose.Trade,
+	}
+
+	uploadLogisticsMap = map[string]UploadLogisticsHandler{
+		consts.JdOrg: jdLogistics.Upload,
 	}
 
 }
 
 //发起支付
 func getSubmitHandler(orgCode string, userAgentType int) SumbitHandler {
+	fmt.Printf("%v\n", submitMap)
 	switch userAgentType {
 	case consts.WebUserAgentType:
 		if orgCode == consts.EpaymentsOrg {
@@ -151,6 +180,16 @@ func getVerifyHandler(orgCode string) VerifyHandler {
 //交易查询
 func getSeachTradeHandler(orgCode string) SearchTradeHandler {
 	return searchTradeMap[orgCode]
+}
+
+//关闭交易
+func getCloseTradeHandler(orgCode string) CloseTradeHandler {
+	return closeTradeMap[orgCode]
+}
+
+//上传物流信息
+func getUploadLogisticsHandler(orgCode string) UploadLogisticsHandler {
+	return uploadLogisticsMap[orgCode]
 }
 
 //配置读取

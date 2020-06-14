@@ -3,6 +3,9 @@ package service
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
@@ -15,6 +18,23 @@ func (payment *Payment) getConfigValue(configCodes []string, orgCode string) (pa
 	payParamMap = make(map[string]string)
 	for _, configCode := range configCodes {
 		payParamMap[configCode] = config.GetInstance().GetString(orgCode + "." + configCode)
+		if configCode == "private_key" || configCode == "public_key" {
+			keyPath := path.Join(config.GetInstance().GetString("app_path"), payParamMap[configCode])
+			fmt.Println("keyPath", keyPath)
+			keyFile, err := os.Open(keyPath)
+			if err != nil {
+				fmt.Println("keyPath err", err)
+				payParamMap[configCode] = ""
+			}
+
+			keyBytes, err := ioutil.ReadAll(keyFile)
+			if err != nil {
+				fmt.Println("keyBytes err", err)
+				payParamMap[configCode] = ""
+			}
+
+			payParamMap[configCode] = string(keyBytes)
+		}
 		if payParamMap[configCode] == "" {
 			fmt.Println("configCode", configCode)
 			return payParamMap, code.ConfigValueErrCode, errors.New(code.ConfigValueErrMessage)
@@ -41,6 +61,7 @@ func (payment *Payment) Sumbit(order validate.Order) (pay string, errCode int, e
 	//支付处理
 	submitHandle := getSubmitHandler(order.OrgCode, order.UserAgentType)
 	if submitHandle == nil {
+		fmt.Println("submitHandle")
 		return pay, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	pay, errCode, err = submitHandle(configParamMap, order)
@@ -133,11 +154,55 @@ func (payment *Payment) SearchTrade(req validate.SearchTradeReq) (searchTradeRsp
 }
 
 func (payment *Payment) CloseTrade(req validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+	//获取配置项code
+	getConfigCodehandle := getConfigCodeHandler(req.OrgCode + ".close")
+	if getConfigCodehandle == nil {
+		return closeTradeRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
+	}
+	configCode := getConfigCodehandle()
+
+	//读取配置项值
+	configParamMap, errCode, err := payment.getConfigValue(configCode, req.OrgCode)
+	if err != nil {
+		return closeTradeRsp, errCode, err
+	}
+
+	//关闭支付交易处理
+	closedTradeHandle := getCloseTradeHandler(req.OrgCode)
+	if closedTradeHandle == nil {
+		return closeTradeRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
+	}
+	closeTradeRsp, errCode, err = closedTradeHandle(configParamMap, req)
+	if err != nil {
+		return closeTradeRsp, errCode, err
+	}
 
 	return closeTradeRsp, 0, nil
 }
 
 func (payment *Payment) UploadLogistics(req validate.UploadLogisticsReq) (uploadLogisticsTradeRsp response.UploadLogisticsRsp, errCode int, err error) {
+	//获取配置项code
+	getConfigCodehandle := getConfigCodeHandler(req.OrgCode + ".logistics")
+	if getConfigCodehandle == nil {
+		return uploadLogisticsTradeRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
+	}
+	configCode := getConfigCodehandle()
+
+	//读取配置项值
+	configParamMap, errCode, err := payment.getConfigValue(configCode, req.OrgCode)
+	if err != nil {
+		return uploadLogisticsTradeRsp, errCode, err
+	}
+
+	//关闭支付交易处理
+	uploadLogisticsTradeHandle := getUploadLogisticsHandler(req.OrgCode)
+	if uploadLogisticsTradeHandle == nil {
+		return uploadLogisticsTradeRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
+	}
+	uploadLogisticsTradeRsp, errCode, err = uploadLogisticsTradeHandle(configParamMap, req)
+	if err != nil {
+		return uploadLogisticsTradeRsp, errCode, err
+	}
 
 	return uploadLogisticsTradeRsp, 0, nil
 }

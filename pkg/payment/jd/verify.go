@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"payment_demo/api/response"
 
-	"github.com/gdchenli/pay/dialects/jd/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,14 +29,9 @@ const (
 	CallbackStatusErrMessage        = "同步通知，交易状态不正确"
 )
 
-type Callback struct{}
+type Verify struct{}
 
-type CallbackArg struct {
-	PublicKey string `json:"public_key"` //公钥
-	DesKey    string `json:"des_key"`
-}
-
-type CallbackQuery struct {
+type VerifyQuery struct {
 	TradeNum  string `json:"tradeNum"`  //订单号
 	Amount    string `json:"amount"`    //交易金额
 	Currency  string `json:"currency"`  //货币类型
@@ -45,21 +40,14 @@ type CallbackQuery struct {
 	Sign      string `json:"sign"`      //签名
 }
 
-type CallbackRsp struct {
-	OrderId    string `json:"order_id"`    //订单号
-	Status     bool   `json:"status"`      //交易状态，true交易成功 false交易失败
-	EncryptRsp string `json:"encrypt_rsp"` //返回的加密数据
-	DecryptRsp string `json:"decrypt_rsp"` //返回的解密数据
-}
-
-func (callback *Callback) Validate(query string, arg CallbackArg) (callbackRsp CallbackRsp, errCode int, err error) {
-	callbackRsp.EncryptRsp = query
+func (verify *Verify) Validate(configParamMap map[string]string, query, methodCode string) (verifykRsp response.VerifyRsp, errCode int, err error) {
+	//verifykRsp.EncryptRsp = query
 
 	//解析参数
 	urlValuesMap, err := url.ParseQuery(query)
 	if err != nil {
 		logrus.Errorf("org:jd,"+CallbackEncryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackEncryptFormatErrCode, err.Error())
-		return callbackRsp, CallbackEncryptFormatErrCode, errors.New(CallbackEncryptFormatErrMessage)
+		return verifykRsp, CallbackEncryptFormatErrCode, errors.New(CallbackEncryptFormatErrMessage)
 	}
 	queryMap := make(map[string]string)
 	for k, v := range urlValuesMap {
@@ -67,46 +55,46 @@ func (callback *Callback) Validate(query string, arg CallbackArg) (callbackRsp C
 	}
 
 	//解密
-	decryptMap, err := callback.decryptArg(queryMap, arg.DesKey)
+	decryptMap, err := verify.decryptArg(queryMap, configParamMap["des_key"])
 	if err != nil {
 		logrus.Errorf("org:jd,"+CallbackDecryptFailedErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFailedErrCode, err.Error())
-		return callbackRsp, CallbackDecryptFailedErrCode, errors.New(CallbackDecryptFailedErrMessage)
+		return verifykRsp, CallbackDecryptFailedErrCode, errors.New(CallbackDecryptFailedErrMessage)
 	}
 	decryptBytes, err := json.Marshal(decryptMap)
 	if err != nil {
 		logrus.Errorf("org:jd,"+CallbackDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFormatErrCode, err.Error())
-		return callbackRsp, CallbackDecryptFormatErrCode, errors.New(CallbackDecryptFormatErrMessage)
+		return verifykRsp, CallbackDecryptFormatErrCode, errors.New(CallbackDecryptFormatErrMessage)
 	}
-	callbackRsp.DecryptRsp = string(decryptBytes)
+	//verifykRsp.DecryptRsp = string(decryptBytes)
 	fmt.Println("decryptBytes", string(decryptBytes))
 
 	//解析为结构体
-	var callbackQuery CallbackQuery
-	err = json.Unmarshal(decryptBytes, &callbackQuery)
+	var verifyQuery VerifyQuery
+	err = json.Unmarshal(decryptBytes, &verifyQuery)
 	if err != nil {
 		logrus.Errorf("org:jd,"+CallbackDecryptFormatErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFormatErrCode, err.Error())
-		return callbackRsp, CallbackDecryptFormatErrCode, errors.New(CallbackDecryptFormatErrMessage)
+		return verifykRsp, CallbackDecryptFormatErrCode, errors.New(CallbackDecryptFormatErrMessage)
 	}
-	callbackRsp.OrderId = callbackQuery.TradeNum
+	verifykRsp.OrderId = verifyQuery.TradeNum
 
 	//校验签名
-	if !callback.checkSign(decryptMap, arg.PublicKey) {
+	if !verify.checkSign(decryptMap, configParamMap["public_key"]) {
 		logrus.Errorf("org:jd,"+CallbackSignErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackSignErrCode)
-		return callbackRsp, CallbackSignErrCode, errors.New(CallbackSignErrMessage)
+		return verifykRsp, CallbackSignErrCode, errors.New(CallbackSignErrMessage)
 	}
 
 	//交易状态
-	if callbackQuery.Status != CallbackSuccessCode {
+	if verifyQuery.Status != CallbackSuccessCode {
 		logrus.Errorf("org:jd,"+CallbackStatusErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackStatusErrCode)
-		return callbackRsp, CallbackStatusErrCode, errors.New(CallbackStatusErrMessage)
+		return verifykRsp, CallbackStatusErrCode, errors.New(CallbackStatusErrMessage)
 	}
-	callbackRsp.Status = true
+	verifykRsp.Status = true
 
-	return callbackRsp, 0, nil
+	return verifykRsp, 0, nil
 }
 
 //解密
-func (callback *Callback) decryptArg(encryptMap map[string]string, desKey string) (decryptMap map[string]string, err error) {
+func (verify *Verify) decryptArg(encryptMap map[string]string, desKey string) (decryptMap map[string]string, err error) {
 	//解密
 	desKeyBytes, err := base64.StdEncoding.DecodeString(desKey)
 	if err != nil {
@@ -120,8 +108,8 @@ func (callback *Callback) decryptArg(encryptMap map[string]string, desKey string
 			decryptMap[k] = v
 			continue
 		}
-		encryptBytes, err := util.HexString2Bytes(v)
-		decryptBytes, err := util.TripleEcbDesDecrypt(encryptBytes, desKeyBytes)
+		encryptBytes, err := HexString2Bytes(v)
+		decryptBytes, err := TripleEcbDesDecrypt(encryptBytes, desKeyBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -132,7 +120,7 @@ func (callback *Callback) decryptArg(encryptMap map[string]string, desKey string
 }
 
 //校验签名
-func (callback *Callback) checkSign(urlValuesMap map[string]string, publicKey string) bool {
+func (verify *Verify) checkSign(urlValuesMap map[string]string, publicKey string) bool {
 	sign, ok := urlValuesMap["sign"]
 	if !ok {
 		return false
@@ -141,14 +129,21 @@ func (callback *Callback) checkSign(urlValuesMap map[string]string, publicKey st
 		return false
 	}
 	delete(urlValuesMap, "sign")
-	encodePayString := util.GetNotEmptySortString(urlValuesMap)
+	encodePayString := GetNotEmptySortString(urlValuesMap)
 
 	signBytes, err := base64.StdEncoding.DecodeString(sign)
 	if err != nil {
 		return false
 	}
 
-	sha256 := util.HaSha256(encodePayString)
+	sha256 := HaSha256(encodePayString)
 
-	return util.VerifyPKCS1v15([]byte(sha256), signBytes, []byte(publicKey), crypto.Hash(0))
+	return VerifyPKCS1v15([]byte(sha256), signBytes, []byte(publicKey), crypto.Hash(0))
+}
+
+func (verify *Verify) GetConfigCode() []string {
+	return []string{
+		"merchant",
+		"des_key", "public_key",
+	}
 }

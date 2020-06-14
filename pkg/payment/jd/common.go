@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/des"
 	"crypto/md5"
+	cryptoRand "crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -221,7 +222,7 @@ func TripleEcbDesDecrypt(crypted, key []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	out = jd.JDUnPadding(out)
+	out = JDUnPadding(out)
 	return out, nil
 }
 
@@ -273,7 +274,7 @@ func SignPKCS1v15(msg, privateKey []byte, hashType crypto.Hash) ([]byte, error) 
 		return nil, errors.New("parse private key error")
 	}
 
-	sign, err := rsa.SignPKCS1v15(rand.Reader, pri, hashType, msg)
+	sign, err := rsa.SignPKCS1v15(cryptoRand.Reader, pri, hashType, msg)
 	if err != nil {
 		return nil, errors.New("sign error")
 	}
@@ -312,7 +313,7 @@ func TripleEcbDesEncrypt(origData, key []byte) ([]byte, error) {
 	k2 := tkey[8:16]
 	k3 := tkey[16:]
 
-	origData = jd.JDPadding(origData) // PKCS5Padding(origData, bs)
+	origData = JDPadding(origData) // PKCS5Padding(origData, bs)
 	buf1, err := encrypt(origData, k1)
 	if err != nil {
 		return nil, err

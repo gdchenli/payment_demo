@@ -6,16 +6,18 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"payment_demo/api/response"
+	"payment_demo/api/validate"
 	"regexp"
+	"strconv"
 	"strings"
 
-	"github.com/gdchenli/pay/dialects/jd/util"
 	"github.com/gdchenli/pay/pkg/curl"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	JdClosedTradeSuccessStatus = 1
+	ClosedTradeSuccessStatus = 1
 )
 
 const (
@@ -37,21 +39,9 @@ const (
 	CloseTradeResponseDataSignErrMessage          = "关闭交易流水,返回数据签名校验错误"
 )
 
-type Closed struct{}
+type Close struct{}
 
-type ClosedArg struct {
-	Merchant   string `json:"merchant"`   //商户ID
-	TradeNum   string `json:"tradeNum"`   //订单编号
-	OTradeNum  string `json:"oTradeNum"`  //原交易流水号
-	Amount     int64  `json:"amount"`     //交易金额
-	Currency   string `json:"currency"`   //交易币种
-	DesKey     string `json:"signKey"`    //desKey
-	PrivateKey string `json:"privateKey"` //私钥
-	PublicKey  string `json:"publicKey"`  //公钥
-	GateWay    string `json:"gate_way"`   //网关地址
-}
-
-type ClosedWithoutSignRequest struct {
+type CloseWithoutSignRequest struct {
 	XMLName   xml.Name `xml:"jdpay" json:"-"`
 	Version   string   `xml:"version" json:"version"`     //版本
 	Merchant  string   `xml:"merchant" json:"merchant"`   //商户号
@@ -61,7 +51,7 @@ type ClosedWithoutSignRequest struct {
 	Currency  string   `xml:"currency" json:"currency"`   //币种
 }
 
-type ClosedWithSignRequest struct {
+type CloseWithSignRequest struct {
 	XMLName   xml.Name `xml:"jdpay" json:"-"`
 	Version   string   `xml:"version" json:"version"`     //版本
 	Merchant  string   `xml:"merchant" json:"merchant"`   //商户号
@@ -72,62 +62,55 @@ type ClosedWithSignRequest struct {
 	Sign      string   `xml:"sign" json:"sign"`           //签名
 }
 
-type ClosedWithEncrypt struct {
+type CloseWithEncrypt struct {
 	XMLName  xml.Name `xml:"jdpay" json:"-"`
 	Version  string   `xml:"version" json:"version"`   //版本
 	Merchant string   `xml:"merchant" json:"merchant"` //商户号
 	Encrypt  string   `xml:"encrypt" json:"encrypt"`   //加密数据
 }
 
-type ClosedResult struct {
-	XMLName  xml.Name             `xml:"jdpay" json:"-"`
-	Version  string               `xml:"version" json:"version"`   //版本号
-	Merchant string               `xml:"merchant" json:"merchant"` //商户号
-	Result   ClosedResultResponse `xml:"result" json:"result"`     //交易结果
-	Encrypt  string               `xml:"encrypt" json:"encrypt"`   //加密信息
+type CloseResult struct {
+	XMLName  xml.Name            `xml:"jdpay" json:"-"`
+	Version  string              `xml:"version" json:"version"`   //版本号
+	Merchant string              `xml:"merchant" json:"merchant"` //商户号
+	Result   CloseResultResponse `xml:"result" json:"result"`     //交易结果
+	Encrypt  string              `xml:"encrypt" json:"encrypt"`   //加密信息
 }
 
-type ClosedResultResponse struct {
+type CloseResultResponse struct {
 	Code string `xml:"code" json:"code"` //交易返回码
 	Desc string `xml:"desc" json:"desc"` //返回码信息
 }
 
-type ClosedDecryptRsp struct {
-	XMLName   xml.Name        `xml:"jdpay" json:"-"`
-	Merchant  string          `xml:"merchant" json:"merchant"`   //商户号
-	TradeNum  string          `xml:"tradeNum" json:"tradeNum"`   //订单编号
-	TradeType string          `xml:"tradeType" json:"tradeType"` //交易类型
-	Result    ClosedResultRsp `xml:"result" json:"result"`       //交易结果
-	Sign      string          `xml:"sign" json:"sign"`           //数据签名
-	OTradeNum string          `xml:"oTradeNum" json:"oTradeNum"` //原交易流水号
-	Amount    int64           `xml:"amount" json:"amount"`       //人民币支付总金额
-	Currency  string          `xml:"currency" json:"currency"`   //交易币种
-	TradeTime string          `xml:"tradeTime" json:"tradeTime"` //交易时间
-	Status    int             `xml:"status" json:"status"`       //交易状态
+type CloseDecryptRsp struct {
+	XMLName   xml.Name       `xml:"jdpay" json:"-"`
+	Merchant  string         `xml:"merchant" json:"merchant"`   //商户号
+	TradeNum  string         `xml:"tradeNum" json:"tradeNum"`   //订单编号
+	TradeType string         `xml:"tradeType" json:"tradeType"` //交易类型
+	Result    CloseResultRsp `xml:"result" json:"result"`       //交易结果
+	Sign      string         `xml:"sign" json:"sign"`           //数据签名
+	OTradeNum string         `xml:"oTradeNum" json:"oTradeNum"` //原交易流水号
+	Amount    int64          `xml:"amount" json:"amount"`       //人民币支付总金额
+	Currency  string         `xml:"currency" json:"currency"`   //交易币种
+	TradeTime string         `xml:"tradeTime" json:"tradeTime"` //交易时间
+	Status    int            `xml:"status" json:"status"`       //交易状态
 }
 
-type ClosedResultRsp struct {
+type CloseResultRsp struct {
 	Code string `xml:"code" json:"code"` //交易返回码
 	Desc string `xml:"desc" json:"desc"` //返回码信息
 }
 
-type ClosedRsp struct {
-	Status     bool   `json:"status"`      //交易关闭状态
-	OrderId    string `json:"order_id"`    //订单号
-	EncryptRsp string `json:"encrypt_rsp"` //返回的加密数据
-	DecryptRsp string `json:"decrypt_rsp"` //返回的解密数据
-	EncryptRes string `json:"encrypt_res"` //请求的加密数据
-	DecryptRes string `json:"decrypt_res"` //请求的未加密数据
-}
-
-func (closed *Closed) Trade(arg ClosedArg) (closedRsp ClosedRsp, errCode int, err error) {
-	closedWithoutSignRequest := ClosedWithoutSignRequest{
+func (close *Close) Trade(configParamMap map[string]string, req validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+	totalFeeStr := fmt.Sprintf("%.f", req.TotalFee*100)
+	totalFee, _ := strconv.ParseInt(totalFeeStr, 10, 64)
+	closedWithoutSignRequest := CloseWithoutSignRequest{
 		Version:   Version,
-		Merchant:  arg.Merchant,
-		TradeNum:  arg.TradeNum,
-		OTradeNum: arg.OTradeNum,
-		Amount:    arg.Amount,
-		Currency:  arg.Currency,
+		Merchant:  configParamMap["merchant"],
+		TradeNum:  req.OrderId + "jd",
+		OTradeNum: req.OrderId,
+		Amount:    totalFee,
+		Currency:  req.Currency,
 	}
 
 	xmlBytes, err := xml.Marshal(closedWithoutSignRequest)
@@ -142,101 +125,101 @@ func (closed *Closed) Trade(arg ClosedArg) (closedRsp ClosedRsp, errCode int, er
 	fmt.Println("without sign xml", xmlStr)
 
 	//生成签名
-	sha256 := util.HaSha256(xmlStr)
-	signBytes, err := util.SignPKCS1v15([]byte(sha256), []byte(arg.PrivateKey), crypto.Hash(0))
+	sha256 := HaSha256(xmlStr)
+	signBytes, err := SignPKCS1v15([]byte(sha256), []byte(configParamMap["private_key"]), crypto.Hash(0))
 	if err != nil {
-		logrus.Errorf(CloseTradeBuildSignErrMessage+",request:%+v,errCode:%v,err:%v", arg, CloseTradeBuildSignErrCode, err.Error())
-		return closedRsp, CloseTradeBuildSignErrCode, errors.New(CloseTradeBuildSignErrMessage)
+		logrus.Errorf(CloseTradeBuildSignErrMessage+",request:%+v,errCode:%v,err:%v", req, CloseTradeBuildSignErrCode, err.Error())
+		return closeTradeRsp, CloseTradeBuildSignErrCode, errors.New(CloseTradeBuildSignErrMessage)
 	}
 	sign := base64.StdEncoding.EncodeToString(signBytes)
-	closedWithSignRequest := ClosedWithSignRequest{
+	closedWithSignRequest := CloseWithSignRequest{
 		Version:   closedWithoutSignRequest.Version,
 		Merchant:  closedWithoutSignRequest.Merchant,
 		TradeNum:  closedWithoutSignRequest.TradeNum,
 		OTradeNum: closedWithoutSignRequest.OTradeNum,
-		Amount:    arg.Amount,
-		Currency:  arg.Currency,
+		Amount:    totalFee,
+		Currency:  req.Currency,
 		Sign:      sign,
 	}
 	xmlBytes, err = xml.Marshal(closedWithSignRequest)
 	xmlStr = strings.TrimRight(xml.Header, "\n") + string(xmlBytes)
-	closedRsp.DecryptRes = xmlStr
+	//closeTradeRsp.DecryptRes = xmlStr
 
-	desKeyBytes, err := base64.StdEncoding.DecodeString(arg.DesKey)
+	desKeyBytes, err := base64.StdEncoding.DecodeString(configParamMap["des_key"])
 	if err != nil {
-		logrus.Errorf(CloseTradeDesKeyFormatErrMessage+",request:%+v,errCode:%v,err:%v", arg, CloseTradeDesKeyFormatErrCode, err.Error())
-		return closedRsp, CloseTradeDesKeyFormatErrCode, errors.New(CloseTradeDesKeyFormatErrMessage)
+		logrus.Errorf(CloseTradeDesKeyFormatErrMessage+",request:%+v,errCode:%v,err:%v", req, CloseTradeDesKeyFormatErrCode, err.Error())
+		return closeTradeRsp, CloseTradeDesKeyFormatErrCode, errors.New(CloseTradeDesKeyFormatErrMessage)
 	}
-	encryptBytes, err := util.TripleEcbDesEncrypt([]byte(xmlStr), desKeyBytes)
+	encryptBytes, err := TripleEcbDesEncrypt([]byte(xmlStr), desKeyBytes)
 	if err != nil {
-		logrus.Errorf(CloseTradeRequestDataEncryptFailedErrMessage+",request:%+v,errCode:%v,err:%v", arg, CloseTradeRequestDataEncryptFailedErrCode, err.Error())
-		return closedRsp, CloseTradeRequestDataEncryptFailedErrCode, errors.New(CloseTradeRequestDataEncryptFailedErrMessage)
+		logrus.Errorf(CloseTradeRequestDataEncryptFailedErrMessage+",request:%+v,errCode:%v,err:%v", req, CloseTradeRequestDataEncryptFailedErrCode, err.Error())
+		return closeTradeRsp, CloseTradeRequestDataEncryptFailedErrCode, errors.New(CloseTradeRequestDataEncryptFailedErrMessage)
 	}
-	reqEncrypt := util.DecimalByteSlice2HexString(encryptBytes)
+	reqEncrypt := DecimalByteSlice2HexString(encryptBytes)
 	reqEncrypt = base64.StdEncoding.EncodeToString([]byte(reqEncrypt))
-	closedWithEncrypt := ClosedWithEncrypt{
+	closedWithEncrypt := CloseWithEncrypt{
 		Version:  Version,
-		Merchant: arg.Merchant,
+		Merchant: configParamMap["merchant"],
 		Encrypt:  reqEncrypt,
 	}
 	xmlBytes, err = xml.Marshal(closedWithEncrypt)
 	xmlStr = strings.TrimRight(xml.Header, "\n") + string(xmlBytes)
-	//fmt.Println("with 3des xml", xmlStr)
-	closedRsp.EncryptRes = xmlStr
+	fmt.Println("with 3des xml", xmlStr)
+	//closeTradeRsp.EncryptRes = xmlStr
 
-	var closedResult ClosedResult
+	var closeResult CloseResult
 	playLoad := strings.NewReader(xmlStr)
-	err = curl.PostXML(arg.GateWay, &closedResult, playLoad)
+	err = curl.PostXML(configParamMap["close_way"], &closeResult, playLoad)
 	if err != nil {
-		logrus.Errorf(CloseTradeNetErrMessage+",request:%+v,errCode:%v,err:%v", arg, CloseTradeNetErrCode, err.Error())
-		return closedRsp, CloseTradeNetErrCode, errors.New(CloseTradeNetErrMessage)
+		logrus.Errorf(CloseTradeNetErrMessage+",request:%+v,errCode:%v,err:%v", req, CloseTradeNetErrCode, err.Error())
+		return closeTradeRsp, CloseTradeNetErrCode, errors.New(CloseTradeNetErrMessage)
 	}
 	//fmt.Printf("closedResult:%+v\n", closedResult)
-	closedResultBytes, err := xml.Marshal(closedResult)
+	/*closedResultBytes, err := xml.Marshal(closedResult)
 	if err != nil {
 		logrus.Errorf(CloseTradeResponseDataEncryptFormatErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", arg, closedResult, CloseTradeResponseDataEncryptFormatErrCode, err.Error())
-		return closedRsp, CloseTradeResponseDataEncryptFormatErrCode, errors.New(CloseTradeResponseDataEncryptFormatErrMessage)
-	}
-	closedRsp.EncryptRsp = string(closedResultBytes)
+		return closeTradeRsp, CloseTradeResponseDataEncryptFormatErrCode, errors.New(CloseTradeResponseDataEncryptFormatErrMessage)
+	}*/
+	//closeTradeRsp.EncryptRsp = string(closedResultBytes)
 
 	//解密数据
-	rspEncryptBytes, err := base64.StdEncoding.DecodeString(closedResult.Encrypt)
+	rspEncryptBytes, err := base64.StdEncoding.DecodeString(closeResult.Encrypt)
 	if err != nil {
-		logrus.Errorf(CloseTradeResponseDataDecryptFailedErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", arg, closedResult, CloseTradeResponseDataDecryptFailedErrCode, err.Error())
-		return closedRsp, CloseTradeResponseDataDecryptFailedErrCode, errors.New(CloseTradeResponseDataDecryptFailedErrMessage)
+		logrus.Errorf(CloseTradeResponseDataDecryptFailedErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", req, closeResult, CloseTradeResponseDataDecryptFailedErrCode, err.Error())
+		return closeTradeRsp, CloseTradeResponseDataDecryptFailedErrCode, errors.New(CloseTradeResponseDataDecryptFailedErrMessage)
 	}
-	rspEncryptBytes, err = util.HexString2Bytes(string(rspEncryptBytes))
-	rspDecryptBytes, err := util.TripleEcbDesDecrypt(rspEncryptBytes, desKeyBytes)
+	rspEncryptBytes, err = HexString2Bytes(string(rspEncryptBytes))
+	rspDecryptBytes, err := TripleEcbDesDecrypt(rspEncryptBytes, desKeyBytes)
 	if err != nil {
-		logrus.Errorf(CloseTradeResponseDataDecryptFailedErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", arg, closedResult, CloseTradeResponseDataDecryptFailedErrCode, err.Error())
-		return closedRsp, CloseTradeResponseDataDecryptFailedErrCode, errors.New(CloseTradeResponseDataDecryptFailedErrMessage)
+		logrus.Errorf(CloseTradeResponseDataDecryptFailedErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", req, closeResult, CloseTradeResponseDataDecryptFailedErrCode, err.Error())
+		return closeTradeRsp, CloseTradeResponseDataDecryptFailedErrCode, errors.New(CloseTradeResponseDataDecryptFailedErrMessage)
 	}
 	//fmt.Println("search rsp", string(rspDecrypt))
-	closedRsp.DecryptRsp = string(rspDecryptBytes)
+	//closeTradeRsp.DecryptRsp = string(rspDecryptBytes)
 
-	var closedDecryptRsp ClosedDecryptRsp
-	err = xml.Unmarshal(rspDecryptBytes, &closedDecryptRsp)
+	var closeDecryptRsp CloseDecryptRsp
+	err = xml.Unmarshal(rspDecryptBytes, &closeDecryptRsp)
 	if err != nil {
-		logrus.Errorf(CloseTradeResponseDataDecryptFormatErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", arg, closedResult, CloseTradeResponseDataDecryptFormatErrCode, err.Error())
-		return closedRsp, CloseTradeResponseDataDecryptFormatErrCode, errors.New(CloseTradeResponseDataDecryptFormatErrMessage)
+		logrus.Errorf(CloseTradeResponseDataDecryptFormatErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", req, closeResult, CloseTradeResponseDataDecryptFormatErrCode, err.Error())
+		return closeTradeRsp, CloseTradeResponseDataDecryptFormatErrCode, errors.New(CloseTradeResponseDataDecryptFormatErrMessage)
 	}
-	closedRsp.OrderId = closedDecryptRsp.TradeNum
+	closeTradeRsp.OrderId = closeDecryptRsp.TradeNum
 
 	//签名校验
-	if !closed.checkSignature(closedDecryptRsp.Sign, closedRsp.DecryptRsp, arg.PublicKey) {
-		logrus.Errorf(CloseTradeResponseDataSignErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", arg, closedResult, CloseTradeResponseDataSignErrCode)
-		return closedRsp, CloseTradeResponseDataSignErrCode, errors.New(CloseTradeResponseDataSignErrMessage)
+	if !close.checkSignature(closeDecryptRsp.Sign, string(rspDecryptBytes), configParamMap["public_key"]) {
+		logrus.Errorf(CloseTradeResponseDataSignErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", req, closeResult, CloseTradeResponseDataSignErrCode)
+		return closeTradeRsp, CloseTradeResponseDataSignErrCode, errors.New(CloseTradeResponseDataSignErrMessage)
 	}
 
-	if closedDecryptRsp.Status == JdClosedTradeSuccessStatus {
-		closedRsp.Status = true
+	if closeDecryptRsp.Status == ClosedTradeSuccessStatus {
+		closeTradeRsp.Status = true
 	}
 
-	return closedRsp, 0, nil
+	return closeTradeRsp, 0, nil
 }
 
 //验证查询交易结果
-func (closed *Closed) checkSignature(sign, decryptRsp, publicKey string) bool {
+func (close *Close) checkSignature(sign, decryptRsp, publicKey string) bool {
 	//签名字符串截取
 	clipStartIndex := strings.Index(decryptRsp, "<sign>")
 	clipEndIndex := strings.Index(decryptRsp, "</sign>")
@@ -253,10 +236,17 @@ func (closed *Closed) checkSignature(sign, decryptRsp, publicKey string) bool {
 	if err != nil {
 		return false
 	}
-	sha256 := util.HaSha256(originXml)
-	verifySign := util.VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey), crypto.Hash(0))
+	sha256 := HaSha256(originXml)
+	verifySign := VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey), crypto.Hash(0))
 	if !verifySign {
 		fmt.Println("签名校验不通过")
 	}
 	return verifySign
+}
+
+func (close *Close) GetConfigCode() []string {
+	return []string{
+		"merchant",
+		"des_key", "private_key", "public_key", "close_way",
+	}
 }
