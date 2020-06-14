@@ -25,29 +25,37 @@ cd cmd/cashier/ && go build . && ./cashier
 ```
 .
 ├── README.md
-├── app
-│   └── cashier                 http响应处理文件夹
-│       ├── callback.go         支付同步回调
-│       ├── common.go           
-│       ├── logistics.go        jd支付上传物流信息
-│       ├── notify.go           支付异步回调
-│       ├── pay.go              发起支付
-│       └── trade.go            交易查询
+├── api
+│   ├── controller          #http处理逻辑
+│   │   └── payment.go
+│   ├── response            #响应数据结构
+│   │   └── payment.go
+│   └── validate            #请求数据校验
+│       ├── logistics.go
+│       ├── pay.go
+│       └── trade.go
 ├── cmd
-│   └── cashier
-│       ├── config.toml.exmple  配置示例文件
-│       ├── logs                日志目录
-│       └── main.go             入口
+│   ├── config.toml.exmple  #示例配置文件
+│   ├── logs                #日志记录
+│   └── main.go             #入口文件
 ├── go.mod
 ├── go.sum
 ├── internal
-│   ├── cashier
-│   │   ├── alipay.go           支付宝直连
-│   │   ├── allpay.go           allpay
-│   │   ├── epayments.go        epayments
-│   │   ├── interface.go
-│   │   └── jd.go               京东支付
-│   └── common
-├── pkg                         工具文件夹
-└── vendor                      第三方依赖包文件夹
+│   ├── common
+│   │   └── code            #公用错误码
+│   └── service
+│       └── payment         #支付流程逻辑
+└── pkg
+    ├── config              
+    ├── curl
+    ├── ginprometheus
+    ├── grace
+    ├── log
+    ├── payment             #支付方式对接处理逻辑
+    │   ├── alipay          #支付宝ISV对接处理逻辑
+    │   ├── allpay          #支付机构allpay对接处理逻辑
+    │   ├── consts          #公用常量
+    │   ├── epayments       #支付机构epayments对接处理逻辑
+    │   └── jd              #京东支付ISV对接处理逻辑
+    └── recovery
 ```
