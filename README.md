@@ -12,13 +12,13 @@
 
 拷贝配置文件
 ```
-cp cmd/cashier/config.toml.example cmd/cashier/config.toml
+cp cmd/config.toml.example cmd/config.toml
 ```
 配置支付参数 
 
 运行项目
 ```
-cd cmd/cashier/ && go build . && ./cashier
+cd cmd/ && go build . && ./cmd
 ```
 
 ### 目录结构
