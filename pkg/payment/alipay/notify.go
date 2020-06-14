@@ -1,8 +1,13 @@
 package alipay
 
 import (
+	"errors"
 	"fmt"
 	"payment_demo/api/response"
+	"payment_demo/api/validate"
+	"strconv"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gdchenli/pay/dialects/alipay/util"
 )
@@ -34,15 +39,12 @@ type NotifyArg struct {
 	GateWay  string `json:"gate_way"`
 }
 
-func (notify *Notify) Validate(query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
-	/*notifyRsp.Rsp = query
-
+func (notify *Notify) Validate(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
-	fmt.Printf("%+v\n", queryMap)
 
 	//订单编号
 	notifyRsp.OrderId = queryMap["out_trade_no"]
@@ -55,7 +57,7 @@ func (notify *Notify) Validate(query, methodCode string) (notifyRsp response.Not
 		delete(queryMap, "sign_type")
 	}
 
-	if !notify.checkSign(queryMap, arg.Md5Key, sign) {
+	if !notify.checkSign(queryMap, configParamMap["md5_key"], sign) {
 		logrus.Errorf(NotifySignErrMessage+",order id %v,errCode:%v", notifyRsp.OrderId, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
@@ -68,13 +70,18 @@ func (notify *Notify) Validate(query, methodCode string) (notifyRsp response.Not
 	//alipay交易流水号，
 	notifyRsp.TradeNo = queryMap["trade_no"]
 
-	tradeArg := TradeArg{
-		Merchant:   arg.Merchant,
-		OutTradeNo: queryMap["out_trade_no"],
-		Md5Key:     arg.Md5Key,
-		TradeWay:   arg.GateWay,
+	totalFee, err := strconv.ParseFloat(queryMap["total_fee"], 64)
+	if err != nil {
+		logrus.Errorf("org:alipay,"+NotifyDecryptFormatErrMessage+",order id %v,errCode:%v,err:%v", notifyRsp.OrderId, NotifyDecryptFormatErrCode, err.Error())
+		return notifyRsp, NotifyDecryptFormatErrCode, errors.New(NotifyDecryptFormatErrMessage)
 	}
-	alipayTradeRsp, errCode, err := new(Trade).Search(tradeArg)
+
+	tradeArg := validate.SearchTradeReq{
+		OrderId:    queryMap["out_trade_no"],
+		MethodCode: methodCode,
+		OrgCode:    "alipay", TotalFee: totalFee,
+		Currency: queryMap["currency"]}
+	alipayTradeRsp, errCode, err := new(Trade).Search(configParamMap, tradeArg)
 	if err != nil {
 		return notifyRsp, errCode, err
 	}
@@ -86,26 +93,26 @@ func (notify *Notify) Validate(query, methodCode string) (notifyRsp response.Not
 	notifyRsp.PaidAt = alipayTradeRsp.PaidAt
 
 	//汇率
-	totalFee, err := strconv.ParseFloat(queryMap["total_fee"], 64)
-	if err != nil {
-		logrus.Errorf("org:alipay,"+NotifyDecryptFormatErrMessage+",order id %v,errCode:%v,err:%v", notifyRsp.OrderId, NotifyDecryptFormatErrCode, err.Error())
-		return notifyRsp, NotifyDecryptFormatErrCode, errors.New(NotifyDecryptFormatErrMessage)
-	}
 	rate := alipayTradeRsp.RmbFee / totalFee
 	rate, err = strconv.ParseFloat(fmt.Sprintf("%.8f", rate), 64)
 	if err != nil {
 		logrus.Errorf("org:alipay,"+NotifyDecryptFormatErrMessage+",order id %v,errCode:%v,err:%v", notifyRsp.OrderId, NotifyDecryptFormatErrCode, err.Error())
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
-	notifyRsp.Rate = rate*/
+	notifyRsp.Rate = rate
 
 	return notifyRsp, 0, nil
 }
 
 func (notify *Notify) checkSign(queryMap map[string]string, md5Key, sign string) bool {
 	sortString := util.GetSortString(queryMap)
-	fmt.Println("sortString", sortString)
 	calculateSign := util.Md5(sortString + md5Key)
-	fmt.Println("calculateSign", calculateSign)
+
 	return calculateSign == sign
+}
+
+func (notify *Notify) GetConfigCode() []string {
+	return []string{
+		"pay_way", "md5_key", "gate_way", "partner",
+	}
 }

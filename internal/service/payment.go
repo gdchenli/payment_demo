@@ -17,13 +17,12 @@ func (payment *Payment) getConfigValue(configCodes []string) (payParamMap map[st
 	return payParamMap, 0, nil
 }
 
-func (payment *Payment) Sumbit(order validate.Order) (pay interface{}, errCode int, err error) {
+func (payment *Payment) Sumbit(order validate.Order) (pay string, errCode int, err error) {
 	//获取配置项code
-	getConfigCodehandle := getConfigCodeHandler(order.OrgCode)
+	getConfigCodehandle := getConfigCodeHandler(order.OrgCode + ".payment")
 	if getConfigCodehandle == nil {
 		return pay, errCode, err
 	}
-
 	configCode := getConfigCodehandle()
 
 	//读取配置项值
@@ -37,7 +36,6 @@ func (payment *Payment) Sumbit(order validate.Order) (pay interface{}, errCode i
 	if submitHandle == nil {
 		return pay, errCode, err
 	}
-
 	pay, errCode, err = submitHandle(configParamMap, order)
 	if err != nil {
 		return pay, errCode, err
@@ -47,26 +45,91 @@ func (payment *Payment) Sumbit(order validate.Order) (pay interface{}, errCode i
 }
 
 func (payment *Payment) Notify(query, orgCode, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+	//获取配置项code
+	getConfigCodehandle := getConfigCodeHandler(orgCode + ".notify")
+	if getConfigCodehandle == nil {
+		return notifyRsp, errCode, err
+	}
+	configCode := getConfigCodehandle()
+
+	//读取配置项值
+	configParamMap, errCode, err := payment.getConfigValue(configCode)
+	if err != nil {
+		return notifyRsp, errCode, err
+	}
+
+	//异步通知处理
+	notifyHandle := getNotifyHandler(orgCode)
+	if notifyHandle == nil {
+		return notifyRsp, errCode, err
+	}
+	notifyRsp, errCode, err = notifyHandle(configParamMap, query, methodCode)
+	if err != nil {
+		return notifyRsp, errCode, err
+	}
 
 	return notifyRsp, 0, nil
 }
 
 func (payment *Payment) Verify(query, orgCode, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+	//获取配置项code
+	getConfigCodehandle := getConfigCodeHandler(orgCode + ".notify")
+	if getConfigCodehandle == nil {
+		return verifyRsp, errCode, err
+	}
+	configCode := getConfigCodehandle()
+
+	//读取配置项值
+	configParamMap, errCode, err := payment.getConfigValue(configCode)
+	if err != nil {
+		return verifyRsp, errCode, err
+	}
+
+	//同步通知处理
+	notifyHandle := getVerifyHandler(orgCode)
+	if notifyHandle == nil {
+		return verifyRsp, errCode, err
+	}
+	verifyRsp, errCode, err = notifyHandle(configParamMap, query, methodCode)
+	if err != nil {
+		return verifyRsp, errCode, err
+	}
 
 	return verifyRsp, 0, nil
 }
 
-func (payment *Payment) SearchTrade(req validate.SearchTradeReq, orgCode, methodCode string) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (payment *Payment) SearchTrade(req validate.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
+	//获取配置项code
+	getConfigCodehandle := getConfigCodeHandler(req.OrgCode + ".trade")
+	if getConfigCodehandle == nil {
+		return searchTradeRsp, errCode, err
+	}
+	configCode := getConfigCodehandle()
 
+	//读取配置项值
+	configParamMap, errCode, err := payment.getConfigValue(configCode)
+	if err != nil {
+		return searchTradeRsp, errCode, err
+	}
+
+	//查询支付交易处理
+	searchTradeHandle := getSeachTradeHandler(req.OrgCode)
+	if searchTradeHandle == nil {
+		return searchTradeRsp, errCode, err
+	}
+	searchTradeRsp, errCode, err = searchTradeHandle(configParamMap, req)
+	if err != nil {
+		return searchTradeRsp, errCode, err
+	}
 	return searchTradeRsp, 0, nil
 }
 
-func (payment *Payment) CloseTrade(req validate.CloseTradeReq, orgCode, methodCode string) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (payment *Payment) CloseTrade(req validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
 
 	return closeTradeRsp, 0, nil
 }
 
-func (payment *Payment) UploadLogistics(req validate.UploadLogisticsReq, orgCode, methodCode string) (uploadLogisticsTradeRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (payment *Payment) UploadLogistics(req validate.UploadLogisticsReq) (uploadLogisticsTradeRsp response.UploadLogisticsRsp, errCode int, err error) {
 
 	return uploadLogisticsTradeRsp, 0, nil
 }

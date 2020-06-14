@@ -1,7 +1,10 @@
 package alipay
 
 import (
+	"errors"
 	"payment_demo/api/response"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gdchenli/pay/dialects/alipay/util"
 )
@@ -14,18 +17,18 @@ type VerifyRsp struct {
 	Rsp     string `json:"rsp"`      //返回的数据
 }
 
-func (vreify *Verify) Validate(query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
-	/*callbackRsp.Rsp = query
+func (vreify *Verify) Validate(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+	//callbackRsp.Rsp = query
 
 	//解析参数
 	queryMap, err := util.ParseQueryString(query)
 	if err != nil {
 		logrus.Errorf("org:alipay,"+NotifyQueryFormatErrMessage+",errCode:%v,err:%v", NotifyQueryFormatErrCode, err.Error())
-		return callbackRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
+		return verifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
 
 	//订单编号
-	callbackRsp.OrderId = queryMap["out_trade_no"]
+	verifyRsp.OrderId = queryMap["out_trade_no"]
 
 	//校验签名
 	var sign string
@@ -35,15 +38,15 @@ func (vreify *Verify) Validate(query, methodCode string) (verifyRsp response.Ver
 		delete(queryMap, "sign_type")
 	}
 
-	if !callback.checkSign(queryMap, md5Key, sign) {
-		logrus.Errorf("org:alipay,"+NotifySignErrMessage+",orderId:%v,errCode:%v", callbackRsp.OrderId, NotifySignErrCode)
-		return callbackRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
+	if !vreify.checkSign(queryMap, configParamMap["md5_key"], sign) {
+		logrus.Errorf("org:alipay,"+NotifySignErrMessage+",orderId:%v,errCode:%v", queryMap["out_trade_no"], NotifySignErrCode)
+		return verifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 
 	//交易状态
 	if queryMap["trade_status"] == TradeFinished || queryMap["trade_status"] == TradeSuccess {
-		callbackRsp.Status = true
-	}*/
+		verifyRsp.Status = true
+	}
 
 	return verifyRsp, 0, nil
 }
@@ -52,4 +55,10 @@ func (vreify *Verify) checkSign(queryMap map[string]string, signKey, sign string
 	sortString := util.GetSortString(queryMap)
 	calculateSign := util.Md5(sortString + signKey)
 	return calculateSign == sign
+}
+
+func (vreify *Verify) GetConfigCode() []string {
+	return []string{
+		"pay_way", "md5_key", "gate_way", "partner",
+	}
 }

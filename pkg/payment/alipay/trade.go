@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"payment_demo/api/response"
+	"payment_demo/api/validate"
 	"strconv"
 	"time"
 
@@ -96,36 +98,36 @@ type TradeRsp struct {
 	Rsp     string  `json:"rsp"`
 }
 
-func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err error) {
-	tradeRsp.OrderId = arg.OutTradeNo
+func (trade *Trade) Search(configParamMap map[string]string, req validate.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+	tradeRsp.OrderId = req.OrderId
 	paramMap := map[string]string{
-		"service":        SearchServiceType, //交易查询服务
-		"partner":        arg.Merchant,      //商户ID
-		"_input_charset": CharsetUTF8,       //编码
-		"out_trade_no":   arg.OutTradeNo,    //订单编号
+		"service":        SearchServiceType,         //交易查询服务
+		"partner":        configParamMap["partner"], //商户ID
+		"_input_charset": CharsetUTF8,               //编码
+		"out_trade_no":   req.OrderId,               //订单编号
 	}
 	payString := util.GetSortString(paramMap)
-	paramMap["sign"] = util.Md5(payString + arg.Md5Key)
+	paramMap["sign"] = util.Md5(payString + configParamMap["md5_key"])
 	paramMap["sign_type"] = SignTypeMD5
 	values := url.Values{}
 	for k, v := range paramMap {
 		values.Add(k, v)
 	}
-	tradeRsp.Res = values.Encode()
-	returnBytes, err := curl.GetJSONReturnByte(arg.TradeWay + "?" + values.Encode())
+	//tradeRsp.Res = values.Encode()
+	returnBytes, err := curl.GetJSONReturnByte(configParamMap["gate_way"] + "?" + values.Encode())
 	if err != nil {
-		logrus.Errorf("org:alipay,"+SearchTradeNetErrMessage+",order id %v,errCode:%v,err:%v", arg.OutTradeNo, SearchTradeNetErrCode, err.Error())
+		logrus.Errorf("org:alipay,"+SearchTradeNetErrMessage+",order id %v,errCode:%v,err:%v", req.OrderId, SearchTradeNetErrCode, err.Error())
 		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
 	}
-	tradeRsp.Rsp = string(returnBytes)
+	//tradeRsp.Rsp = string(returnBytes)
 
 	var searchResult SearchResult
 	if err = xml.Unmarshal(returnBytes, &searchResult); err != nil {
-		logrus.Errorf("org:alipay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.OutTradeNo, SearchTradeResponseDataFormatErrCode, err.Error())
+		logrus.Errorf("org:alipay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", req.OrderId, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
-	if !trade.checkSign(searchResult, arg.Md5Key) {
-		logrus.Errorf("org:alipay,"+SearchTradeResponseDataSignErrMessage+",order id %v,errCode:%v", arg.OutTradeNo, SearchTradeResponseDataSignErrCode)
+	if !trade.checkSign(searchResult, configParamMap["md5_key"]) {
+		logrus.Errorf("org:alipay,"+SearchTradeResponseDataSignErrMessage+",order id %v,errCode:%v", req.OrderId, SearchTradeResponseDataSignErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
 
@@ -146,7 +148,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	//支付时间
 	parseTime, err := time.Parse(DateTimeFormatLayout, searchResult.Response.TradeXml.GmtPayment)
 	if err != nil {
-		logrus.Errorf("org:alipay,"+SearchTradeNetErrMessage+",order id %v,errCode:%v,err:%v", arg.OutTradeNo, SearchTradeNetErrCode, err.Error())
+		logrus.Errorf("org:alipay,"+SearchTradeNetErrMessage+",order id %v,errCode:%v,err:%v", req.OrderId, SearchTradeNetErrCode, err.Error())
 		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
 	}
 	tradeRsp.PaidAt = parseTime.UTC().Format(DateTimeFormatLayout)
@@ -154,14 +156,14 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	//人民币金额
 	tradeRsp.RmbFee, err = strconv.ParseFloat(searchResult.Response.TradeXml.TotalFee, 64)
 	if err != nil {
-		logrus.Errorf("org:alipay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.OutTradeNo, SearchTradeResponseDataFormatErrCode, err.Error())
+		logrus.Errorf("org:alipay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", req.OrderId, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 
 	//汇率
-	tradeRsp.Rate, err = strconv.ParseFloat(fmt.Sprintf("%.8f", tradeRsp.RmbFee/arg.TotalFee), 64)
+	tradeRsp.Rate, err = strconv.ParseFloat(fmt.Sprintf("%.8f", tradeRsp.RmbFee/req.TotalFee), 64)
 	if err != nil {
-		logrus.Errorf("org:alipay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.OutTradeNo, SearchTradeResponseDataFormatErrCode, err.Error())
+		logrus.Errorf("org:alipay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", req.OrderId, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 
@@ -200,4 +202,10 @@ func (trade *Trade) checkSign(searchResult SearchResult, md5Key string) bool {
 	compareSignature := util.Md5(payString + md5Key)
 
 	return compareSignature == searchResult.Sign
+}
+
+func (trade *Trade) GetConfigCode() []string {
+	return []string{
+		"pay_way", "md5_key", "gate_way", "partner",
+	}
 }
