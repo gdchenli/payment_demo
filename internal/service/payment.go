@@ -1,17 +1,24 @@
 package service
 
 import (
+	"errors"
+	"fmt"
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
+	"payment_demo/internal/common/code"
 	"payment_demo/pkg/config"
 )
 
 type Payment struct{}
 
-func (payment *Payment) getConfigValue(configCodes []string) (payParamMap map[string]string, errCode int, err error) {
+func (payment *Payment) getConfigValue(configCodes []string, orgCode string) (payParamMap map[string]string, errCode int, err error) {
 	payParamMap = make(map[string]string)
 	for _, configCode := range configCodes {
-		payParamMap[configCode] = config.GetInstance().GetString("alipay." + configCode)
+		payParamMap[configCode] = config.GetInstance().GetString(orgCode + "." + configCode)
+		if payParamMap[configCode] == "" {
+			fmt.Println("configCode", configCode)
+			return payParamMap, code.ConfigValueErrCode, errors.New(code.ConfigValueErrMessage)
+		}
 	}
 
 	return payParamMap, 0, nil
@@ -21,12 +28,12 @@ func (payment *Payment) Sumbit(order validate.Order) (pay string, errCode int, e
 	//获取配置项code
 	getConfigCodehandle := getConfigCodeHandler(order.OrgCode + ".payment")
 	if getConfigCodehandle == nil {
-		return pay, errCode, err
+		return pay, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	configCode := getConfigCodehandle()
 
 	//读取配置项值
-	configParamMap, errCode, err := payment.getConfigValue(configCode)
+	configParamMap, errCode, err := payment.getConfigValue(configCode, order.OrgCode)
 	if err != nil {
 		return pay, errCode, err
 	}
@@ -34,7 +41,7 @@ func (payment *Payment) Sumbit(order validate.Order) (pay string, errCode int, e
 	//支付处理
 	submitHandle := getSubmitHandler(order.OrgCode, order.UserAgentType)
 	if submitHandle == nil {
-		return pay, errCode, err
+		return pay, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	pay, errCode, err = submitHandle(configParamMap, order)
 	if err != nil {
@@ -48,12 +55,12 @@ func (payment *Payment) Notify(query, orgCode, methodCode string) (notifyRsp res
 	//获取配置项code
 	getConfigCodehandle := getConfigCodeHandler(orgCode + ".notify")
 	if getConfigCodehandle == nil {
-		return notifyRsp, errCode, err
+		return notifyRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	configCode := getConfigCodehandle()
 
 	//读取配置项值
-	configParamMap, errCode, err := payment.getConfigValue(configCode)
+	configParamMap, errCode, err := payment.getConfigValue(configCode, orgCode)
 	if err != nil {
 		return notifyRsp, errCode, err
 	}
@@ -61,7 +68,7 @@ func (payment *Payment) Notify(query, orgCode, methodCode string) (notifyRsp res
 	//异步通知处理
 	notifyHandle := getNotifyHandler(orgCode)
 	if notifyHandle == nil {
-		return notifyRsp, errCode, err
+		return notifyRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	notifyRsp, errCode, err = notifyHandle(configParamMap, query, methodCode)
 	if err != nil {
@@ -75,12 +82,12 @@ func (payment *Payment) Verify(query, orgCode, methodCode string) (verifyRsp res
 	//获取配置项code
 	getConfigCodehandle := getConfigCodeHandler(orgCode + ".notify")
 	if getConfigCodehandle == nil {
-		return verifyRsp, errCode, err
+		return verifyRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	configCode := getConfigCodehandle()
 
 	//读取配置项值
-	configParamMap, errCode, err := payment.getConfigValue(configCode)
+	configParamMap, errCode, err := payment.getConfigValue(configCode, orgCode)
 	if err != nil {
 		return verifyRsp, errCode, err
 	}
@@ -88,7 +95,7 @@ func (payment *Payment) Verify(query, orgCode, methodCode string) (verifyRsp res
 	//同步通知处理
 	notifyHandle := getVerifyHandler(orgCode)
 	if notifyHandle == nil {
-		return verifyRsp, errCode, err
+		return verifyRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	verifyRsp, errCode, err = notifyHandle(configParamMap, query, methodCode)
 	if err != nil {
@@ -102,12 +109,12 @@ func (payment *Payment) SearchTrade(req validate.SearchTradeReq) (searchTradeRsp
 	//获取配置项code
 	getConfigCodehandle := getConfigCodeHandler(req.OrgCode + ".trade")
 	if getConfigCodehandle == nil {
-		return searchTradeRsp, errCode, err
+		return searchTradeRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	configCode := getConfigCodehandle()
 
 	//读取配置项值
-	configParamMap, errCode, err := payment.getConfigValue(configCode)
+	configParamMap, errCode, err := payment.getConfigValue(configCode, req.OrgCode)
 	if err != nil {
 		return searchTradeRsp, errCode, err
 	}
@@ -115,12 +122,13 @@ func (payment *Payment) SearchTrade(req validate.SearchTradeReq) (searchTradeRsp
 	//查询支付交易处理
 	searchTradeHandle := getSeachTradeHandler(req.OrgCode)
 	if searchTradeHandle == nil {
-		return searchTradeRsp, errCode, err
+		return searchTradeRsp, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	searchTradeRsp, errCode, err = searchTradeHandle(configParamMap, req)
 	if err != nil {
 		return searchTradeRsp, errCode, err
 	}
+
 	return searchTradeRsp, 0, nil
 }
 

@@ -6,8 +6,6 @@ import (
 	"payment_demo/api/validate"
 	"payment_demo/internal/service"
 
-	"github.com/gin-gonic/gin/binding"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,13 +33,13 @@ func (payment *Payment) upload(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, logisticsRsp)
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": logisticsRsp})
 }
 
 func (payment *Payment) notify(ctx *gin.Context) {
 	notifyBytes, err := ioutil.ReadAll(ctx.Request.Body)
 	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": err.Error()})
+		ctx.JSON(http.StatusOK, gin.H{"code": "1", "message": err.Error()})
 		return
 	}
 	defer func() {
@@ -55,7 +53,7 @@ func (payment *Payment) notify(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": notifyRsp})
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": notifyRsp})
 }
 
 func (payment *Payment) searchTrade(ctx *gin.Context) {
@@ -73,7 +71,7 @@ func (payment *Payment) searchTrade(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, searchTradeRsp)
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": searchTradeRsp})
 }
 
 func (payment *Payment) closeTrade(ctx *gin.Context) {
@@ -82,12 +80,6 @@ func (payment *Payment) closeTrade(ctx *gin.Context) {
 
 	if errCode, err := closeTradeReq.Validate(); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
-		return
-	}
-
-	closeTradeHandle := GetCloseTradeHandler(ctx.Query("org_cod"))
-	if closeTradeHandle == nil {
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
 		return
 	}
 

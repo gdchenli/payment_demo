@@ -3,8 +3,9 @@ package service
 import (
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
-	"payment_demo/internal/common/consts"
 	"payment_demo/pkg/payment/alipay"
+	"payment_demo/pkg/payment/allpay"
+	"payment_demo/pkg/payment/consts"
 )
 
 //发起支付
@@ -46,22 +47,33 @@ func init() {
 	alipayPayment := new(alipay.Payment)
 	alipayNotify := new(alipay.Notify)
 	alipayVerify := new(alipay.Verify)
-
 	alipayTrade := new(alipay.Trade)
+
+	allpayPayment := new(allpay.Payment)
+	allpayNotify := new(allpay.Notify)
+	allpayVerify := new(allpay.Verify)
+	allpayTrade := new(allpay.Trade)
 
 	configCodeMap = map[string]ConfigCodeHandler{
 		consts.AlipayOrg + ".payment": alipayPayment.GetConfigCode, //发起支付配置
 		consts.AlipayOrg + ".notify":  alipayNotify.GetConfigCode,  //异步通知配置
 		consts.AlipayOrg + ".verify":  alipayVerify.GetConfigCode,  //同步通知
 		consts.AlipayOrg + ".trade":   alipayTrade.GetConfigCode,   //交易查询
+
+		consts.AllpayOrg + ".payment": allpayPayment.GetConfigCode, //发起支付配置
+		consts.AllpayOrg + ".notify":  allpayNotify.GetConfigCode,  //异步通知配置
+		consts.AllpayOrg + ".verify":  allpayVerify.GetConfigCode,  //同步通知
+		consts.AllpayOrg + ".trade":   allpayTrade.GetConfigCode,   //交易查询
 	}
 
 	submitMap = map[string]SumbitHandler{
 		consts.AlipayOrg: alipayPayment.CreatePayUrl,
+		consts.AllpayOrg: allpayPayment.CreatePayUrl,
 	}
 
 	ampSubmitMap = map[string]SumbitHandler{
 		consts.AlipayOrg: alipayPayment.CreateAmpPayStr,
+		consts.AllpayOrg: allpayPayment.CreateAmpPayStr,
 	}
 
 	appSubmitMap = map[string]AppSumbitHandler{
@@ -70,14 +82,17 @@ func init() {
 
 	notifyMap = map[string]NotifyHandler{
 		consts.AlipayOrg: alipayNotify.Validate,
+		consts.AllpayOrg: allpayNotify.Validate,
 	}
 
 	verifyMap = map[string]VerifyHandler{
 		consts.AlipayOrg: alipayVerify.Validate,
+		consts.AllpayOrg: allpayVerify.Validate,
 	}
 
 	searchTradeMap = map[string]SearchTradeHandler{
 		consts.AlipayOrg: alipayTrade.Search,
+		consts.AllpayOrg: allpayTrade.Search,
 	}
 
 }

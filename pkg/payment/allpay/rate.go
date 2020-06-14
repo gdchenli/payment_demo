@@ -3,6 +3,7 @@ package allpay
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"strconv"
 
@@ -48,6 +49,7 @@ func (rate *Rate) Search(arg RateArg) (float64, int, error) {
 		values.Add(k, v)
 	}
 
+	fmt.Println(rate.getGateWay(arg.GateWay) + "?" + values.Encode())
 	returnBytes, err := curl.GetJSONReturnByte(rate.getGateWay(arg.GateWay) + "?" + values.Encode())
 	if err != nil {
 		return 0, RateSearchNetErrCode, errors.New(RateSearchNetErrMessage)

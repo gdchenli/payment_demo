@@ -9,8 +9,8 @@ import (
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
-	"payment_demo/internal/common/consts"
 	"payment_demo/pkg/config"
+	consts2 "payment_demo/pkg/payment/consts"
 	"strconv"
 	"time"
 
@@ -133,9 +133,9 @@ func (jd *Jd) Pay(arg validate.Order) (form string, errCode int, err error) {
 
 func (jd *Jd) getPayWay(userAgentType int) string {
 	switch userAgentType {
-	case consts.WebUserAgentType:
+	case consts2.WebUserAgentType:
 		return config.GetInstance().GetString(JdPcPayWay)
-	case consts.MobileUserAgentType:
+	case consts2.MobileUserAgentType:
 		return config.GetInstance().GetString(JdH5PayWay)
 	}
 
@@ -148,7 +148,7 @@ func (jd *Jd) Notify(query, methodCode string) (notifyRsp response.NotifyRsp, er
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,notify encrypt data:%+v,notify decrypt data:%v",
-			jdNotifyRsp.OrderId, consts.JdOrg, methodCode, jdNotifyRsp.EncryptRsp, jdNotifyRsp.DecryptRsp)
+			jdNotifyRsp.OrderId, consts2.JdOrg, methodCode, jdNotifyRsp.EncryptRsp, jdNotifyRsp.DecryptRsp)
 	}()
 
 	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
@@ -189,7 +189,7 @@ func (jd *Jd) Verify(query, methodCode string) (verifyRsp response.VerifyRsp, er
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,callback encrypt data:%+v,callback decrypt data:%v",
-			jdCallbackRsp.OrderId, consts.JdOrg, consts.JdMethod, jdCallbackRsp.EncryptRsp, jdCallbackRsp.DecryptRsp)
+			jdCallbackRsp.OrderId, consts2.JdOrg, consts2.JdMethod, jdCallbackRsp.EncryptRsp, jdCallbackRsp.DecryptRsp)
 	}()
 
 	publicKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPublicKey))
@@ -227,7 +227,7 @@ func (jd *Jd) SearchTrade(orderId, methodCode, currency string, totalFee float64
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,trade search request encrypt data:%+v,trade search request decrypt data:%v"+
 			",trade search response search encrypt data:%v,trade search response search decrypt data:%v",
-			jdTradeRsp.OrderId, consts.JdOrg, methodCode, jdTradeRsp.EncryptRes, jdTradeRsp.DecryptRes, jdTradeRsp.EncryptRsp, jdTradeRsp.DecryptRsp)
+			jdTradeRsp.OrderId, consts2.JdOrg, methodCode, jdTradeRsp.EncryptRes, jdTradeRsp.DecryptRes, jdTradeRsp.EncryptRsp, jdTradeRsp.DecryptRsp)
 
 	}()
 
@@ -304,7 +304,7 @@ func (jd *Jd) CloseTrade(arg validate.CloseTradeReq) (closeTradeRsp response.Clo
 		//记录日志
 		logrus.Info("order id:%v,org:%v,method:%v,closed trade request encrypt data:%+v,closed trade request decrypt data:%v"+
 			",closed trade response encrypt data:%v,closed trade response decrypt data:%v",
-			jdClosedRsp.OrderId, consts.JdOrg, consts.JdMethod, jdClosedRsp.EncryptRes, jdClosedRsp.DecryptRes, jdClosedRsp.EncryptRsp, jdClosedRsp.DecryptRsp)
+			jdClosedRsp.OrderId, consts2.JdOrg, consts2.JdMethod, jdClosedRsp.EncryptRes, jdClosedRsp.DecryptRes, jdClosedRsp.EncryptRsp, jdClosedRsp.DecryptRsp)
 	}()
 
 	//金额转为分
@@ -389,7 +389,7 @@ func (jd *Jd) UploadLogistics(arg validate.UploadLogisticsReq) (uploadLogisticsR
 		//记录日志
 		logrus.Info("order id:%v,org:%v,method:%v,upload logistics request encrypt data:%+v,upload logistics request decrypt data:%v"+
 			",upload logistics response encrypt data:%v,upload logistics response decrypt data:%v",
-			jdLogisticsRsp.OrderId, consts.JdOrg, consts.JdMethod, jdLogisticsRsp.EncryptRes, jdLogisticsRsp.DecryptRes, jdLogisticsRsp.EncryptRsp, jdLogisticsRsp.DecryptRsp)
+			jdLogisticsRsp.OrderId, consts2.JdOrg, consts2.JdMethod, jdLogisticsRsp.EncryptRes, jdLogisticsRsp.DecryptRes, jdLogisticsRsp.EncryptRsp, jdLogisticsRsp.DecryptRsp)
 	}()
 
 	privateKeyPath := path.Join(config.GetInstance().GetString("app_path"), config.GetInstance().GetString(JdPrivateKey))

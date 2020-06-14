@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"payment_demo/api/response"
+	"payment_demo/api/validate"
+	consts2 "payment_demo/pkg/payment/consts"
 	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/gdchenli/pay/dialects/allpay/util"
 	"github.com/gdchenli/pay/pkg/curl"
 )
 
@@ -70,43 +72,46 @@ type TradeRsp struct {
 	Rsp     string  `json:"rsp"`
 }
 
-func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err error) {
+func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+	md5Key := paramMap["md5_key"]
+	delete(paramMap, "md5_key")
+	gateWay := trade.getGateWay(paramMap["gate_way"])
+	delete(paramMap, "gate_way")
+	sapiWay := paramMap["sapi_way"]
+	delete(paramMap, "sapi_way")
+
 	transTime := time.Now().Format(TimeLayout)
-	paramMap := map[string]string{
-		"version":       Version,
-		"charSet":       CharsetUTF8,
-		"transType":     SearchTradeTransType,
-		"orderNum":      arg.OrderNum,
-		"merID":         arg.MerId,
-		"acqID":         arg.AcqId,
-		"paymentSchema": arg.PaymentSchema,
-		"transTime":     transTime,
-		"signType":      MD5SignType,
-	}
-	paramMap["signature"] = trade.getSign(paramMap, arg.Md5Key)
+	paramMap["version"] = Version
+	paramMap["charSet"] = CharsetUTF8
+	paramMap["transType"] = SearchTradeTransType
+	paramMap["orderNum"] = req.OrderId
+	paramMap["paymentSchema"] = trade.getPaymentSchema(req.MethodCode)
+	paramMap["transTime"] = transTime
+	paramMap["signType"] = MD5SignType
+	paramMap["signature"] = trade.getSign(paramMap, md5Key)
 	values := url.Values{}
 	for k, v := range paramMap {
 		values.Add(k, v)
 	}
-	//fmt.Println("values.Encode()", arg.TradeGateWay+"?"+values.Encode())
-	returnBytes, err := curl.GetJSONReturnByte(trade.getGateWay(arg.TradeGateWay) + "?" + values.Encode())
+	fmt.Println("values.Encode()", gateWay+"?"+values.Encode())
+	returnBytes, err := curl.GetJSONReturnByte(gateWay + "?" + values.Encode())
 	if err != nil {
-		logrus.Errorf("org:allpay,"+SearchTradeNetErrMessage+",order id %v,errCode:%v,err:%v", arg.OrderNum, SearchTradeNetErrCode, err.Error())
+		logrus.Errorf("org:allpay,"+SearchTradeNetErrMessage+",order id %v,errCode:%v,err:%v", req.OrderId, SearchTradeNetErrCode, err.Error())
 		return tradeRsp, SearchTradeNetErrCode, errors.New(SearchTradeNetErrMessage)
 	}
 	rspMap := make(map[string]string)
 	err = json.Unmarshal(returnBytes, &rspMap)
 	if err != nil {
-		logrus.Errorf("org:allpay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", arg.OrderNum, SearchTradeResponseDataFormatErrCode, err.Error())
+		logrus.Errorf("org:allpay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", req.OrderId, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
 	fmt.Printf("%+v\n", rspMap)
-	tradeRsp.OrderId = arg.OrderNum
+	tradeRsp.OrderId = req.OrderId
 	//校验签名
 	sign := rspMap["signature"]
 	delete(rspMap, "signature")
-	if !trade.checkSign(rspMap, arg.Md5Key, sign) {
-		logrus.Errorf("org:allpay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v", arg.OrderNum, SearchTradeResponseDataFormatErrCode)
+	if !trade.checkSign(rspMap, md5Key, sign) {
+		logrus.Errorf("org:allpay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v", req.OrderId, SearchTradeResponseDataFormatErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
 
@@ -122,12 +127,12 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 
 	//汇率
 	rateArg := RateArg{
-		MerId:                  arg.MerId,
-		OriginalCurrencyCode:   arg.Currency,
+		MerId:                  paramMap["merID"],
+		OriginalCurrencyCode:   req.Currency,
 		ConversionCurrencyCode: CNY,
-		Md5Key:                 arg.Md5Key,
+		Md5Key:                 md5Key,
 		PaymentSchema:          rspMap["paymentSchema"],
-		GateWay:                arg.SapiGateWay,
+		GateWay:                sapiWay,
 	}
 	tradeRsp.Rate, errCode, err = new(Rate).Search(rateArg)
 	if err != nil {
@@ -136,7 +141,7 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 	}
 
 	//人民币金额
-	tradeRsp.RmbFee, err = strconv.ParseFloat(fmt.Sprintf("%.2f", arg.TotalFee*tradeRsp.Rate), 64)
+	tradeRsp.RmbFee, err = strconv.ParseFloat(fmt.Sprintf("%.2f", req.TotalFee*tradeRsp.Rate), 64)
 	if err != nil {
 		logrus.Errorf("org:allpay,"+SearchTradeRateFormatErrMessage+",errCode:%v,err:%v", SearchTradeRateFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeRateFormatErrCode, errors.New(SearchTradeRateFormatErrMessage)
@@ -146,16 +151,33 @@ func (trade *Trade) Search(arg TradeArg) (tradeRsp TradeRsp, errCode int, err er
 }
 
 func (trade *Trade) getSign(paramMap map[string]string, signKey string) string {
-	sortString := util.GetSortString(paramMap)
-	return util.Md5(sortString + signKey)
+	sortString := GetSortString(paramMap)
+	return Md5(sortString + signKey)
 }
 
 func (trade *Trade) checkSign(rspMap map[string]string, md5Key, sign string) bool {
-	sortString := util.GetSortString(rspMap)
-	calculateSign := util.Md5(sortString + md5Key)
+	sortString := GetSortString(rspMap)
+	calculateSign := Md5(sortString + md5Key)
 	return calculateSign == sign
 }
 
 func (trade *Trade) getGateWay(gateWay string) string {
 	return gateWay + TradeRoute
+}
+
+func (trade *Trade) getPaymentSchema(methodCode string) string {
+	switch methodCode {
+	case consts2.AlipayMethod:
+		return ApSchema
+	case consts2.UnionpayMethod:
+		return UpSchema
+	default:
+		return ""
+	}
+}
+
+func (trade *Trade) GetConfigCode() []string {
+	return []string{
+		"merID", "acqID", "md5_key", "gate_way", "sapi_way",
+	}
 }

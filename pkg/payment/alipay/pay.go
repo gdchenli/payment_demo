@@ -5,9 +5,8 @@ import (
 	"net/url"
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
+	"payment_demo/pkg/payment/consts"
 	"strconv"
-
-	"github.com/gdchenli/pay/dialects/alipay/util"
 )
 
 const (
@@ -79,8 +78,8 @@ func (payment *Payment) getParamMap(paramMap map[string]string, order validate.O
 	delete(paramMap, "md5_key")
 
 	//签名
-	payString := util.GetSortString(paramMap)
-	paramMap["sign"] = util.Md5(payString + md5Key)
+	payString := GetSortString(paramMap)
+	paramMap["sign"] = Md5(payString + md5Key)
 	paramMap["sign_type"] = SignTypeMD5
 
 	return paramMap
@@ -91,7 +90,7 @@ func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order 
 
 	paramMap := payment.getParamMap(configParamMap, order)
 
-	return util.GetSortString(paramMap), 0, nil
+	return GetSortString(paramMap), 0, nil
 }
 
 func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order validate.Order) (url string, errCode int, err error) {
@@ -162,9 +161,9 @@ func (payment *Payment) getTotalFee(currency string, totalFeeF float64) (totalFe
 
 //获取产品代码
 func (payment *Payment) getProductCode(orderSource int) (productCode string) {
-	if orderSource == 1 {
+	if orderSource == consts.WebUserAgentType {
 		productCode = newOverseasSeller
-	} else if orderSource == 2 {
+	} else if orderSource == consts.MobileUserAgentType || orderSource == consts.AlipayMiniProgramUserAgentType {
 		productCode = newWapOverseasSeller
 	}
 	return productCode

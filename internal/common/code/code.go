@@ -1,7 +1,7 @@
 package code
 
 //错误码
-const (
+/*const (
 	AmountFormatErrCode               = 10001
 	AmountFormatErrMessage            = "金额转换异常"
 	PrivateKeyNotExistsErrCode        = 10002
@@ -34,4 +34,11 @@ const (
 	AcqIdNotExistsErrMessage          = "收单行id不存在"
 	MerchantNameNotExistsErrCode      = 10016
 	MerchantNameNotExistsErrMessage   = "商户名称不存在"
+)
+*/
+const (
+	NotSupportOrgErrCode    = 10001
+	NotSupportOrgErrMessage = "不支持该支付机构"
+	ConfigValueErrCode      = 10002
+	ConfigValueErrMessage   = "配置信息错误"
 )

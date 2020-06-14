@@ -12,7 +12,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/gdchenli/pay/dialects/alipay/util"
 	"github.com/gdchenli/pay/pkg/curl"
 )
 
@@ -87,17 +86,6 @@ type TradeXml struct {
 	UseCoupon           string `xml:"use_coupon" json:"use_coupon"`                         //读取use_coupon
 }
 
-type TradeRsp struct {
-	Status  string  `json:"status"`   //交易状态
-	OrderId string  `json:"order_id"` //订单号
-	TradeNo string  `json:"trade_no"` //支付机构交易流水号
-	PaidAt  string  `json:"paid_at"`  //支付gmt时间
-	RmbFee  float64 `json:"rmb_fee"`  //人民币金额
-	Rate    float64 `json:"rate"`     //汇率
-	Res     string  `json:"res"`
-	Rsp     string  `json:"rsp"`
-}
-
 func (trade *Trade) Search(configParamMap map[string]string, req validate.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
 	tradeRsp.OrderId = req.OrderId
 	paramMap := map[string]string{
@@ -106,8 +94,8 @@ func (trade *Trade) Search(configParamMap map[string]string, req validate.Search
 		"_input_charset": CharsetUTF8,               //编码
 		"out_trade_no":   req.OrderId,               //订单编号
 	}
-	payString := util.GetSortString(paramMap)
-	paramMap["sign"] = util.Md5(payString + configParamMap["md5_key"])
+	payString := GetSortString(paramMap)
+	paramMap["sign"] = Md5(payString + configParamMap["md5_key"])
 	paramMap["sign_type"] = SignTypeMD5
 	values := url.Values{}
 	for k, v := range paramMap {
@@ -198,8 +186,8 @@ func (trade *Trade) checkSign(searchResult SearchResult, md5Key string) bool {
 		"use_coupon":             searchResult.Response.TradeXml.UseCoupon,
 	}
 
-	payString := util.GetSortString(payMap)
-	compareSignature := util.Md5(payString + md5Key)
+	payString := GetSortString(payMap)
+	compareSignature := Md5(payString + md5Key)
 
 	return compareSignature == searchResult.Sign
 }

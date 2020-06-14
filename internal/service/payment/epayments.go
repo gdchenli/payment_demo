@@ -5,8 +5,8 @@ import (
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
-	"payment_demo/internal/common/consts"
 	"payment_demo/pkg/config"
+	consts2 "payment_demo/pkg/payment/consts"
 
 	"github.com/gdchenli/pay/dialects/epayments/payment"
 	"github.com/sirupsen/logrus"
@@ -87,7 +87,7 @@ func (e *Epayments) Pay(order validate.Order) (form string, errCode int, err err
 		return form, errCode, err
 	}
 
-	if order.UserAgentType == consts.MobileUserAgentType {
+	if order.UserAgentType == consts2.MobileUserAgentType {
 		return new(payment.Payment).CreateQrCode(payArg)
 	} else {
 		return new(payment.Payment).CreateForm(payArg)
@@ -96,9 +96,9 @@ func (e *Epayments) Pay(order validate.Order) (form string, errCode int, err err
 
 //获取支付通道
 func (e *Epayments) getPaymentChannels(methodCode string) (paymentChannels string) {
-	if methodCode == consts.WechatMethod {
+	if methodCode == consts2.WechatMethod {
 		paymentChannels = payment.ChannelWechat
-	} else if methodCode == consts.AlipayMethod {
+	} else if methodCode == consts2.AlipayMethod {
 		paymentChannels = payment.ChannelAlipay
 	}
 	return paymentChannels
@@ -109,7 +109,7 @@ func (e *Epayments) Notify(query, methodCode string) (notifyRsp response.NotifyR
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,notify data:%+v",
-			epaymentsNotifyRsp.OrderId, consts.EpaymentsOrg, methodCode, epaymentsNotifyRsp.Rsp)
+			epaymentsNotifyRsp.OrderId, consts2.EpaymentsOrg, methodCode, epaymentsNotifyRsp.Rsp)
 	}()
 
 	md5key := config.GetInstance().GetString(EpaymentsMd5Key)
@@ -137,7 +137,7 @@ func (e *Epayments) Verify(query, methodCode string) (verifyRsp response.VerifyR
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,callback data:%+v",
-			epaymentsCallbackRsp.OrderId, consts.EpaymentsOrg, methodCode, epaymentsCallbackRsp.Rsp)
+			epaymentsCallbackRsp.OrderId, consts2.EpaymentsOrg, methodCode, epaymentsCallbackRsp.Rsp)
 	}()
 
 	md5key := config.GetInstance().GetString(EpaymentsMd5Key)
@@ -162,7 +162,7 @@ func (e *Epayments) SearchTrade(orderId, methodCode, currency string, totalFee f
 	defer func() {
 		//记录日志
 		logrus.Infof("order id:%v,org:%v,method:%v,callback data:%+v",
-			epaymentsTradeRsp.OrderId, consts.EpaymentsOrg, methodCode, epaymentsTradeRsp.Rsp)
+			epaymentsTradeRsp.OrderId, consts2.EpaymentsOrg, methodCode, epaymentsTradeRsp.Rsp)
 	}()
 
 	merchant := config.GetInstance().GetString(EpaymentsMerchant)

@@ -3,12 +3,11 @@ package allpay
 import (
 	"errors"
 	"fmt"
+	"payment_demo/api/response"
 	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/gdchenli/pay/dialects/allpay/util"
 )
 
 const (
@@ -22,27 +21,9 @@ const (
 
 type Notify struct{}
 
-type NotifyRsp struct {
-	OrderId string  `json:"order_id"` //订单号
-	Status  bool    `json:"status"`   //交易状态，true交易成功 false交易失败
-	TradeNo string  `json:"trade_no"` //支付机构交易流水号
-	PaidAt  string  `json:"paid_at"`  //支付gmt时间
-	RmbFee  float64 `json:"rmb_fee"`  //人民币金额
-	Rate    float64 `json:"rate"`     //汇率
-	Rsp     string  `json:"rsp"`      //返回的数据
-}
-
-type NotifyArg struct {
-	MerId       string `json:"mer_id"`
-	Md5Key      string `json:"md5_key"`
-	SapiGateWay string `json:"sapi_gate_way"`
-}
-
-func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp, errCode int, err error) {
-	notifyRsp.Rsp = query
-
+func (notify *Notify) Validate(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	//解析参数
-	queryMap, err := util.JsonToMap(query)
+	queryMap, err := JsonToMap(query)
 	if err != nil {
 		logrus.Errorf("org:allpay,"+NotifyQueryFormatErrMessage+",errCode:%v,err:%v", NotifyQueryFormatErrCode, err.Error())
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
@@ -61,7 +42,7 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 		sign = value
 		delete(queryMap, "signature")
 	}
-	if !notify.checkSign(queryMap, arg.Md5Key, sign) {
+	if !notify.checkSign(queryMap, configParamMap["md5_key"], sign) {
 		logrus.Errorf("org:allpay,"+NotifySignErrMessage+",order id %v,errCode:%v", notifyRsp.OrderId, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
@@ -79,12 +60,12 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 
 	//汇率
 	rateArg := RateArg{
-		MerId:                  arg.MerId,
+		MerId:                  configParamMap["merID"],
 		OriginalCurrencyCode:   queryMap["orderCurrency"],
 		ConversionCurrencyCode: CNY,
-		Md5Key:                 arg.Md5Key,
+		Md5Key:                 configParamMap["md5_key"],
 		PaymentSchema:          queryMap["paymentSchema"],
-		GateWay:                arg.SapiGateWay,
+		GateWay:                configParamMap["sapi_way"],
 	}
 	notifyRsp.Rate, errCode, err = new(Rate).Search(rateArg)
 	if err != nil {
@@ -105,12 +86,18 @@ func (notify *Notify) Validate(query string, arg NotifyArg) (notifyRsp NotifyRsp
 		logrus.Errorf("org:allpay,"+NotifyQueryFormatErrMessage+",errCode:%v,err:%v", NotifyQueryFormatErrCode, err.Error())
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
-
+	notifyRsp.Message = "Ok"
 	return notifyRsp, 0, nil
 }
 
 func (notify *Notify) checkSign(queryMap map[string]string, md5Key, sign string) bool {
-	sortString := util.GetSortString(queryMap)
-	calculateSign := util.Md5(sortString + md5Key)
+	sortString := GetSortString(queryMap)
+	calculateSign := Md5(sortString + md5Key)
 	return calculateSign == sign
+}
+
+func (notify *Notify) GetConfigCode() []string {
+	return []string{
+		"merID", "acqID", "md5_key", "sapi_way",
+	}
 }

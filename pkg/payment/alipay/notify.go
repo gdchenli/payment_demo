@@ -8,8 +8,6 @@ import (
 	"strconv"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/gdchenli/pay/dialects/alipay/util"
 )
 
 const (
@@ -23,25 +21,9 @@ const (
 
 type Notify struct{}
 
-type NotifyRsp struct {
-	OrderId string  `json:"order_id"` //订单号
-	Status  bool    `json:"status"`   //交易状态，true交易成功 false交易失败
-	TradeNo string  `json:"trade_no"` //支付机构交易流水号
-	PaidAt  string  `json:"paid_at"`  //支付gmt时间
-	RmbFee  float64 `json:"rmb_fee"`  //人民币金额
-	Rate    float64 `json:"rate"`     //汇率
-	Rsp     string  `json:"rsp"`      //返回的数据
-}
-
-type NotifyArg struct {
-	Merchant string `json:"merchant"`
-	Md5Key   string `json:"md5_key"`
-	GateWay  string `json:"gate_way"`
-}
-
 func (notify *Notify) Validate(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	//解析参数
-	queryMap, err := util.ParseQueryString(query)
+	queryMap, err := ParseQueryString(query)
 	if err != nil {
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
 	}
@@ -100,13 +82,14 @@ func (notify *Notify) Validate(configParamMap map[string]string, query, methodCo
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
 	notifyRsp.Rate = rate
+	notifyRsp.Message = "success"
 
 	return notifyRsp, 0, nil
 }
 
 func (notify *Notify) checkSign(queryMap map[string]string, md5Key, sign string) bool {
-	sortString := util.GetSortString(queryMap)
-	calculateSign := util.Md5(sortString + md5Key)
+	sortString := GetSortString(queryMap)
+	calculateSign := Md5(sortString + md5Key)
 
 	return calculateSign == sign
 }
