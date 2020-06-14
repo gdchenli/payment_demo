@@ -1,17 +1,18 @@
-package alipay
+package allpay
 
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"net/url"
 	"sort"
+	"strings"
 )
 
-//支付字符串拼接
 func GetSortString(m map[string]string) string {
-
 	var buf bytes.Buffer
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -32,6 +33,15 @@ func GetSortString(m map[string]string) string {
 	return buf.String()
 }
 
+//特殊字符过滤
+func SpecialReplace(str string) string {
+	specialChars := []string{"+", "-", "×", "<", ">", "#", "[", "]", "(", ")", "（", "）", "/", "?", "&", ".", "{", "}", "「", "」"}
+	for _, spc := range specialChars {
+		str = strings.Replace(str, spc, "", -1)
+	}
+	return str
+}
+
 func ParseQueryString(str string) (map[string]string, error) {
 	queryMap := make(map[string]string)
 	values, err := url.ParseQuery(str)
@@ -43,6 +53,23 @@ func ParseQueryString(str string) (map[string]string, error) {
 	}
 
 	return queryMap, nil
+}
+
+//json转map
+func JsonToMap(paramString string) (paramMap map[string]string, err error) {
+	if err := json.Unmarshal([]byte(paramString), &paramMap); err != nil {
+		return paramMap, err
+	}
+	return paramMap, nil
+}
+
+// base解码
+func BASE64DecodeStr(src string) string {
+	a, err := base64.StdEncoding.DecodeString(src)
+	if err != nil {
+		return ""
+	}
+	return string(a)
 }
 
 //MD5加密
@@ -57,4 +84,12 @@ func Md5(str string) string {
 // base编码
 func BASE64EncodeStr(src []byte) string {
 	return base64.StdEncoding.EncodeToString(src)
+}
+
+//sha256加密
+func Hsha256(str string) string {
+	h := sha256.New()
+	h.Write([]byte(str))
+	cipherStr := h.Sum(nil)
+	return hex.EncodeToString(cipherStr)
 }

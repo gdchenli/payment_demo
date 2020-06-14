@@ -1,13 +1,28 @@
-package alipay
+package epayments
 
 import (
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
+	"math/rand"
 	"net/url"
 	"sort"
+	"time"
 )
+
+//生成随机字符串
+func GetRandomString(length int) string {
+	str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	byts := []byte(str)
+	bytesLen := len(byts)
+	result := []byte{}
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := 0; i < length; i++ {
+		result = append(result, byts[r.Intn(bytesLen)])
+	}
+	return string(result)
+}
 
 //支付字符串拼接
 func GetSortString(m map[string]string) string {

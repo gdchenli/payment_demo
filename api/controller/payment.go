@@ -4,8 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"payment_demo/api/validate"
-
-	"github.com/gin-gonic/gin/binding"
+	"payment_demo/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,28 +24,22 @@ func (payment *Payment) Router(router *gin.Engine) {
 }
 
 func (payment *Payment) upload(ctx *gin.Context) {
-	l := new(validate.UploadLogisticsReq)
-	ctx.ShouldBind(l)
+	uploadLogisticsReq := new(validate.UploadLogisticsReq)
+	ctx.ShouldBind(uploadLogisticsReq)
 
-	uploadLogisticsHandle := GetUploadLogisticsHandler(l.OrgCode)
-	if uploadLogisticsHandle == nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
-		return
-	}
-
-	logisticsRsp, errCode, err := uploadLogisticsHandle(*l)
+	logisticsRsp, errCode, err := new(service.Payment).UploadLogistics(*uploadLogisticsReq)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, logisticsRsp)
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": logisticsRsp})
 }
 
 func (payment *Payment) notify(ctx *gin.Context) {
 	notifyBytes, err := ioutil.ReadAll(ctx.Request.Body)
 	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": err.Error()})
+		ctx.JSON(http.StatusOK, gin.H{"code": "1", "message": err.Error()})
 		return
 	}
 	defer func() {
@@ -54,43 +47,31 @@ func (payment *Payment) notify(ctx *gin.Context) {
 	}()
 	query := string(notifyBytes)
 
-	notifyHandle := GetNotifyHandler(ctx.Param("org"))
-	if notifyHandle == nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
-		return
-	}
-
-	notifyRsp, errCode, err := notifyHandle(query, ctx.Param("method"))
+	notifyRsp, errCode, err := new(service.Payment).Notify(query, ctx.Param("org"), ctx.Param("method"))
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": notifyRsp})
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": notifyRsp})
 }
 
 func (payment *Payment) searchTrade(ctx *gin.Context) {
-	t := new(validate.SearchTradeReq)
-	ctx.ShouldBind(t)
+	searchTradeReq := new(validate.SearchTradeReq)
+	ctx.ShouldBind(searchTradeReq)
 
-	if errCode, err := t.Validate(); err != nil {
+	if errCode, err := searchTradeReq.Validate(); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	searchTradeHandle := GetSearchTradeHandler(ctx.Query("org_code"))
-	if searchTradeHandle == nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
-		return
-	}
-
-	searchTradeRsp, errCode, err := searchTradeHandle(t.OrderId, t.MethodCode, t.Currency, t.TotalFee)
+	searchTradeRsp, errCode, err := new(service.Payment).SearchTrade(*searchTradeReq)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, searchTradeRsp)
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": searchTradeRsp})
 }
 
 func (payment *Payment) closeTrade(ctx *gin.Context) {
@@ -102,13 +83,7 @@ func (payment *Payment) closeTrade(ctx *gin.Context) {
 		return
 	}
 
-	closeTradeHandle := GetCloseTradeHandler(ctx.Query("org_cod"))
-	if closeTradeHandle == nil {
-		ctx.Data(http.StatusOK, binding.MIMEHTML, []byte(NotSupportPaymentOrgMsg))
-		return
-	}
-
-	closeTradeRsp, errCode, err := closeTradeHandle(*closeTradeReq)
+	closeTradeRsp, errCode, err := new(service.Payment).CloseTrade(*closeTradeReq)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
@@ -127,19 +102,13 @@ func (payment *Payment) Pay(ctx *gin.Context) {
 		return
 	}
 
-	payHandle := GetPayHandler(o.OrgCode)
-	if payHandle == nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
-		return
-	}
-
-	form, errCode, err := payHandle(*o)
+	submitRsp, errCode, err := new(service.Payment).Sumbit(*o)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": form})
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": submitRsp})
 }
 
 func (payment *Payment) verify(ctx *gin.Context) {
@@ -149,17 +118,11 @@ func (payment *Payment) verify(ctx *gin.Context) {
 		query = ctx.Request.URL.Query().Encode()
 	}
 
-	verifyHandle := GetVerifyHandler(ctx.Param("org"))
-	if verifyHandle == nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": NotSupportPaymentOrgCode, "message": NotSupportPaymentOrgMsg})
-		return
-	}
-
-	callBackRsp, errCode, err := verifyHandle(query, ctx.Param("method"))
+	verifyRsp, errCode, err := new(service.Payment).Verify(query, ctx.Param("org"), ctx.Param("method"))
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, callBackRsp)
+	ctx.JSON(http.StatusOK, verifyRsp)
 }

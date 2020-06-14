@@ -1,4 +1,4 @@
-package alipay
+package allpay
 
 import (
 	"errors"
@@ -7,8 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Verify struct{}
-
 const (
 	VerifyQueryFormatErrCode    = 10301
 	VerifyQueryFormatErrMessage = "同步通知，支付数据格式错误"
@@ -16,47 +14,51 @@ const (
 	VerifySignErrMessage        = "同步通知，签名校验失败"
 )
 
-func (vreify *Verify) Validate(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+type Verify struct{}
+
+func (verify *Verify) Validate(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
 	//callbackRsp.Rsp = query
 
 	//解析参数
 	queryMap, err := ParseQueryString(query)
 	if err != nil {
-		logrus.Errorf("org:alipay,"+VerifyQueryFormatErrMessage+",errCode:%v,err:%v", VerifyQueryFormatErrCode, err.Error())
+		logrus.Errorf("org:allpay,"+VerifyQueryFormatErrMessage+",errCode:%v,err:%v", VerifyQueryFormatErrCode, err.Error())
 		return verifyRsp, VerifyQueryFormatErrCode, errors.New(VerifyQueryFormatErrMessage)
 	}
 
 	//订单编号
-	verifyRsp.OrderId = queryMap["out_trade_no"]
+	verifyRsp.OrderId = queryMap["orderNum"]
 
 	//校验签名
 	var sign string
 	if value, ok := queryMap["sign"]; ok {
 		sign = value
 		delete(queryMap, "sign")
-		delete(queryMap, "sign_type")
 	}
-
-	if !vreify.checkSign(queryMap, configParamMap["md5_key"], sign) {
-		logrus.Errorf("org:alipay,"+VerifySignErrMessage+",orderId:%v,errCode:%v", queryMap["out_trade_no"], VerifySignErrCode)
+	if value, ok := queryMap["signature"]; ok {
+		sign = value
+		delete(queryMap, "signature")
+	}
+	if !verify.checkSign(queryMap, configParamMap["md5_key"], sign) {
+		logrus.Errorf("org:allpay,"+VerifySignErrMessage+",order id %v,errCode:%v", queryMap["orderNum"], VerifySignErrCode)
 		return verifyRsp, VerifySignErrCode, errors.New(VerifySignErrMessage)
 	}
 
 	//交易状态
-	if queryMap["trade_status"] == TradeFinished || queryMap["trade_status"] == TradeSuccess {
+	if queryMap["RespCode"] == "00" {
 		verifyRsp.Status = true
 	}
 
 	return verifyRsp, 0, nil
 }
 
-func (vreify *Verify) checkSign(queryMap map[string]string, signKey, sign string) bool {
+func (verify *Verify) checkSign(queryMap map[string]string, signKey, sign string) bool {
 	sortString := GetSortString(queryMap)
 	calculateSign := Md5(sortString + signKey)
 	return calculateSign == sign
 }
 
-func (vreify *Verify) GetConfigCode() []string {
+func (verify *Verify) GetConfigCode() []string {
 	return []string{
 		"md5_key",
 	}
