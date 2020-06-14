@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gdchenli/pay/dialects/epayments/util"
 	"github.com/gdchenli/pay/pkg/curl"
 	"github.com/sirupsen/logrus"
 )
@@ -137,8 +136,8 @@ func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeR
 }
 
 func (trade *Trade) checkSign(rspMap map[string]string, md5Key, sign string) bool {
-	sortString := util.GetSortString(rspMap)
-	calculateSign := util.Md5(sortString + md5Key)
+	sortString := GetSortString(rspMap)
+	calculateSign := Md5(sortString + md5Key)
 	return calculateSign == sign
 }
 

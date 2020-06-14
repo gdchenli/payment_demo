@@ -8,7 +8,6 @@ import (
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 
-	"github.com/gdchenli/pay/dialects/epayments/util"
 	"github.com/gdchenli/pay/pkg/curl"
 	"github.com/skip2/go-qrcode"
 )
@@ -65,8 +64,8 @@ func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.
 	paramMap["payment_channels"] = payment.getPaymentChannels(order.MethodCode)
 	paramMap["describe"] = order.OrderId
 	paramMap["nonce_str"] = GetRandomString(20)
-	sortString := util.GetSortString(paramMap)
-	paramMap["signature"] = util.Md5(sortString + md5Key)
+	sortString := GetSortString(paramMap)
+	paramMap["signature"] = Md5(sortString + md5Key)
 	paramMap["sign_type"] = SignTypeMD5
 
 	payUrl = payment.buildPayUrl(paramMap, gateWay)
@@ -118,8 +117,8 @@ func (payment *Payment) CreateQrCode(paramMap map[string]string, order validate.
 	paramMap["payment_channels"] = payment.getPaymentChannels(order.MethodCode)
 	paramMap["describe"] = order.OrderId
 	paramMap["nonce_str"] = GetRandomString(20)
-	sortString := util.GetSortString(paramMap)
-	paramMap["signature"] = util.Md5(sortString + md5Key)
+	sortString := GetSortString(paramMap)
+	paramMap["signature"] = Md5(sortString + md5Key)
 	paramMap["sign_type"] = SignTypeMD5
 
 	values := url.Values{}
@@ -146,7 +145,7 @@ func (payment *Payment) CreateQrCode(paramMap map[string]string, order validate.
 	if qrCodeResult.CodeUrl == "" {
 		return qrCodeUrl, PayNetErrCode, errors.New(PayNetErrMessage)
 	}
-	imgStr := "data:image/png;base64," + util.BASE64EncodeStr(qrCodeBytes)
+	imgStr := "data:image/png;base64," + BASE64EncodeStr(qrCodeBytes)
 	return imgStr, 0, nil
 }
 

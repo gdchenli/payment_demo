@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"payment_demo/api/response"
 
-	"github.com/gdchenli/pay/dialects/epayments/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,7 +25,7 @@ type CallbackRsp struct {
 
 func (verify *Verify) Validate(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
 	//解析参数
-	queryMap, err := util.ParseQueryString(query)
+	queryMap, err := ParseQueryString(query)
 	if err != nil {
 		logrus.Errorf("org:epayments,"+VerifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, VerifyQueryFormatErrCode, err.Error())
 		return verifyRsp, VerifyQueryFormatErrCode, errors.New(VerifyQueryFormatErrMessage)
@@ -57,9 +56,9 @@ func (verify *Verify) Validate(configParamMap map[string]string, query, methodCo
 }
 
 func (verify *Verify) checkSign(queryMap map[string]string, signKey, sign string) bool {
-	sortString := util.GetSortString(queryMap)
+	sortString := GetSortString(queryMap)
 	fmt.Println("sortString", sortString)
-	calculateSign := util.Md5(sortString + signKey)
+	calculateSign := Md5(sortString + signKey)
 	return calculateSign == sign
 }
 

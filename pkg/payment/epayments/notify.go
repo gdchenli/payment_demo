@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gdchenli/pay/dialects/epayments/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,7 +31,7 @@ type NotifyRsp struct {
 
 func (notify *Notify) Validate(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	//解析参数
-	queryMap, err := util.ParseQueryString(query)
+	queryMap, err := ParseQueryString(query)
 	if err != nil {
 		logrus.Errorf(NotifyQueryFormatErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyQueryFormatErrCode, err.Error())
 		return notifyRsp, NotifyQueryFormatErrCode, errors.New(NotifyQueryFormatErrMessage)
@@ -96,8 +95,8 @@ func (notify *Notify) Validate(configParamMap map[string]string, query, methodCo
 }
 
 func (notify *Notify) checkSign(queryMap map[string]string, md5Key, sign string) bool {
-	sortString := util.GetSortString(queryMap)
-	calculateSign := util.Md5(sortString + md5Key)
+	sortString := GetSortString(queryMap)
+	calculateSign := Md5(sortString + md5Key)
 	return calculateSign == sign
 }
 
