@@ -14,7 +14,10 @@ type Payment struct{}
 func (p *Payment) Router(router *gin.Engine) {
 	r := router.Group("/payment")
 	{
-		r.POST("/order/pay", p.Pay)              //发起支付
+		r.POST("/pay", p.pay)                    //h5 、pc发起支付
+		r.POST("/alipayminiprogram/pay", p.pay)  //支付宝小程序发起支付
+		r.GET("/qrcode", p.qrcode)               //二维码支付
+		r.GET("/form", p.form)                   //发起支付
 		r.POST("/notify/:org/:method", p.notify) //异步通知
 		r.POST("/verify/:org/:method", p.verify) //同步通知
 		r.GET("/trade/search", p.searchTrade)    //交易查询
@@ -23,17 +26,58 @@ func (p *Payment) Router(router *gin.Engine) {
 	}
 }
 
-func (p *Payment) upload(ctx *gin.Context) {
-	uploadLogisticsReq := new(validate.UploadLogisticsReq)
-	ctx.ShouldBind(uploadLogisticsReq)
+func (p *Payment) pay(ctx *gin.Context) {
+	o := new(validate.Order)
+	ctx.ShouldBind(o)
 
-	logisticsRsp, errCode, err := new(payment.Payment).UploadLogistics(*uploadLogisticsReq)
-	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
+	if errCode, err := o.Validate(); err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": logisticsRsp})
+	submitRsp, errCode, err := new(payment.Payment).Sumbit(*o, false)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": submitRsp})
+}
+
+func (p *Payment) qrcode(ctx *gin.Context) {
+	o := new(validate.Order)
+	ctx.ShouldBind(o)
+
+	if errCode, err := o.Validate(); err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		return
+	}
+
+	submitRsp, errCode, err := new(payment.Payment).Sumbit(*o, true)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": submitRsp})
+}
+
+func (p *Payment) form(ctx *gin.Context) {
+	o := new(validate.Order)
+	ctx.ShouldBind(o)
+
+	if errCode, err := o.Validate(); err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		return
+	}
+
+	submitRsp, errCode, err := new(payment.Payment).Sumbit(*o, true)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": submitRsp})
 }
 
 func (p *Payment) notify(ctx *gin.Context) {
@@ -54,6 +98,22 @@ func (p *Payment) notify(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": notifyRsp})
+}
+
+func (p *Payment) verify(ctx *gin.Context) {
+	ctx.Request.ParseForm()
+	query := ctx.Request.PostForm.Encode()
+	if query == "" {
+		query = ctx.Request.URL.Query().Encode()
+	}
+
+	verifyRsp, errCode, err := new(payment.Payment).Verify(query, ctx.Param("org"), ctx.Param("method"))
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, verifyRsp)
 }
 
 func (p *Payment) searchTrade(ctx *gin.Context) {
@@ -92,37 +152,15 @@ func (p *Payment) closeTrade(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, closeTradeRsp)
 }
 
-//发起支付
-func (p *Payment) Pay(ctx *gin.Context) {
-	o := new(validate.Order)
-	ctx.ShouldBind(o)
+func (p *Payment) upload(ctx *gin.Context) {
+	uploadLogisticsReq := new(validate.UploadLogisticsReq)
+	ctx.ShouldBind(uploadLogisticsReq)
 
-	if errCode, err := o.Validate(); err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
-		return
-	}
-
-	submitRsp, errCode, err := new(payment.Payment).Sumbit(*o)
+	logisticsRsp, errCode, err := new(payment.Payment).UploadLogistics(*uploadLogisticsReq)
 	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
+		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": submitRsp})
-}
-
-func (p *Payment) verify(ctx *gin.Context) {
-	ctx.Request.ParseForm()
-	query := ctx.Request.PostForm.Encode()
-	if query == "" {
-		query = ctx.Request.URL.Query().Encode()
-	}
-
-	verifyRsp, errCode, err := new(payment.Payment).Verify(query, ctx.Param("org"), ctx.Param("method"))
-	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, verifyRsp)
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": logisticsRsp})
 }

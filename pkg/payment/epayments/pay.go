@@ -3,6 +3,7 @@ package epayments
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"payment_demo/api/validate"
 	"payment_demo/pkg/curl"
@@ -43,6 +44,17 @@ type PayArg struct {
 }
 
 func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.Order) (payUrl string, errCode int, err error) {
+	if order.UserAgentType == consts.WebUserAgentType {
+		marshal, _ := json.Marshal(order)
+		reqParamMap := make(map[string]interface{})
+		json.Unmarshal(marshal, &reqParamMap)
+		values := url.Values{}
+		for k, v := range reqParamMap {
+			values.Add(k, fmt.Sprintf("%v", v))
+		}
+		return "/payment/qrCode?" + values.Encode(), 0, nil
+	}
+
 	gateWay := paramMap["gate_way"]
 	delete(paramMap, "gate_way")
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"payment_demo/api/validate"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
@@ -65,6 +66,17 @@ type KjInfo struct {
 }
 
 func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.Order) (form string, errCode int, err error) {
+	marshal, _ := json.Marshal(order)
+	reqParamMap := make(map[string]interface{})
+	json.Unmarshal(marshal, &reqParamMap)
+	values := url.Values{}
+	for k, v := range reqParamMap {
+		values.Add(k, fmt.Sprintf("%v", v))
+	}
+	return "/payment/form?" + values.Encode(), 0, nil
+}
+
+func (payment *Payment) CreatePayForm(paramMap map[string]string, order validate.Order) (form string, errCode int, err error) {
 	privateKey := paramMap["private_key"]
 	delete(paramMap, "private_key")
 	desKey := paramMap["des_key"]
@@ -119,12 +131,12 @@ func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.
 	}
 
 	//生成form表单
-	form = payment.buildPayUrl(paramMap, payWay)
+	form = payment.buildPayForm(paramMap, payWay)
 
 	return form, 0, nil
 }
 
-func (payment *Payment) buildPayUrl(paramMap map[string]string, gateWay string) (payUrl string) {
+func (payment *Payment) buildPayForm(paramMap map[string]string, gateWay string) (payUrl string) {
 	payUrl = "<form action='" + gateWay + "' method='post' id='pay_form'>"
 	for k, v := range paramMap {
 		payUrl += "<input value='" + v + "' name='" + k + "' type='hidden'/>"

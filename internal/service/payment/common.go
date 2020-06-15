@@ -1,7 +1,6 @@
 package payment
 
 import (
-	"fmt"
 	"payment_demo/api/response"
 	"payment_demo/api/validate"
 	"payment_demo/pkg/payment/alipay"
@@ -30,7 +29,7 @@ type ConfigCodeHandler func() []string
 
 //发起支付
 var submitMap map[string]SumbitHandler
-var qrCodeSubmitMap map[string]SumbitHandler
+var transferSubmitMap map[string]SumbitHandler
 var ampSubmitMap map[string]SumbitHandler
 var wmpSubmitMap map[string]WmpSumbitHandler
 var appSubmitMap map[string]AppSumbitHandler
@@ -101,8 +100,9 @@ func init() {
 		consts.JdOrg:        jdPayment.CreatePayUrl,
 	}
 
-	qrCodeSubmitMap = map[string]SumbitHandler{
+	transferSubmitMap = map[string]SumbitHandler{
 		consts.EpaymentsOrg: epaymentsPayment.CreateQrCode,
+		consts.JdOrg:        jdPayment.CreatePayForm,
 	}
 
 	ampSubmitMap = map[string]SumbitHandler{
@@ -146,21 +146,12 @@ func init() {
 }
 
 //发起支付
-func getSubmitHandler(orgCode string, userAgentType int) SumbitHandler {
-	fmt.Printf("%v\n", submitMap)
-	switch userAgentType {
-	case consts.WebUserAgentType:
-		if orgCode == consts.EpaymentsOrg {
-			return qrCodeSubmitMap[orgCode]
-		}
-		return submitMap[orgCode]
-	case consts.MobileUserAgentType:
-		return submitMap[orgCode]
-	case consts.AlipayMiniProgramUserAgentType:
-		return ampSubmitMap[orgCode]
+func getSubmitHandler(orgCode string, istransfer bool) SumbitHandler {
+	if istransfer {
+		return transferSubmitMap[orgCode]
 	}
 
-	return nil
+	return submitMap[orgCode]
 }
 
 func getAppSubmitHandler(orgCode string) AppSumbitHandler {
