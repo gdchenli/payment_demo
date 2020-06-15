@@ -53,7 +53,7 @@ func (p *Payment) qrcode(ctx *gin.Context) {
 		return
 	}
 
-	submitRsp, errCode, err := new(payment.Payment).Sumbit(*o, true)
+	submitRsp, errCode, err := new(payment.Payment).Pay(*o, true)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -71,7 +71,7 @@ func (p *Payment) form(ctx *gin.Context) {
 		return
 	}
 
-	submitRsp, errCode, err := new(payment.Payment).Sumbit(*o, true)
+	submitRsp, errCode, err := new(payment.Payment).Pay(*o, true)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
