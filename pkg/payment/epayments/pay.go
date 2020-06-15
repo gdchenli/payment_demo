@@ -52,7 +52,7 @@ func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.
 		for k, v := range reqParamMap {
 			values.Add(k, fmt.Sprintf("%v", v))
 		}
-		return "/payment/qrCode?" + values.Encode(), 0, nil
+		return "/payment/qrcode?" + values.Encode(), 0, nil
 	}
 
 	gateWay := paramMap["gate_way"]
