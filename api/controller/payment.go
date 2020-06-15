@@ -16,7 +16,7 @@ func (p *Payment) Router(router *gin.Engine) {
 	{
 		r.POST("/pay", p.pay)                    //h5 、pc发起支付
 		r.POST("/alipayminiprogram/pay", p.pay)  //支付宝小程序发起支付
-		r.GET("/qrcode", p.qrcode)               //二维码支付
+		r.GET("/qrcodeimg", p.qrcode)            //二维码支付
 		r.GET("/form", p.form)                   //发起支付
 		r.POST("/notify/:org/:method", p.notify) //异步通知
 		r.POST("/verify/:org/:method", p.verify) //同步通知
@@ -35,7 +35,7 @@ func (p *Payment) pay(ctx *gin.Context) {
 		return
 	}
 
-	submitRsp, errCode, err := new(payment.Payment).Sumbit(*o, false)
+	submitRsp, errCode, err := new(payment.Payment).Pay(*o, false)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
