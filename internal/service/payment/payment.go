@@ -44,7 +44,7 @@ func (payment *Payment) getConfigValue(configCodes []string, orgCode string) (pa
 	return payParamMap, 0, nil
 }
 
-func (payment *Payment) Sumbit(order validate.Order) (pay string, errCode int, err error) {
+func (payment *Payment) Sumbit(order validate.Order, istransfer bool) (pay string, errCode int, err error) {
 	//获取配置项code
 	getConfigCodehandle := getConfigCodeHandler(order.OrgCode + ".payment")
 	if getConfigCodehandle == nil {
@@ -59,7 +59,7 @@ func (payment *Payment) Sumbit(order validate.Order) (pay string, errCode int, e
 	}
 
 	//支付处理
-	submitHandle := getSubmitHandler(order.OrgCode, order.UserAgentType)
+	submitHandle := getSubmitHandler(order.OrgCode, istransfer)
 	if submitHandle == nil {
 		fmt.Println("submitHandle")
 		return pay, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
