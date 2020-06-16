@@ -1,5 +1,7 @@
 package request
 
+import "errors"
+
 const (
 	RequiredPayOrderIdErrCode     = 10150
 	RequiredPayOrderIdErrMessage  = "请输入发起支付的订单编号"
@@ -25,30 +27,30 @@ type Order struct {
 	UserAgentType int     `form:"user_agent_type" json:"user_agent_type"` //环境
 }
 
-//func (order *Order) Validate() (errCode int, err error) {
-//	if order.OrderId == "" {
-//		return RequiredPayOrderIdErrCode, errors.New(RequiredPayOrderIdErrMessage)
-//	}
-//
-//	if order.TotalFee == 0 {
-//		return RequiredPayTotalFeeErrCode, errors.New(RequiredPayTotalFeeErrMessage)
-//	}
-//
-//	if order.Currency == "" {
-//		return RequiredPayCurrencyErrCode, errors.New(RequiredPayCurrencyErrMessage)
-//	}
-//
-//	if order.MethodCode == "" {
-//		return RequiredPayMethodErrCode, errors.New(RequiredPayMethodMessage)
-//	}
-//
-//	if order.OrgCode == "" {
-//		return RequiredPayOrgErrCode, errors.New(RequiredPayOrgErrMessage)
-//	}
-//
-//	if order.OrgCode == "jd" && order.UserId == "" {
-//		return RequiredUserIdErrCode, errors.New(RequiredUserIdErrMessage)
-//	}
-//
-//	return 0, nil
-//}
+func (order *Order) Validate() (errCode int, err error) {
+	if order.OrderId == "" {
+		return RequiredPayOrderIdErrCode, errors.New(RequiredPayOrderIdErrMessage)
+	}
+
+	if order.TotalFee == 0 {
+		return RequiredPayTotalFeeErrCode, errors.New(RequiredPayTotalFeeErrMessage)
+	}
+
+	if order.Currency == "" {
+		return RequiredPayCurrencyErrCode, errors.New(RequiredPayCurrencyErrMessage)
+	}
+
+	if order.MethodCode == "" {
+		return RequiredPayMethodErrCode, errors.New(RequiredPayMethodMessage)
+	}
+
+	if order.OrgCode == "" {
+		return RequiredPayOrgErrCode, errors.New(RequiredPayOrgErrMessage)
+	}
+
+	if order.OrgCode == "jd" && order.UserId == "" {
+		return RequiredUserIdErrCode, errors.New(RequiredUserIdErrMessage)
+	}
+
+	return 0, nil
+}
