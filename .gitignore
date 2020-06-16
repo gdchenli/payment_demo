@@ -1,4 +1,3 @@
-.DS_Store
 .idea
-
-cmd.exe
+.DS_Store
+!.gitignore

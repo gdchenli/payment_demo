@@ -3,4 +3,5 @@ jd_public_key.pem
 config.toml
 config.toml.test
 cmd
+cmd.exe
 !.gitignore
