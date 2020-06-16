@@ -1,0 +1,6 @@
+jd_private_key.pem
+jd_public_key.pem
+config.toml
+config.toml.test
+cmd
+!.gitignore
