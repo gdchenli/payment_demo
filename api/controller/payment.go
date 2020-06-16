@@ -3,6 +3,7 @@ package controller
 import (
 	"io/ioutil"
 	"net/http"
+	"payment_demo/api/validate"
 	"payment_demo/internal/request"
 	"payment_demo/internal/service/payment"
 
@@ -30,7 +31,7 @@ func (p *Payment) pay(ctx *gin.Context) {
 	o := new(request.Order)
 	ctx.ShouldBind(o)
 
-	if errCode, err := o.Validate(); err != nil {
+	if errCode, err := new(validate.Order).Validate(o); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
@@ -48,7 +49,7 @@ func (p *Payment) qrcode(ctx *gin.Context) {
 	o := new(request.Order)
 	ctx.ShouldBind(o)
 
-	if errCode, err := o.Validate(); err != nil {
+	if errCode, err := new(validate.Order).Validate(o); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
@@ -66,7 +67,7 @@ func (p *Payment) form(ctx *gin.Context) {
 	o := new(request.Order)
 	ctx.ShouldBind(o)
 
-	if errCode, err := o.Validate(); err != nil {
+	if errCode, err := new(validate.Order).Validate(o); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
@@ -120,7 +121,7 @@ func (p *Payment) searchTrade(ctx *gin.Context) {
 	searchTradeReq := new(request.SearchTradeReq)
 	ctx.ShouldBind(searchTradeReq)
 
-	if errCode, err := searchTradeReq.Validate(); err != nil {
+	if errCode, err := new(validate.SearchTradeReq).Validate(searchTradeReq); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
@@ -138,7 +139,7 @@ func (p *Payment) closeTrade(ctx *gin.Context) {
 	closeTradeReq := new(request.CloseTradeReq)
 	ctx.ShouldBind(closeTradeReq)
 
-	if errCode, err := closeTradeReq.Validate(); err != nil {
+	if errCode, err := new(validate.CloseTradeReq).Validate(closeTradeReq); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
