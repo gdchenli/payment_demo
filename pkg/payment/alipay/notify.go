@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"payment_demo/api/response"
-	"payment_demo/internal/request"
+	"payment_demo/internal/common/request"
 	"strconv"
 
 	"github.com/sirupsen/logrus"

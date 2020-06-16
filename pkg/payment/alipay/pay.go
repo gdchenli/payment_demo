@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"payment_demo/api/response"
-	"payment_demo/internal/request"
+	"payment_demo/internal/common/request"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 )

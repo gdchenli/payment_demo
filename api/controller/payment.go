@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"payment_demo/api/validate"
-	"payment_demo/internal/request"
+	"payment_demo/internal/common/request"
 	"payment_demo/internal/service/payment"
 
 	"github.com/gin-gonic/gin"

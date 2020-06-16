@@ -42,11 +42,11 @@ cd cmd/ && go build . && ./cmd
 ├── go.sum
 ├── internal
 │   ├── common
-│   │   └── code            #公用错误码
-│   ├── request             #请求数据
-│       ├── logistics.go
-│       ├── pay.go
-│       └── trade.go
+│   │   ├── code            #公用错误码
+│   │   └── request         #请求数据
+│   │       ├── logistics.go
+│   │       ├── pay.go
+│   │       └── trade.go
 │   └── service
 │       └── payment         #支付流程逻辑
 └── pkg

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"payment_demo/api/response"
-	"payment_demo/internal/request"
+	"payment_demo/internal/common/request"
 	"payment_demo/pkg/curl"
 	"regexp"
 	"strconv"
