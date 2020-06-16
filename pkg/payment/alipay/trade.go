@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"payment_demo/pkg/curl"
 	"strconv"
 	"time"
@@ -85,7 +85,7 @@ type TradeXml struct {
 	UseCoupon           string `xml:"use_coupon" json:"use_coupon"`                         //读取use_coupon
 }
 
-func (trade *Trade) Search(configParamMap map[string]string, req validate.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (trade *Trade) Search(configParamMap map[string]string, req request.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
 	tradeRsp.OrderId = req.OrderId
 	paramMap := map[string]string{
 		"service":        SearchServiceType,         //交易查询服务

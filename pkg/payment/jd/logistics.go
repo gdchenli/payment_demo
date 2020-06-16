@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"payment_demo/pkg/curl"
 	"regexp"
 	"strings"
@@ -109,7 +109,7 @@ type LogisticsRsp struct {
 	DecryptRes string `json:"decrypt_res"` //请求的未加密数据
 }
 
-func (l *Logistics) Upload(configParamMap map[string]string, req validate.UploadLogisticsReq) (logisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (l *Logistics) Upload(configParamMap map[string]string, req request.UploadLogisticsReq) (logisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
 	logisticsRsp.OrderId = req.OrderId
 
 	logisticsWithoutSignRequest := LogisticsWithoutSignRequest{

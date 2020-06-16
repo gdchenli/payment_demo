@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"payment_demo/pkg/curl"
 	"regexp"
 	"strings"
@@ -113,7 +113,7 @@ type SearchPayRsp struct {
 	TradeTime string `xml:"tradeTime" json:"tradeTime"` //交易时间
 }
 
-func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (trade *Trade) Search(paramMap map[string]string, req request.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
 	searchWithoutSignRequest := SearchWithoutSignRequest{
 		Version:   Version,
 		Merchant:  paramMap["merchant"],

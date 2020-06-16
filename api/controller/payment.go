@@ -3,7 +3,7 @@ package controller
 import (
 	"io/ioutil"
 	"net/http"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"payment_demo/internal/service/payment"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +27,7 @@ func (p *Payment) Router(router *gin.Engine) {
 }
 
 func (p *Payment) pay(ctx *gin.Context) {
-	o := new(validate.Order)
+	o := new(request.Order)
 	ctx.ShouldBind(o)
 
 	if errCode, err := o.Validate(); err != nil {
@@ -45,7 +45,7 @@ func (p *Payment) pay(ctx *gin.Context) {
 }
 
 func (p *Payment) qrcode(ctx *gin.Context) {
-	o := new(validate.Order)
+	o := new(request.Order)
 	ctx.ShouldBind(o)
 
 	if errCode, err := o.Validate(); err != nil {
@@ -63,7 +63,7 @@ func (p *Payment) qrcode(ctx *gin.Context) {
 }
 
 func (p *Payment) form(ctx *gin.Context) {
-	o := new(validate.Order)
+	o := new(request.Order)
 	ctx.ShouldBind(o)
 
 	if errCode, err := o.Validate(); err != nil {
@@ -117,7 +117,7 @@ func (p *Payment) verify(ctx *gin.Context) {
 }
 
 func (p *Payment) searchTrade(ctx *gin.Context) {
-	searchTradeReq := new(validate.SearchTradeReq)
+	searchTradeReq := new(request.SearchTradeReq)
 	ctx.ShouldBind(searchTradeReq)
 
 	if errCode, err := searchTradeReq.Validate(); err != nil {
@@ -135,7 +135,7 @@ func (p *Payment) searchTrade(ctx *gin.Context) {
 }
 
 func (p *Payment) closeTrade(ctx *gin.Context) {
-	closeTradeReq := new(validate.CloseTradeReq)
+	closeTradeReq := new(request.CloseTradeReq)
 	ctx.ShouldBind(closeTradeReq)
 
 	if errCode, err := closeTradeReq.Validate(); err != nil {
@@ -153,7 +153,7 @@ func (p *Payment) closeTrade(ctx *gin.Context) {
 }
 
 func (p *Payment) upload(ctx *gin.Context) {
-	uploadLogisticsReq := new(validate.UploadLogisticsReq)
+	uploadLogisticsReq := new(request.UploadLogisticsReq)
 	ctx.ShouldBind(uploadLogisticsReq)
 
 	logisticsRsp, errCode, err := new(payment.Payment).UploadLogistics(*uploadLogisticsReq)

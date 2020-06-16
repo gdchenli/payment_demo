@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 )
@@ -49,7 +49,7 @@ type TradeInformation struct {
 	TotalQuantity int    `json:"total_quantity"`
 }
 
-func (payment *Payment) getParamMap(paramMap map[string]string, order validate.Order) map[string]string {
+func (payment *Payment) getParamMap(paramMap map[string]string, order request.Order) map[string]string {
 	paramMap["service"] = payment.getServiceType(order.UserAgentType)
 	paramMap["_input_charset"] = CharsetUTF8
 	paramMap["subject"] = order.OrderId
@@ -85,7 +85,7 @@ func (payment *Payment) getParamMap(paramMap map[string]string, order validate.O
 	return paramMap
 }
 
-func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order validate.Order) (payString string, errCode int, err error) {
+func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order request.Order) (payString string, errCode int, err error) {
 	delete(configParamMap, "gate_way")
 
 	paramMap := payment.getParamMap(configParamMap, order)
@@ -93,7 +93,7 @@ func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order 
 	return GetSortString(paramMap), 0, nil
 }
 
-func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order validate.Order) (url string, errCode int, err error) {
+func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order request.Order) (url string, errCode int, err error) {
 	geteWay := configParamMap["gate_way"]
 	delete(configParamMap, "gate_way")
 
@@ -102,7 +102,7 @@ func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order val
 	return payment.buildPayUrl(paramMap, geteWay), 0, nil
 }
 
-func (payment *Payment) CreateAppPayStr(paramMap map[string]string, order validate.Order) (appRsp response.AppRsp, errCode int, err error) {
+func (payment *Payment) CreateAppPayStr(paramMap map[string]string, order request.Order) (appRsp response.AppRsp, errCode int, err error) {
 	return appRsp, 0, nil
 }
 

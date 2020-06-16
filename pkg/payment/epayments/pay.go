@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"payment_demo/pkg/curl"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
@@ -43,7 +43,7 @@ type PayArg struct {
 	PaymentChannels string  `json:"payment_channels"`
 }
 
-func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.Order) (payUrl string, errCode int, err error) {
+func (payment *Payment) CreatePayUrl(paramMap map[string]string, order request.Order) (payUrl string, errCode int, err error) {
 	if order.UserAgentType == consts.WebUserAgentType {
 		marshal, _ := json.Marshal(order)
 		reqParamMap := make(map[string]interface{})
@@ -105,7 +105,7 @@ type QrCodeResult struct {
 	SignType    string `json:"sign_type"`    //签名类型
 }
 
-func (payment *Payment) CreateQrCode(paramMap map[string]string, order validate.Order) (qrCodeUrl string, errCode int, err error) {
+func (payment *Payment) CreateQrCode(paramMap map[string]string, order request.Order) (qrCodeUrl string, errCode int, err error) {
 	gateWay := paramMap["gate_way"]
 	delete(paramMap, "gate_way")
 

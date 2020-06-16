@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"payment_demo/pkg/curl"
 	"payment_demo/pkg/payment/consts"
 	"strings"
@@ -50,7 +50,7 @@ type DetailInfo struct {
 	Quantity  int    `json:"quantity"`
 }
 
-func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order validate.Order) (payUrl string, errCode int, err error) {
+func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order request.Order) (payUrl string, errCode int, err error) {
 	gateWay := payment.getGateWay(configParamMap["gate_way"])
 	delete(configParamMap, "gata_way")
 
@@ -64,7 +64,7 @@ func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order val
 	return payUrl, 0, nil
 }
 
-func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order validate.Order) (payStr string, errCode int, err error) {
+func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order request.Order) (payStr string, errCode int, err error) {
 	gateWay := payment.getGateWay(configParamMap["gate_way"])
 	delete(configParamMap, "gata_way")
 
@@ -91,7 +91,7 @@ func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order 
 	return ampProgramRsp.SdkParams, 0, nil
 }
 
-func (payment *Payment) getPayParamMap(paramMap map[string]string, order validate.Order) (map[string]string, int, error) {
+func (payment *Payment) getPayParamMap(paramMap map[string]string, order request.Order) (map[string]string, int, error) {
 	orderAmount := fmt.Sprintf("%.2f", order.TotalFee)
 	transTime := time.Now().Format(TimeLayout)
 	detailInfoBytes, err := json.Marshal([]DetailInfo{{

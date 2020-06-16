@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"payment_demo/pkg/curl"
 	"regexp"
 	"strconv"
@@ -101,7 +101,7 @@ type CloseResultRsp struct {
 	Desc string `xml:"desc" json:"desc"` //返回码信息
 }
 
-func (close *Close) Trade(configParamMap map[string]string, req validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (close *Close) Trade(configParamMap map[string]string, req request.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
 	totalFeeStr := fmt.Sprintf("%.f", req.TotalFee*100)
 	totalFee, _ := strconv.ParseInt(totalFeeStr, 10, 64)
 	closedWithoutSignRequest := CloseWithoutSignRequest{

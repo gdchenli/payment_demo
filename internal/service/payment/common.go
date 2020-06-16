@@ -2,7 +2,7 @@ package payment
 
 import (
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"payment_demo/pkg/payment/alipay"
 	"payment_demo/pkg/payment/allpay"
 	"payment_demo/pkg/payment/consts"
@@ -11,18 +11,18 @@ import (
 )
 
 //发起支付
-type SumbitHandler func(configParamMap map[string]string, order validate.Order) (url string, errCode int, err error)                //pc、h5、支付宝小程序
-type WmpSumbitHandler func(configParamMap map[string]string, order validate.Order) (wmRsp response.WmpRsp, errCode int, err error)  //微信小程序
-type AppSumbitHandler func(configParamMap map[string]string, order validate.Order) (appRsp response.AppRsp, errCode int, err error) //App
+type SumbitHandler func(configParamMap map[string]string, order request.Order) (url string, errCode int, err error)                //pc、h5、支付宝小程序
+type WmpSumbitHandler func(configParamMap map[string]string, order request.Order) (wmRsp response.WmpRsp, errCode int, err error)  //微信小程序
+type AppSumbitHandler func(configParamMap map[string]string, order request.Order) (appRsp response.AppRsp, errCode int, err error) //App
 
 //支付通知
 type NotifyHandler func(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) //异步通知
 type VerifyHandler func(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) //同步通知
 
 //交易信息
-type SearchTradeHandler func(configParamMap map[string]string, req validate.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error)                 //交易查询
-type CloseTradeHandler func(configParamMap map[string]string, req validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error)                     //关闭交易
-type UploadLogisticsHandler func(configParamMap map[string]string, req validate.UploadLogisticsReq) (uploadLogisticsRsp response.UploadLogisticsRsp, errCode int, err error) //上传物流
+type SearchTradeHandler func(configParamMap map[string]string, req request.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error)                 //交易查询
+type CloseTradeHandler func(configParamMap map[string]string, req request.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error)                     //关闭交易
+type UploadLogisticsHandler func(configParamMap map[string]string, req request.UploadLogisticsReq) (uploadLogisticsRsp response.UploadLogisticsRsp, errCode int, err error) //上传物流
 
 //配置
 type ConfigCodeHandler func() []string

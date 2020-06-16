@@ -7,8 +7,8 @@ import (
 	"os"
 	"path"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
+	"payment_demo/internal/request"
 	"payment_demo/pkg/config"
 )
 
@@ -44,7 +44,7 @@ func (payment *Payment) getConfigValue(configCodes []string, orgCode string) (pa
 	return payParamMap, 0, nil
 }
 
-func (payment *Payment) Pay(order validate.Order, istransfer bool) (pay string, errCode int, err error) {
+func (payment *Payment) Pay(order request.Order, istransfer bool) (pay string, errCode int, err error) {
 	//获取配置项code
 	getConfigCodehandle := getConfigCodeHandler(order.OrgCode + ".payment")
 	if getConfigCodehandle == nil {
@@ -126,7 +126,7 @@ func (payment *Payment) Verify(query, orgCode, methodCode string) (verifyRsp res
 	return verifyRsp, 0, nil
 }
 
-func (payment *Payment) SearchTrade(req validate.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (payment *Payment) SearchTrade(req request.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
 	//获取配置项code
 	getConfigCodehandle := getConfigCodeHandler(req.OrgCode + ".trade")
 	if getConfigCodehandle == nil {
@@ -153,7 +153,7 @@ func (payment *Payment) SearchTrade(req validate.SearchTradeReq) (searchTradeRsp
 	return searchTradeRsp, 0, nil
 }
 
-func (payment *Payment) CloseTrade(req validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (payment *Payment) CloseTrade(req request.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
 	//获取配置项code
 	getConfigCodehandle := getConfigCodeHandler(req.OrgCode + ".close")
 	if getConfigCodehandle == nil {
@@ -180,7 +180,7 @@ func (payment *Payment) CloseTrade(req validate.CloseTradeReq) (closeTradeRsp re
 	return closeTradeRsp, 0, nil
 }
 
-func (payment *Payment) UploadLogistics(req validate.UploadLogisticsReq) (uploadLogisticsTradeRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (payment *Payment) UploadLogistics(req request.UploadLogisticsReq) (uploadLogisticsTradeRsp response.UploadLogisticsRsp, errCode int, err error) {
 	//获取配置项code
 	getConfigCodehandle := getConfigCodeHandler(req.OrgCode + ".logistics")
 	if getConfigCodehandle == nil {

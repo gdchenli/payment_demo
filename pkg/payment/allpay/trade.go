@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"payment_demo/pkg/curl"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
@@ -71,7 +71,7 @@ type TradeRsp struct {
 	Rsp     string  `json:"rsp"`
 }
 
-func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (trade *Trade) Search(paramMap map[string]string, req request.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
 	md5Key := paramMap["md5_key"]
 	delete(paramMap, "md5_key")
 	gateWay := trade.getGateWay(paramMap["gate_way"])

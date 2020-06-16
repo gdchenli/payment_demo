@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
+	"payment_demo/internal/request"
 	"strconv"
 
 	"github.com/sirupsen/logrus"
@@ -58,7 +58,7 @@ func (notify *Notify) Validate(configParamMap map[string]string, query, methodCo
 		return notifyRsp, NotifyDecryptFormatErrCode, errors.New(NotifyDecryptFormatErrMessage)
 	}
 
-	tradeArg := validate.SearchTradeReq{
+	tradeArg := request.SearchTradeReq{
 		OrderId:    queryMap["out_trade_no"],
 		MethodCode: methodCode,
 		OrgCode:    "alipay", TotalFee: totalFee,
