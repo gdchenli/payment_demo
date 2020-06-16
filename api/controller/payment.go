@@ -23,6 +23,11 @@ func (p *Payment) Router(router *gin.Engine) {
 		r.GET("/trade/search", p.searchTrade)    //交易查询
 		r.GET("/trade/close", p.closeTrade)      //关闭交易
 		r.POST("/logistics/upload", p.upload)    //上传物流信息
+
+		r.POST("/cashier", func(context *gin.Context) {})
+		r.POST("/qrcode", func(context *gin.Context) {})
+		r.POST("/form", func(context *gin.Context) {})
+		r.POST("/prompt", func(context *gin.Context) {})
 	}
 }
 
