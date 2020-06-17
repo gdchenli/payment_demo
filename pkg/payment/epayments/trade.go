@@ -102,6 +102,9 @@ func (trade *Trade) Search(paramMap map[string]string, req request.SearchTradeRe
 	case TradeRefund:
 		tradeRsp.Status = SearchTradeRefund
 	}
+	if tradeRsp.Status != TradeSuccess {
+		return tradeRsp, 0, nil
+	}
 
 	//支付时间
 	parseTime, err := time.Parse(DateTimeFormatLayout, tradeRspMap["gmt_payment"])

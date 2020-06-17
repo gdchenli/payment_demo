@@ -230,6 +230,10 @@ func (trade *Trade) Search(paramMap map[string]string, req request.SearchTradeRe
 		searchTradeRsp.Status = SearchTradeError
 	}
 
+	if searchTradeRsp.Status != TradeProcess {
+		return searchTradeRsp, 0, nil
+	}
+
 	searchTradeRsp.TradeNo = searchDecryptRsp.TradeNum //该接口不会返回交易流水号，使用请求交易时的订单号
 	searchTradeRsp.PaidAt = time.Now().UTC().Format(DateTimeFormatLayout)
 	searchTradeRsp.RmbFee = float64(searchDecryptRsp.Amount) / 100
