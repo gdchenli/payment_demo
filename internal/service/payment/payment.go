@@ -10,6 +10,7 @@ import (
 	"payment_demo/internal/common/code"
 	"payment_demo/internal/common/request"
 	"payment_demo/pkg/config"
+	"payment_demo/pkg/payment/epayments"
 	"payment_demo/pkg/payment/jd"
 )
 
@@ -19,9 +20,6 @@ type Payment struct {
 
 func New(orgCode string) (*Payment, int, error) {
 	payment := new(Payment)
-	if orgCode == "" {
-		return payment, 0, nil
-	}
 
 	payment.OrgHandler = getOrgHandler(orgCode)
 	if payment.OrgHandler == nil {
@@ -60,7 +58,7 @@ func (payment *Payment) getConfigValue(configCodes []string, orgCode string) (pa
 	return payParamMap, 0, nil
 }
 
-func (payment *Payment) Pay(order request.Order, istransfer bool) (pay string, errCode int, err error) {
+func (payment *Payment) Pay(order request.Order) (pay string, errCode int, err error) {
 	//获取配置项code
 	configCode := payment.OrgHandler.GetPayConfigCode()
 
@@ -72,6 +70,46 @@ func (payment *Payment) Pay(order request.Order, istransfer bool) (pay string, e
 
 	//支付处理
 	pay, errCode, err = payment.OrgHandler.CreatePayUrl(configParamMap, order)
+	if err != nil {
+		return pay, errCode, err
+	}
+
+	return pay, 0, nil
+}
+
+func (payment *Payment) PayQrCode(order request.Order) (pay string, errCode int, err error) {
+	//获取配置项code
+	epaymentsPayment := epayments.New()
+	configCode := epaymentsPayment.GetPayConfigCode()
+
+	//读取配置项值
+	configParamMap, errCode, err := payment.getConfigValue(configCode, order.OrgCode)
+	if err != nil {
+		return pay, errCode, err
+	}
+
+	//支付处理
+	pay, errCode, err = epaymentsPayment.CreateQrCode(configParamMap, order)
+	if err != nil {
+		return pay, errCode, err
+	}
+
+	return pay, 0, nil
+}
+
+func (payment *Payment) PayForm(order request.Order) (pay string, errCode int, err error) {
+	//获取配置项code
+	jdPayment := jd.New()
+	configCode := jdPayment.GetPayConfigCode()
+
+	//读取配置项值
+	configParamMap, errCode, err := payment.getConfigValue(configCode, order.OrgCode)
+	if err != nil {
+		return pay, errCode, err
+	}
+
+	//支付处理
+	pay, errCode, err = jdPayment.CreatePayForm(configParamMap, order)
 	if err != nil {
 		return pay, errCode, err
 	}
@@ -155,6 +193,7 @@ func (payment *Payment) CloseTrade(req request.CloseTradeReq) (closeTradeRsp res
 }
 
 func (payment *Payment) UploadLogistics(req request.UploadLogisticsReq) (uploadLogisticsTradeRsp response.UploadLogisticsRsp, errCode int, err error) {
+	//获取配置项code
 	jdPayment := jd.New()
 	configCode := jdPayment.GetUploadLogisticsConfigCode()
 

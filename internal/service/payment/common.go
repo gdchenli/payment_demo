@@ -6,6 +6,7 @@ import (
 	"payment_demo/pkg/payment/alipay"
 	"payment_demo/pkg/payment/allpay"
 	"payment_demo/pkg/payment/consts"
+	"payment_demo/pkg/payment/epayments"
 	"payment_demo/pkg/payment/jd"
 )
 
@@ -37,7 +38,7 @@ func getOrgHandler(orgCode string) OrgHandler {
 	case consts.AlipayOrg:
 		return alipay.New()
 	case consts.EpaymentsOrg:
-		return allpay.New()
+		return epayments.New()
 	case consts.AllpayOrg:
 		return allpay.New()
 	case consts.JdOrg:

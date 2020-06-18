@@ -42,7 +42,7 @@ func (p *Payment) pay(ctx *gin.Context) {
 		return
 	}
 
-	submitRsp, errCode, err := paymentService.Pay(*o, false)
+	submitRsp, errCode, err := paymentService.Pay(*o)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -65,7 +65,7 @@ func (p *Payment) qrcode(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
-	submitRsp, errCode, err := paymentService.Pay(*o, true)
+	submitRsp, errCode, err := paymentService.PayQrCode(*o)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -88,7 +88,7 @@ func (p *Payment) form(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
-	submitRsp, errCode, err := paymentService.Pay(*o, true)
+	submitRsp, errCode, err := paymentService.PayForm(*o)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -195,12 +195,7 @@ func (p *Payment) uploadLogistics(ctx *gin.Context) {
 	uploadLogisticsReq := new(request.UploadLogisticsReq)
 	ctx.ShouldBind(uploadLogisticsReq)
 
-	paymentService, errCode, err := payment.New(uploadLogisticsReq.OrgCode)
-	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
-		return
-	}
-	logisticsRsp, errCode, err := paymentService.UploadLogistics(*uploadLogisticsReq)
+	logisticsRsp, errCode, err := new(payment.Payment).UploadLogistics(*uploadLogisticsReq)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
