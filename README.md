@@ -5,8 +5,8 @@
 |---|---|---|---|
 |京东|京东支付|2.0||
 |allpay|支付宝支付、银联支付|5.0|[文档](https://git.allpayx.com/OpenAPI/common/src/master/AllPay_Integration_Specification_CH.md)|
-|epayments|微信支付|[文档](https://www.kiwifast.com/doc/)|
-|支付宝|支付宝支付|[文档](https://global.alipay.com/docs/ac/global/create_forex_trade)|
+|epayments|微信支付||[文档](https://www.kiwifast.com/doc/)|
+|支付宝|支付宝支付||[文档](https://global.alipay.com/docs/ac/global/create_forex_trade)|
 
 
 ### 运行项目
