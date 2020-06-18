@@ -58,7 +58,7 @@ func (payment *Payment) getConfigValue(configCodes []string, orgCode string) (pa
 	return payParamMap, 0, nil
 }
 
-func (payment *Payment) Pay(order request.Order) (pay string, errCode int, err error) {
+func (payment *Payment) Pay(order request.OrderArg) (pay string, errCode int, err error) {
 	//获取配置项code
 	configCode := payment.OrgHandler.GetPayConfigCode()
 
@@ -79,7 +79,7 @@ func (payment *Payment) Pay(order request.Order) (pay string, errCode int, err e
 	return pay, 0, nil
 }
 
-func (payment *Payment) PayQrCode(order request.Order) (pay string, errCode int, err error) {
+func (payment *Payment) PayQrCode(order request.OrderArg) (pay string, errCode int, err error) {
 	//获取配置项code
 	epaymentsPayment := epayments.New()
 	configCode := epaymentsPayment.GetPayConfigCode()
@@ -101,7 +101,7 @@ func (payment *Payment) PayQrCode(order request.Order) (pay string, errCode int,
 	return pay, 0, nil
 }
 
-func (payment *Payment) PayForm(order request.Order) (pay string, errCode int, err error) {
+func (payment *Payment) PayForm(order request.OrderArg) (pay string, errCode int, err error) {
 	//获取配置项code
 	jdPayment := jd.New()
 	configCode := jdPayment.GetPayConfigCode()
@@ -165,7 +165,7 @@ func (payment *Payment) Verify(query, orgCode, methodCode string) (verifyRsp res
 	return verifyRsp, 0, nil
 }
 
-func (payment *Payment) SearchTrade(req request.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (payment *Payment) SearchTrade(req request.SearchTradeArg) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
 	//获取配置项code
 	configCode := payment.OrgHandler.GetVerifyConfigCode()
 
@@ -185,7 +185,7 @@ func (payment *Payment) SearchTrade(req request.SearchTradeReq) (searchTradeRsp 
 	return searchTradeRsp, 0, nil
 }
 
-func (payment *Payment) CloseTrade(req request.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (payment *Payment) CloseTrade(req request.CloseTradeArg) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
 	//获取配置项code
 	configCode := payment.OrgHandler.GetCloseTradeConfigCode()
 
@@ -206,7 +206,7 @@ func (payment *Payment) CloseTrade(req request.CloseTradeReq) (closeTradeRsp res
 	return closeTradeRsp, 0, nil
 }
 
-func (payment *Payment) UploadLogistics(req request.UploadLogisticsReq) (uploadLogisticsTradeRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (payment *Payment) UploadLogistics(req request.UploadLogisticsArg) (uploadLogisticsTradeRsp response.UploadLogisticsRsp, errCode int, err error) {
 	//获取配置项code
 	jdPayment := jd.New()
 	configCode := jdPayment.GetUploadLogisticsConfigCode()

@@ -56,7 +56,7 @@ func (alipay *Alipay) Notify(configParamMap map[string]string, query, methodCode
 		return notifyRsp, NotifyDecryptFormatErrCode, errors.New(NotifyDecryptFormatErrMessage)
 	}
 
-	tradeArg := request.SearchTradeReq{
+	tradeArg := request.SearchTradeArg{
 		OrderId:    queryMap["out_trade_no"],
 		MethodCode: methodCode,
 		OrgCode:    "alipay", TotalFee: totalFee,

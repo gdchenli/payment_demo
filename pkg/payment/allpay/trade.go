@@ -57,7 +57,7 @@ type TradeRsp struct {
 	Rsp     string  `json:"rsp"`
 }
 
-func (allpay *Allpay) SearchTrade(paramMap map[string]string, req request.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (allpay *Allpay) SearchTrade(paramMap map[string]string, req request.SearchTradeArg) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
 	md5Key := paramMap["md5_key"]
 	delete(paramMap, "md5_key")
 	gateWay := getSearchTradeGateWay(paramMap["gate_way"])

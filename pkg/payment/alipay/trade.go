@@ -83,7 +83,7 @@ type TradeXml struct {
 	UseCoupon           string `xml:"use_coupon" json:"use_coupon"`                         //读取use_coupon
 }
 
-func (alipay *Alipay) SearchTrade(configParamMap map[string]string, req request.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (alipay *Alipay) SearchTrade(configParamMap map[string]string, req request.SearchTradeArg) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
 	tradeRsp.OrderId = req.OrderId
 	paramMap := map[string]string{
 		"service":        SearchServiceType,         //交易查询服务
