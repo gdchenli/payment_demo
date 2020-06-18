@@ -1,6 +1,6 @@
 package request
 
-type UploadLogisticsReq struct {
+type UploadLogisticsArg struct {
 	OrderId          string `form:"order_id" json:"order_id"`                   //订单号
 	LogisticsNo      string `form:"logistics_no" json:"logistics_no"`           //物流单号
 	LogisticsCompany string `form:"logistics_company" json:"logistics_company"` //物流公司名称
