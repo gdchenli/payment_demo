@@ -25,7 +25,7 @@ func New(orgCode string) (*Payment, int, error) {
 
 	payment.OrgHandler = getOrgHandler(orgCode)
 	if payment.OrgHandler == nil {
-		return payment, code.ConfigValueErrCode, errors.New(code.ConfigValueErrMessage)
+		return payment, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	return payment, 0, nil
 }
