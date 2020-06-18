@@ -85,7 +85,7 @@ type TradeXml struct {
 	UseCoupon           string `xml:"use_coupon" json:"use_coupon"`                         //读取use_coupon
 }
 
-func (trade *Trade) Search(configParamMap map[string]string, req request.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (alipay *Alipay) SearchTrade(configParamMap map[string]string, req request.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
 	tradeRsp.OrderId = req.OrderId
 	paramMap := map[string]string{
 		"service":        SearchServiceType,         //交易查询服务
@@ -113,7 +113,7 @@ func (trade *Trade) Search(configParamMap map[string]string, req request.SearchT
 		logrus.Errorf("org:alipay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v,err:%v", req.OrderId, SearchTradeResponseDataFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeResponseDataFormatErrCode, errors.New(SearchTradeResponseDataFormatErrMessage)
 	}
-	if !trade.checkSign(searchResult, configParamMap["md5_key"]) {
+	if !checkSearchTradeSign(searchResult, configParamMap["md5_key"]) {
 		logrus.Errorf("org:alipay,"+SearchTradeResponseDataSignErrMessage+",order id %v,errCode:%v", req.OrderId, SearchTradeResponseDataSignErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
@@ -158,7 +158,7 @@ func (trade *Trade) Search(configParamMap map[string]string, req request.SearchT
 }
 
 //验证查询交易结果
-func (trade *Trade) checkSign(searchResult SearchResult, md5Key string) bool {
+func checkSearchTradeSign(searchResult SearchResult, md5Key string) bool {
 	payMap := map[string]string{
 		"body":                   searchResult.Response.TradeXml.Body,
 		"buyer_email":            searchResult.Response.TradeXml.BuyerEmail,
@@ -191,7 +191,7 @@ func (trade *Trade) checkSign(searchResult SearchResult, md5Key string) bool {
 	return compareSignature == searchResult.Sign
 }
 
-func (trade *Trade) GetConfigCode() []string {
+func (alipay *Alipay) GetSearchTradeConfigCode() []string {
 	return []string{
 		"pay_way", "md5_key", "gate_way", "partner",
 	}

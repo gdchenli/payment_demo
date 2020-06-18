@@ -9,6 +9,8 @@ import (
 	"sort"
 )
 
+type Alipay struct{}
+
 //支付字符串拼接
 func GetSortString(m map[string]string) string {
 

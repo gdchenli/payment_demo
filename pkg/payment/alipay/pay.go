@@ -49,14 +49,14 @@ type TradeInformation struct {
 	TotalQuantity int    `json:"total_quantity"`
 }
 
-func (payment *Payment) getParamMap(paramMap map[string]string, order request.Order) map[string]string {
-	paramMap["service"] = payment.getServiceType(order.UserAgentType)
+func getParamMap(paramMap map[string]string, order request.Order) map[string]string {
+	paramMap["service"] = getServiceType(order.UserAgentType)
 	paramMap["_input_charset"] = CharsetUTF8
 	paramMap["subject"] = order.OrderId
 	paramMap["body"] = order.OrderId
 	paramMap["out_trade_no"] = order.OrderId
-	paramMap["total_fee"] = payment.getTotalFee(order.Currency, order.TotalFee)
-	paramMap["trade_information"] = payment.getTradeInformationJson([]Item{{Name: "test", Qty: 1}})
+	paramMap["total_fee"] = getTotalFee(order.Currency, order.TotalFee)
+	paramMap["trade_information"] = getTradeInformationJson([]Item{{Name: "test", Qty: 1}})
 
 	//超时时间
 	if paramMap["timeout_rule"] == "" {
@@ -64,7 +64,7 @@ func (payment *Payment) getParamMap(paramMap map[string]string, order request.Or
 	}
 	//判断新旧版本
 	if paramMap["pay_way"] == newPay {
-		paramMap["product_code"] = payment.getProductCode(order.UserAgentType)
+		paramMap["product_code"] = getProductCode(order.UserAgentType)
 	}
 	delete(paramMap, "pay_way")
 
@@ -85,28 +85,28 @@ func (payment *Payment) getParamMap(paramMap map[string]string, order request.Or
 	return paramMap
 }
 
-func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order request.Order) (payString string, errCode int, err error) {
+func (alipay *Alipay) CreateAmpPayStr(configParamMap map[string]string, order request.Order) (payString string, errCode int, err error) {
 	delete(configParamMap, "gate_way")
 
-	paramMap := payment.getParamMap(configParamMap, order)
+	paramMap := getParamMap(configParamMap, order)
 
 	return GetSortString(paramMap), 0, nil
 }
 
-func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order request.Order) (url string, errCode int, err error) {
+func (alipay *Alipay) CreatePayUrl(configParamMap map[string]string, order request.Order) (url string, errCode int, err error) {
 	geteWay := configParamMap["gate_way"]
 	delete(configParamMap, "gate_way")
 
-	paramMap := payment.getParamMap(configParamMap, order)
+	paramMap := getParamMap(configParamMap, order)
 
-	return payment.buildPayUrl(paramMap, geteWay), 0, nil
+	return buildPayUrl(paramMap, geteWay), 0, nil
 }
 
-func (payment *Payment) CreateAppPayStr(paramMap map[string]string, order request.Order) (appRsp response.AppRsp, errCode int, err error) {
+func (alipay *Alipay) CreateAppPayStr(paramMap map[string]string, order request.Order) (appRsp response.AppRsp, errCode int, err error) {
 	return appRsp, 0, nil
 }
 
-func (payment *Payment) buildPayUrl(paramMap map[string]string, gateWay string) (payUrl string) {
+func buildPayUrl(paramMap map[string]string, gateWay string) (payUrl string) {
 	values := url.Values{}
 	for k, v := range paramMap {
 		values.Add(k, v)
@@ -116,7 +116,7 @@ func (payment *Payment) buildPayUrl(paramMap map[string]string, gateWay string) 
 }
 
 //获取服务类型
-func (payment *Payment) getServiceType(orderSource int) (serviceType string) {
+func getServiceType(orderSource int) (serviceType string) {
 	if orderSource == 1 {
 		serviceType = pcServiceType
 	} else if orderSource == 2 {
@@ -128,7 +128,7 @@ func (payment *Payment) getServiceType(orderSource int) (serviceType string) {
 }
 
 //获取交易明细
-func (payment *Payment) getTradeInformationJson(items []Item) string {
+func getTradeInformationJson(items []Item) string {
 	var goodsInfoStr string
 	var totalQuantity int
 	for _, item := range items {
@@ -149,7 +149,7 @@ func (payment *Payment) getTradeInformationJson(items []Item) string {
 }
 
 //获取支付金额
-func (payment *Payment) getTotalFee(currency string, totalFeeF float64) (totalFee string) {
+func getTotalFee(currency string, totalFeeF float64) (totalFee string) {
 	//支付金额处理
 	if currency == KRW || currency == JPY {
 		totalFee = strconv.FormatFloat(totalFeeF, 'f', 0, 64)
@@ -160,7 +160,7 @@ func (payment *Payment) getTotalFee(currency string, totalFeeF float64) (totalFe
 }
 
 //获取产品代码
-func (payment *Payment) getProductCode(orderSource int) (productCode string) {
+func getProductCode(orderSource int) (productCode string) {
 	if orderSource == consts.WebUserAgentType {
 		productCode = newOverseasSeller
 	} else if orderSource == consts.MobileUserAgentType || orderSource == consts.AlipayMiniProgramUserAgentType {
@@ -169,7 +169,7 @@ func (payment *Payment) getProductCode(orderSource int) (productCode string) {
 	return productCode
 }
 
-func (payment *Payment) GetConfigCode() []string {
+func (alipay *Alipay) GetPayConfigCode() []string {
 	return []string{
 		"partner", "notify_url", "return_url", "supplier", "refer_url", "currency", "supplier", "timeout_rule",
 		"pay_way", "md5_key", "gate_way",

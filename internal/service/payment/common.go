@@ -47,50 +47,33 @@ var uploadLogisticsMap map[string]UploadLogisticsHandler
 var configCodeMap map[string]ConfigCodeHandler
 
 func init() {
-	alipayPayment := new(alipay.Payment)
-	alipayNotify := new(alipay.Notify)
-	alipayVerify := new(alipay.Verify)
-	alipayTrade := new(alipay.Trade)
-
-	allpayPayment := new(allpay.Payment)
-	allpayNotify := new(allpay.Notify)
-	allpayVerify := new(allpay.Verify)
-	allpayTrade := new(allpay.Trade)
-
-	epaymentsPayment := new(epayments.Payment)
-	epaymentsNotify := new(epayments.Notify)
-	epaymentsVerify := new(epayments.Verify)
-	epaymentsTrade := new(epayments.Trade)
-
-	jdPayment := new(jd.Payment)
-	jdNotify := new(jd.Notify)
-	jdVerify := new(jd.Verify)
-	jdTrade := new(jd.Trade)
-	jdClose := new(jd.Close)
-	jdLogistics := new(jd.Logistics)
+	alipayPayment := new(alipay.Alipay)
+	allpayPayment := new(allpay.Allpay)
+	epaymentsPayment := new(epayments.Epayments)
+	jdPayment := new(jd.Jd)
 
 	configCodeMap = map[string]ConfigCodeHandler{
-		consts.AlipayOrg + ".payment": alipayPayment.GetConfigCode, //发起支付配置
-		consts.AlipayOrg + ".notify":  alipayNotify.GetConfigCode,  //异步通知配置
-		consts.AlipayOrg + ".verify":  alipayVerify.GetConfigCode,  //同步通知
-		consts.AlipayOrg + ".trade":   alipayTrade.GetConfigCode,   //交易查询
+		consts.AlipayOrg + ".payment": alipayPayment.GetPayConfigCode,         //发起支付配置
+		consts.AlipayOrg + ".notify":  alipayPayment.GetNotifyConfigCode,      //异步通知配置
+		consts.AlipayOrg + ".verify":  alipayPayment.GetVerifyConfigCode,      //同步通知
+		consts.AlipayOrg + ".trade":   alipayPayment.GetSearchTradeConfigCode, //交易查询
 
-		consts.AllpayOrg + ".payment": allpayPayment.GetConfigCode, //发起支付配置
-		consts.AllpayOrg + ".notify":  allpayNotify.GetConfigCode,  //异步通知配置
-		consts.AllpayOrg + ".verify":  allpayVerify.GetConfigCode,  //同步通知
-		consts.AllpayOrg + ".trade":   allpayTrade.GetConfigCode,   //交易查询
+		consts.AllpayOrg + ".payment": allpayPayment.GetPayConfigCode,         //发起支付配置
+		consts.AllpayOrg + ".notify":  allpayPayment.GetNotifyConfigCode,      //异步通知配置
+		consts.AllpayOrg + ".verify":  allpayPayment.GetVerifyConfigCode,      //同步通知
+		consts.AllpayOrg + ".trade":   allpayPayment.GetSearchTradeConfigCode, //交易查询
 
-		consts.EpaymentsOrg + ".payment": epaymentsPayment.GetConfigCode, //发起支付配置
-		consts.EpaymentsOrg + ".notify":  epaymentsNotify.GetConfigCode,  //异步通知配置
-		consts.EpaymentsOrg + ".verify":  epaymentsVerify.GetConfigCode,  //同步通知
-		consts.EpaymentsOrg + ".trade":   epaymentsTrade.GetConfigCode,   //交易查询
+		consts.EpaymentsOrg + ".payment": epaymentsPayment.GetPayConfigCode,         //发起支付配置
+		consts.EpaymentsOrg + ".notify":  epaymentsPayment.GetNotifyConfigCode,      //异步通知配置
+		consts.EpaymentsOrg + ".verify":  epaymentsPayment.GetVerifyConfigCode,      //同步通知
+		consts.EpaymentsOrg + ".trade":   epaymentsPayment.GetSearchTradeConfigCode, //交易查询
 
-		consts.JdOrg + ".payment":   jdPayment.GetConfigCode,   //发起支付配置
-		consts.JdOrg + ".notify":    jdNotify.GetConfigCode,    //异步通知配置
-		consts.JdOrg + ".verify":    jdVerify.GetConfigCode,    //同步通知
-		consts.JdOrg + ".trade":     jdTrade.GetConfigCode,     //交易查询
-		consts.JdOrg + ".close":     jdClose.GetConfigCode,     //交易关闭
-		consts.JdOrg + ".logistics": jdLogistics.GetConfigCode, //物流上传
+		consts.JdOrg + ".payment":   jdPayment.GetPayConfigCode,             //发起支付配置
+		consts.JdOrg + ".notify":    jdPayment.GetNotifyConfigCode,          //异步通知配置
+		consts.JdOrg + ".verify":    jdPayment.GetVerifyConfigCode,          //同步通知
+		consts.JdOrg + ".trade":     jdPayment.GetSearchTradeConfigCode,     //交易查询
+		consts.JdOrg + ".close":     jdPayment.GetCloseTradeConfigCode,      //交易关闭
+		consts.JdOrg + ".logistics": jdPayment.GetUploadLogisticsConfigCode, //物流上传
 	}
 
 	submitMap = map[string]SumbitHandler{
@@ -115,32 +98,32 @@ func init() {
 	}
 
 	notifyMap = map[string]NotifyHandler{
-		consts.AlipayOrg:    alipayNotify.Validate,
-		consts.AllpayOrg:    allpayNotify.Validate,
-		consts.EpaymentsOrg: epaymentsNotify.Validate,
-		consts.JdOrg:        jdNotify.Validate,
+		consts.AlipayOrg:    alipayPayment.Notify,
+		consts.AllpayOrg:    allpayPayment.Notify,
+		consts.EpaymentsOrg: epaymentsPayment.Notify,
+		consts.JdOrg:        jdPayment.Notify,
 	}
 
 	verifyMap = map[string]VerifyHandler{
-		consts.AlipayOrg:    alipayVerify.Validate,
-		consts.AllpayOrg:    allpayVerify.Validate,
-		consts.EpaymentsOrg: epaymentsVerify.Validate,
-		consts.JdOrg:        jdVerify.Validate,
+		consts.AlipayOrg:    alipayPayment.Verify,
+		consts.AllpayOrg:    allpayPayment.Verify,
+		consts.EpaymentsOrg: epaymentsPayment.Verify,
+		consts.JdOrg:        jdPayment.Verify,
 	}
 
 	searchTradeMap = map[string]SearchTradeHandler{
-		consts.AlipayOrg:    alipayTrade.Search,
-		consts.AllpayOrg:    allpayTrade.Search,
-		consts.EpaymentsOrg: epaymentsTrade.Search,
-		consts.JdOrg:        jdTrade.Search,
+		consts.AlipayOrg:    alipayPayment.SearchTrade,
+		consts.AllpayOrg:    allpayPayment.SearchTrade,
+		consts.EpaymentsOrg: epaymentsPayment.SearchTrade,
+		consts.JdOrg:        jdPayment.SearchTrade,
 	}
 
 	closeTradeMap = map[string]CloseTradeHandler{
-		consts.JdOrg: jdClose.Trade,
+		consts.JdOrg: jdPayment.CloseTrade,
 	}
 
 	uploadLogisticsMap = map[string]UploadLogisticsHandler{
-		consts.JdOrg: jdLogistics.Upload,
+		consts.JdOrg: jdPayment.Upload,
 	}
 
 }

@@ -50,25 +50,25 @@ type DetailInfo struct {
 	Quantity  int    `json:"quantity"`
 }
 
-func (payment *Payment) CreatePayUrl(configParamMap map[string]string, order request.Order) (payUrl string, errCode int, err error) {
-	gateWay := payment.getGateWay(configParamMap["gate_way"])
+func (allpay *Allpay) CreatePayUrl(configParamMap map[string]string, order request.Order) (payUrl string, errCode int, err error) {
+	gateWay := getPayGateWay(configParamMap["gate_way"])
 	delete(configParamMap, "gata_way")
 
-	paramMap, errCode, err := payment.getPayParamMap(configParamMap, order)
+	paramMap, errCode, err := getPayParamMap(configParamMap, order)
 	if err != nil {
 		return payUrl, errCode, err
 	}
 
-	payUrl = payment.buildPayUrl(paramMap, gateWay)
+	payUrl = buildPayUrl(paramMap, gateWay)
 
 	return payUrl, 0, nil
 }
 
-func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order request.Order) (payStr string, errCode int, err error) {
-	gateWay := payment.getGateWay(configParamMap["gate_way"])
+func (allpay *Allpay) CreateAmpPayStr(configParamMap map[string]string, order request.Order) (payStr string, errCode int, err error) {
+	gateWay := getPayGateWay(configParamMap["gate_way"])
 	delete(configParamMap, "gata_way")
 
-	paramMap, errCode, err := payment.getPayParamMap(configParamMap, order)
+	paramMap, errCode, err := getPayParamMap(configParamMap, order)
 	if err != nil {
 		return payStr, errCode, err
 	}
@@ -91,7 +91,7 @@ func (payment *Payment) CreateAmpPayStr(configParamMap map[string]string, order 
 	return ampProgramRsp.SdkParams, 0, nil
 }
 
-func (payment *Payment) getPayParamMap(paramMap map[string]string, order request.Order) (map[string]string, int, error) {
+func getPayParamMap(paramMap map[string]string, order request.Order) (map[string]string, int, error) {
 	orderAmount := fmt.Sprintf("%.2f", order.TotalFee)
 	transTime := time.Now().Format(TimeLayout)
 	detailInfoBytes, err := json.Marshal([]DetailInfo{{
@@ -109,21 +109,21 @@ func (payment *Payment) getPayParamMap(paramMap map[string]string, order request
 	paramMap["orderNum"] = order.OrderId
 	paramMap["orderAmount"] = orderAmount
 	paramMap["orderCurrency"] = order.Currency
-	paramMap["paymentSchema"] = payment.getPaymentSchema(order.MethodCode)
+	paramMap["paymentSchema"] = getPaymentSchema(order.MethodCode)
 	paramMap["goodsInfo"] = order.OrderId
 	paramMap["detailInfo"] = detailInfo
 	paramMap["transTime"] = transTime
 	paramMap["signType"] = MD5SignType
-	paramMap["tradeFrom"] = payment.getTradeFrom(order.MethodCode, order.UserAgentType)
+	paramMap["tradeFrom"] = getPayTradeFrom(order.MethodCode, order.UserAgentType)
 	paramMap["merReserve"] = ""
 
 	md5key := paramMap["md5_key"]
 	delete(paramMap, "md5_key")
-	paramMap["signature"] = payment.getSign(paramMap, md5key)
+	paramMap["signature"] = getPaySign(paramMap, md5key)
 
 	return paramMap, 0, nil
 }
-func (payment *Payment) getPaymentSchema(methodCode string) string {
+func getPaymentSchema(methodCode string) string {
 	switch methodCode {
 	case consts.AlipayMethod:
 		return ApSchema
@@ -134,7 +134,7 @@ func (payment *Payment) getPaymentSchema(methodCode string) string {
 	}
 }
 
-func (payment *Payment) getTradeFrom(methodCode string, userAgentType int) string {
+func getPayTradeFrom(methodCode string, userAgentType int) string {
 	if methodCode == consts.AlipayMethod {
 		switch userAgentType {
 		case consts.WebUserAgentType:
@@ -155,12 +155,12 @@ func (payment *Payment) getTradeFrom(methodCode string, userAgentType int) strin
 	return ""
 }
 
-func (payment *Payment) getSign(paramMap map[string]string, signKey string) string {
+func getPaySign(paramMap map[string]string, signKey string) string {
 	sortString := GetSortString(paramMap)
 	return Md5(sortString + signKey)
 }
 
-func (payment *Payment) buildPayUrl(paramMap map[string]string, gateWay string) (payUrl string) {
+func buildPayUrl(paramMap map[string]string, gateWay string) (payUrl string) {
 	values := url.Values{}
 	for k, v := range paramMap {
 		values.Add(k, v)
@@ -175,11 +175,11 @@ type AmpProgramRsp struct {
 	SdkParams string `json:"sdk_params"`
 }
 
-func (payment *Payment) getGateWay(gateWay string) string {
+func getPayGateWay(gateWay string) string {
 	return gateWay + PayRoute
 }
 
-func (payment *Payment) GetConfigCode() []string {
+func (allpay *Allpay) GetPayConfigCode() []string {
 	return []string{
 		"merID", "frontURL", "backURL", "acqID", "timeout",
 		"md5_key", "gate_way",

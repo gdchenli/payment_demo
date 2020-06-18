@@ -16,7 +16,7 @@ const (
 	VerifySignErrMessage        = "同步通知，签名校验失败"
 )
 
-func (vreify *Verify) Validate(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+func (alipay *Alipay) Verify(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
 	//callbackRsp.Rsp = query
 
 	//解析参数
@@ -37,7 +37,7 @@ func (vreify *Verify) Validate(configParamMap map[string]string, query, methodCo
 		delete(queryMap, "sign_type")
 	}
 
-	if !vreify.checkSign(queryMap, configParamMap["md5_key"], sign) {
+	if !checkVerifySign(queryMap, configParamMap["md5_key"], sign) {
 		logrus.Errorf("org:alipay,"+VerifySignErrMessage+",orderId:%v,errCode:%v", queryMap["out_trade_no"], VerifySignErrCode)
 		return verifyRsp, VerifySignErrCode, errors.New(VerifySignErrMessage)
 	}
@@ -50,13 +50,13 @@ func (vreify *Verify) Validate(configParamMap map[string]string, query, methodCo
 	return verifyRsp, 0, nil
 }
 
-func (vreify *Verify) checkSign(queryMap map[string]string, signKey, sign string) bool {
+func checkVerifySign(queryMap map[string]string, signKey, sign string) bool {
 	sortString := GetSortString(queryMap)
 	calculateSign := Md5(sortString + signKey)
 	return calculateSign == sign
 }
 
-func (vreify *Verify) GetConfigCode() []string {
+func (alipay *Alipay) GetVerifyConfigCode() []string {
 	return []string{
 		"md5_key",
 	}

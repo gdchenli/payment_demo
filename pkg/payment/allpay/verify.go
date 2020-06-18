@@ -16,7 +16,7 @@ const (
 
 type Verify struct{}
 
-func (verify *Verify) Validate(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+func (allpay *Allpay) Verify(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
 	//callbackRsp.Rsp = query
 
 	//解析参数
@@ -39,7 +39,7 @@ func (verify *Verify) Validate(configParamMap map[string]string, query, methodCo
 		sign = value
 		delete(queryMap, "signature")
 	}
-	if !verify.checkSign(queryMap, configParamMap["md5_key"], sign) {
+	if !checkVerifySign(queryMap, configParamMap["md5_key"], sign) {
 		logrus.Errorf("org:allpay,"+VerifySignErrMessage+",order id %v,errCode:%v", queryMap["orderNum"], VerifySignErrCode)
 		return verifyRsp, VerifySignErrCode, errors.New(VerifySignErrMessage)
 	}
@@ -52,13 +52,13 @@ func (verify *Verify) Validate(configParamMap map[string]string, query, methodCo
 	return verifyRsp, 0, nil
 }
 
-func (verify *Verify) checkSign(queryMap map[string]string, signKey, sign string) bool {
+func checkVerifySign(queryMap map[string]string, signKey, sign string) bool {
 	sortString := GetSortString(queryMap)
 	calculateSign := Md5(sortString + signKey)
 	return calculateSign == sign
 }
 
-func (verify *Verify) GetConfigCode() []string {
+func (allpay *Allpay) GetVerifyConfigCode() []string {
 	return []string{
 		"md5_key",
 	}
