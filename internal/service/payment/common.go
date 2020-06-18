@@ -1,8 +1,8 @@
 package payment
 
 import (
+	"payment_demo/api/request"
 	"payment_demo/api/response"
-	"payment_demo/internal/common/request"
 	"payment_demo/pkg/payment/alipay"
 	"payment_demo/pkg/payment/allpay"
 	"payment_demo/pkg/payment/consts"

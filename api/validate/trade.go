@@ -2,7 +2,7 @@ package validate
 
 import (
 	"errors"
-	"payment_demo/internal/common/request"
+	"payment_demo/api/request"
 )
 
 const (
