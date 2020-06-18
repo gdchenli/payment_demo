@@ -29,8 +29,6 @@ const (
 	CallbackStatusErrMessage        = "同步通知，交易状态不正确"
 )
 
-type Verify struct{}
-
 type VerifyQuery struct {
 	TradeNum  string `json:"tradeNum"`  //订单号
 	Amount    string `json:"amount"`    //交易金额

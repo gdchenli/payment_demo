@@ -27,22 +27,6 @@ const (
 	PayNetErrMessage = "发起支付,网络错误"
 )
 
-type Payment struct{}
-
-type PayArg struct {
-	MerchantId      string  `json:"merchant_id"`    //商户ID
-	NotifyUrl       string  `json:"notify_url"`     //支付结果异步通知到该地址
-	ReturnUrl       string  `json:"return_url"`     //支付结果异步通知到该地址
-	ValidMins       string  `json:"valid_mins"`     //创建交易有效期，单位为分钟，超过时间，订单失效，不传入，默认1小时。
-	IncrementId     string  `json:"increment_id"`   //订单号
-	GrandTotal      float64 `json:"grandtotal"`     //订单金额
-	Currency        string  `json:"currency"`       //订单币种
-	GateWay         string  `json:"gate_way"`       //网关地址
-	Md5Key          string  `json:"md5_key"`        //密钥
-	TransCurrency   string  `json:"trans_currency"` //结算币种
-	PaymentChannels string  `json:"payment_channels"`
-}
-
 func (epayments *Epayments) CreatePayUrl(paramMap map[string]string, order request.Order) (payUrl string, errCode int, err error) {
 	if order.UserAgentType == consts.WebUserAgentType {
 		marshal, _ := json.Marshal(order)

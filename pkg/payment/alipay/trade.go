@@ -37,8 +37,6 @@ const (
 	SearchTradeResponseDataSignErrMessage   = "查询交易流水,返回数据签名校验错误"
 )
 
-type Trade struct{}
-
 type TradeArg struct {
 	Merchant   string  `json:"merchant"`
 	OutTradeNo string  `json:"out_trade_no"`

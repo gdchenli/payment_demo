@@ -30,8 +30,6 @@ const (
 	NotifySignErrMessage          = "异步通知，签名校验失败"
 )
 
-type Notify struct{}
-
 type NotifyQuery struct {
 	XMLName  xml.Name     `xml:"jdpay" json:"-"`
 	Version  string       `xml:"version" json:"version"`   //版本号

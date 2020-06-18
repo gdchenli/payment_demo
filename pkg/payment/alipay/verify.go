@@ -7,8 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Verify struct{}
-
 const (
 	VerifyQueryFormatErrCode    = 10301
 	VerifyQueryFormatErrMessage = "同步通知，支付数据格式错误"

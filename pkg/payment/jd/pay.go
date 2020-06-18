@@ -32,27 +32,6 @@ const (
 	PayEncryptErrMessage         = "发起支付，数据加密错误"
 )
 
-type Payment struct{}
-
-type PayArg struct {
-	Merchant      string      `json:"merchant"`      //商户号
-	TradeNum      string      `json:"tradeNum"`      //订单编号
-	TradeName     string      `json:"tradeName"`     //交易名称
-	Amount        int64       `json:"amount"`        //交易金额，单位分，大于0
-	Currency      string      `json:"currency"`      //货币种类
-	CallbackUrl   string      `json:"callbackUrl"`   //支付成功后跳转路径
-	NotifyUrl     string      `json:"notifyUrl"`     //异步通知页面地址
-	UserId        string      `json:"userId"`        //用户账号
-	ExpireTime    string      `json:"expireTime"`    //订单失效时长，单位：秒，失效后则不能再支付，默认失效时间为604800秒(7天)，最大失效时间为7776000秒（90天），超过则按90天计算
-	GoodsInfo     []GoodsInfo `json:"goodsInfo"`     //商品信息
-	KjInfo        KjInfo      `json:"kInfo"`         //业务信息
-	BizTp         string      `json:"bizTp"`         //通道业务类型
-	PrivateKey    string      `json:"privateKey"`    //商户私钥
-	DesKey        string      `json:"desKey"`        //des key
-	TransCurrency string      `json:"transCurrency"` //结算币种
-	PayWay        string      `json:"pay_way"`
-}
-
 type GoodsInfo struct {
 	Id    string `json:"id"`    //商品编号
 	Name  string `json:"name"`  //商品名称

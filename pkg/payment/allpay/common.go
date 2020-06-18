@@ -14,6 +14,10 @@ import (
 
 type Allpay struct{}
 
+func New() *Allpay {
+	return new(Allpay)
+}
+
 func GetSortString(m map[string]string) string {
 	var buf bytes.Buffer
 	keys := make([]string, 0, len(m))

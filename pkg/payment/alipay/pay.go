@@ -18,27 +18,6 @@ const (
 	businessTypeSalesGoods = 4
 )
 
-type Payment struct{}
-
-type PayArg struct {
-	Merchant      string  `json:"merchant"`          //PartnerId
-	NotifyUrl     string  `json:"notify_url"`        //支付结果异步通知到该地址
-	ReturnUrl     string  `json:"return_url"`        //支付结果异步通知到该地址
-	Body          string  `json:"body"`              //主体
-	OutTradeNo    string  `json:"out_trade_no"`      //订单号
-	TotalFee      float64 `json:"total_fee"`         //订单金额(CNY)
-	Currency      string  `json:"currency"`          //订单币种
-	Supplier      string  `json:"supplier"`          //供应商
-	TimeoutRule   string  `json:"timeout_rule"`      //超时时间,如:12h,10m
-	ReferUrl      string  `json:"refer_url"`         //商家url(站点url)
-	GateWay       string  `json:"gate_way"`          //网关地址
-	Md5Key        string  `json:"md5_key"`           //密钥
-	TransCurrency string  `json:"trade_information"` //结算币种
-	UserAgentType string  `json:"user_agent_type"`   //订单客户端 PC:web  手机端：web_mobile
-	PayWay        string  `json:"pay_way"`           //版本 1旧版本 2新版本
-	Items         []Item  `json:"item"`
-}
-
 type Item struct {
 	Name string `form:"name" json:"name" `
 	Qty  int    `form:"qty_ordered" json:"qty_ordered"`

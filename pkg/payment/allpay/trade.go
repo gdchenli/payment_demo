@@ -40,8 +40,6 @@ const (
 	SearchTradeRateFormatErrMessage         = "查询交易流水,汇率查询结果格式错误"
 )
 
-type Trade struct{}
-
 type TradeResult struct {
 	RespCode string `json:"RespCode"`
 	RespMsg  string `json:"RespMsg"`

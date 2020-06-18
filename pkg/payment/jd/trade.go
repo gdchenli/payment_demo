@@ -49,8 +49,6 @@ const (
 	SearchTradeResponseDataSignErrMessage          = "查询交易流水,返回数据签名校验错误"
 )
 
-type Trade struct{}
-
 type SearchWithoutSignRequest struct {
 	XMLName   xml.Name `xml:"jdpay" json:"-"`
 	Version   string   `xml:"version" json:"version"`     //版本

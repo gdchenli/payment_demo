@@ -14,8 +14,6 @@ const (
 	VerifySignErrMessage        = "同步通知，签名校验失败"
 )
 
-type Verify struct{}
-
 func (allpay *Allpay) Verify(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
 	//callbackRsp.Rsp = query
 

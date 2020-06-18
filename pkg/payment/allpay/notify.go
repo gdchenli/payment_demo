@@ -21,8 +21,6 @@ const (
 	NotifyQueryRateErrMessage   = "异步通知，汇率查询失败"
 )
 
-type Notify struct{}
-
 func (allpay *Allpay) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	//解析参数
 	queryMap, err := JsonToMap(query)

@@ -39,8 +39,6 @@ const (
 	CloseTradeResponseDataSignErrMessage          = "关闭交易流水,返回数据签名校验错误"
 )
 
-type Close struct{}
-
 type CloseWithoutSignRequest struct {
 	XMLName   xml.Name `xml:"jdpay" json:"-"`
 	Version   string   `xml:"version" json:"version"`     //版本

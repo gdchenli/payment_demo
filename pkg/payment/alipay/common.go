@@ -11,6 +11,10 @@ import (
 
 type Alipay struct{}
 
+func New() *Alipay {
+	return new(Alipay)
+}
+
 //支付字符串拼接
 func GetSortString(m map[string]string) string {
 

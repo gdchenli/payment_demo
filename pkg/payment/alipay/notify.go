@@ -19,8 +19,6 @@ const (
 	NotifySignErrMessage          = "异步通知，签名校验失败"
 )
 
-type Notify struct{}
-
 func (alipay *Alipay) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	//解析参数
 	queryMap, err := ParseQueryString(query)

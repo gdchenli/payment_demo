@@ -37,8 +37,6 @@ const (
 	LogisticsUploadResponseDataSignErrMessage          = "回传物流信息,返回数据签名校验错误"
 )
 
-type Logistics struct{}
-
 type LogisticsArg struct {
 	OrderId          string `json:"order_id"`          //订单编号
 	LogisticsNo      string `json:"logistics_no"`      //物流单号
@@ -109,7 +107,7 @@ type LogisticsRsp struct {
 	DecryptRes string `json:"decrypt_res"` //请求的未加密数据
 }
 
-func (jd *Jd) Upload(configParamMap map[string]string, req request.UploadLogisticsReq) (logisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (jd *Jd) UploadLogistics(configParamMap map[string]string, req request.UploadLogisticsReq) (logisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
 	logisticsRsp.OrderId = req.OrderId
 
 	logisticsWithoutSignRequest := LogisticsWithoutSignRequest{
