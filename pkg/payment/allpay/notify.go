@@ -66,14 +66,14 @@ func (allpay *Allpay) Notify(configParamMap map[string]string, query, methodCode
 	}
 
 	//汇率
-	rateArg := request.SearchTradeReq{
+	tradeArg := request.SearchTradeReq{
 		OrderId:    queryMap["orderNum"],
 		MethodCode: methodCode,
 		OrgCode:    consts.AllpayOrg,
 		Currency:   queryMap["orderCurrency"],
 		TotalFee:   orderAmount,
 	}
-	trade, errCode, err := allpay.SearchTrade(configParamMap, rateArg)
+	trade, errCode, err := allpay.SearchTrade(configParamMap, tradeArg)
 	if err != nil {
 		logrus.Errorf("org:allpay,"+NotifyQueryRateErrMessage+",errCode:%v,err:%v", NotifyQueryRateErrCode, err.Error())
 		return notifyRsp, NotifyQueryRateErrCode, errors.New(NotifyQueryRateErrMessage)
