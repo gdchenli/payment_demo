@@ -107,7 +107,7 @@ type LogisticsRsp struct {
 	DecryptRes string `json:"decrypt_res"` //请求的未加密数据
 }
 
-func (jd *Jd) UploadLogistics(configParamMap map[string]string, req request.UploadLogisticsReq) (logisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (jd *Jd) UploadLogistics(configParamMap map[string]string, req request.UploadLogisticsArg) (logisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
 	logisticsRsp.OrderId = req.OrderId
 
 	logisticsWithoutSignRequest := LogisticsWithoutSignRequest{

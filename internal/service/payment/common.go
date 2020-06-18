@@ -12,7 +12,7 @@ import (
 
 type OrgHandler interface {
 	//发起支付
-	CreatePayUrl(configParamMap map[string]string, order request.Order) (url string, errCode int, err error) //pc、h5、支付宝小程序
+	CreatePayUrl(configParamMap map[string]string, order request.OrderArg) (url string, errCode int, err error) //pc、h5、支付宝小程序
 	/*WmpSumbit(configParamMap map[string]string, order request.Order) (wmRsp response.WmpRsp, errCode int, err error)  //微信小程序
 	AppSumbit(configParamMap map[string]string, order request.Order) (appRsp response.AppRsp, errCode int, err error) //App*/
 
@@ -21,8 +21,8 @@ type OrgHandler interface {
 	Verify(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) //同步通知
 
 	//交易信息
-	SearchTrade(configParamMap map[string]string, req request.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) //交易查询
-	CloseTrade(configParamMap map[string]string, req request.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error)     //关闭交易
+	SearchTrade(configParamMap map[string]string, req request.SearchTradeArg) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) //交易查询
+	CloseTrade(configParamMap map[string]string, req request.CloseTradeArg) (closeTradeRsp response.CloseTradeRsp, errCode int, err error)     //关闭交易
 	//UploadLogistics(configParamMap map[string]string, req request.UploadLogisticsReq) (uploadLogisticsRsp response.UploadLogisticsRsp, errCode int, err error) //上传物流
 
 	//配置

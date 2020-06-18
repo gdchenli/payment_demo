@@ -31,7 +31,7 @@ type DetailInfo struct {
 	Quantity  int    `json:"quantity"`
 }
 
-func (allpay *Allpay) CreatePayUrl(configParamMap map[string]string, order request.Order) (payUrl string, errCode int, err error) {
+func (allpay *Allpay) CreatePayUrl(configParamMap map[string]string, order request.OrderArg) (payUrl string, errCode int, err error) {
 	gateWay := getPayGateWay(configParamMap["gate_way"])
 	delete(configParamMap, "gata_way")
 
@@ -45,7 +45,7 @@ func (allpay *Allpay) CreatePayUrl(configParamMap map[string]string, order reque
 	return payUrl, 0, nil
 }
 
-func (allpay *Allpay) CreateAmpPayStr(configParamMap map[string]string, order request.Order) (payStr string, errCode int, err error) {
+func (allpay *Allpay) CreateAmpPayStr(configParamMap map[string]string, order request.OrderArg) (payStr string, errCode int, err error) {
 	gateWay := getPayGateWay(configParamMap["gate_way"])
 	delete(configParamMap, "gata_way")
 
@@ -72,7 +72,7 @@ func (allpay *Allpay) CreateAmpPayStr(configParamMap map[string]string, order re
 	return ampProgramRsp.SdkParams, 0, nil
 }
 
-func getPayParamMap(paramMap map[string]string, order request.Order) (map[string]string, int, error) {
+func getPayParamMap(paramMap map[string]string, order request.OrderArg) (map[string]string, int, error) {
 	orderAmount := fmt.Sprintf("%.2f", order.TotalFee)
 	transTime := time.Now().Format(TimeLayout)
 	detailInfoBytes, err := json.Marshal([]DetailInfo{{

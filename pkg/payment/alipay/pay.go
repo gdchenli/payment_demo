@@ -28,7 +28,7 @@ type TradeInformation struct {
 	TotalQuantity int    `json:"total_quantity"`
 }
 
-func getParamMap(paramMap map[string]string, order request.Order) map[string]string {
+func getParamMap(paramMap map[string]string, order request.OrderArg) map[string]string {
 	paramMap["service"] = getServiceType(order.UserAgentType)
 	paramMap["_input_charset"] = CharsetUTF8
 	paramMap["subject"] = order.OrderId
@@ -64,7 +64,7 @@ func getParamMap(paramMap map[string]string, order request.Order) map[string]str
 	return paramMap
 }
 
-func (alipay *Alipay) CreateAmpPayStr(configParamMap map[string]string, order request.Order) (payString string, errCode int, err error) {
+func (alipay *Alipay) CreateAmpPayStr(configParamMap map[string]string, order request.OrderArg) (payString string, errCode int, err error) {
 	delete(configParamMap, "gate_way")
 
 	paramMap := getParamMap(configParamMap, order)
@@ -72,7 +72,7 @@ func (alipay *Alipay) CreateAmpPayStr(configParamMap map[string]string, order re
 	return GetSortString(paramMap), 0, nil
 }
 
-func (alipay *Alipay) CreatePayUrl(configParamMap map[string]string, order request.Order) (url string, errCode int, err error) {
+func (alipay *Alipay) CreatePayUrl(configParamMap map[string]string, order request.OrderArg) (url string, errCode int, err error) {
 	geteWay := configParamMap["gate_way"]
 	delete(configParamMap, "gate_way")
 
@@ -81,7 +81,7 @@ func (alipay *Alipay) CreatePayUrl(configParamMap map[string]string, order reque
 	return buildPayUrl(paramMap, geteWay), 0, nil
 }
 
-func (alipay *Alipay) CreateAppPayStr(paramMap map[string]string, order request.Order) (appRsp response.AppRsp, errCode int, err error) {
+func (alipay *Alipay) CreateAppPayStr(paramMap map[string]string, order request.OrderArg) (appRsp response.AppRsp, errCode int, err error) {
 	return appRsp, 0, nil
 }
 

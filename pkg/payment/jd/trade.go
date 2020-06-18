@@ -111,7 +111,7 @@ type SearchPayRsp struct {
 	TradeTime string `xml:"tradeTime" json:"tradeTime"` //交易时间
 }
 
-func (jd *Jd) SearchTrade(paramMap map[string]string, req request.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (jd *Jd) SearchTrade(paramMap map[string]string, req request.SearchTradeArg) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
 	searchWithoutSignRequest := SearchWithoutSignRequest{
 		Version:   Version,
 		Merchant:  paramMap["merchant"],

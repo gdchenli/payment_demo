@@ -5,7 +5,7 @@ import (
 	"payment_demo/api/response"
 )
 
-func (alipay *Alipay) CloseTrade(configParamMap map[string]string, req request.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (alipay *Alipay) CloseTrade(configParamMap map[string]string, req request.CloseTradeArg) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
 	return closeTradeRsp, 0, nil
 }
 

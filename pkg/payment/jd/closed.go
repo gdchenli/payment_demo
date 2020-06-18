@@ -99,7 +99,7 @@ type CloseResultRsp struct {
 	Desc string `xml:"desc" json:"desc"` //返回码信息
 }
 
-func (jd *Jd) CloseTrade(configParamMap map[string]string, req request.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (jd *Jd) CloseTrade(configParamMap map[string]string, req request.CloseTradeArg) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
 	totalFeeStr := fmt.Sprintf("%.f", req.TotalFee*100)
 	totalFee, _ := strconv.ParseInt(totalFeeStr, 10, 64)
 	closedWithoutSignRequest := CloseWithoutSignRequest{

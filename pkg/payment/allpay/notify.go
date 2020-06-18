@@ -66,7 +66,7 @@ func (allpay *Allpay) Notify(configParamMap map[string]string, query, methodCode
 	}
 
 	//汇率
-	tradeArg := request.SearchTradeReq{
+	tradeArg := request.SearchTradeArg{
 		OrderId:    queryMap["orderNum"],
 		MethodCode: methodCode,
 		OrgCode:    consts.AllpayOrg,

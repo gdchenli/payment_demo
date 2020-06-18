@@ -36,7 +36,7 @@ const (
 	SearchTradeResponseDataSignErrMessage   = "查询交易流水,返回数据签名校验错误"
 )
 
-func (epayments *Epayments) SearchTrade(paramMap map[string]string, req request.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (epayments *Epayments) SearchTrade(paramMap map[string]string, req request.SearchTradeArg) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
 	md5Key := paramMap["md5_key"]
 	delete(paramMap, "md5_key")
 	gateWay := paramMap["gate_way"]
