@@ -28,44 +28,44 @@ func (p *Payment) Router(router *gin.Engine) {
 }
 
 func (p *Payment) pay(ctx *gin.Context) {
-	o := new(request.Order)
-	ctx.ShouldBind(o)
+	arg := new(request.OrderArg)
+	ctx.ShouldBind(arg)
 
-	if errCode, err := new(validate.Order).Validate(o); err != nil {
+	if errCode, err := new(validate.Order).Validate(arg); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	paymentService, errCode, err := payment.New(o.OrgCode)
+	paymentService, errCode, err := payment.New(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	submitRsp, errCode, err := paymentService.Pay(*o)
+	payRsp, errCode, err := paymentService.Pay(*arg)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": submitRsp})
+	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": payRsp})
 }
 
 func (p *Payment) qrcode(ctx *gin.Context) {
-	o := new(request.Order)
-	ctx.ShouldBind(o)
+	arg := new(request.OrderArg)
+	ctx.ShouldBind(arg)
 
-	if errCode, err := new(validate.Order).Validate(o); err != nil {
+	if errCode, err := new(validate.Order).Validate(arg); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	paymentService, errCode, err := payment.New(o.OrgCode)
+	paymentService, errCode, err := payment.New(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
-	submitRsp, errCode, err := paymentService.PayQrCode(*o)
+	submitRsp, errCode, err := paymentService.PayQrCode(*arg)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -75,20 +75,20 @@ func (p *Payment) qrcode(ctx *gin.Context) {
 }
 
 func (p *Payment) form(ctx *gin.Context) {
-	o := new(request.Order)
-	ctx.ShouldBind(o)
+	arg := new(request.OrderArg)
+	ctx.ShouldBind(arg)
 
-	if errCode, err := new(validate.Order).Validate(o); err != nil {
+	if errCode, err := new(validate.Order).Validate(arg); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	paymentService, errCode, err := payment.New(o.OrgCode)
+	paymentService, errCode, err := payment.New(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
-	submitRsp, errCode, err := paymentService.PayForm(*o)
+	submitRsp, errCode, err := paymentService.PayForm(*arg)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -146,20 +146,20 @@ func (p *Payment) verify(ctx *gin.Context) {
 }
 
 func (p *Payment) searchTrade(ctx *gin.Context) {
-	searchTradeReq := new(request.SearchTradeReq)
-	ctx.ShouldBind(searchTradeReq)
+	arg := new(request.SearchTradeArg)
+	ctx.ShouldBind(arg)
 
-	if errCode, err := new(validate.SearchTradeReq).Validate(searchTradeReq); err != nil {
+	if errCode, err := new(validate.SearchTradeReq).Validate(arg); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	paymentService, errCode, err := payment.New(searchTradeReq.OrgCode)
+	paymentService, errCode, err := payment.New(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
-	searchTradeRsp, errCode, err := paymentService.SearchTrade(*searchTradeReq)
+	searchTradeRsp, errCode, err := paymentService.SearchTrade(*arg)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
@@ -169,20 +169,20 @@ func (p *Payment) searchTrade(ctx *gin.Context) {
 }
 
 func (p *Payment) closeTrade(ctx *gin.Context) {
-	closeTradeReq := new(request.CloseTradeReq)
-	ctx.ShouldBind(closeTradeReq)
+	arg := new(request.CloseTradeArg)
+	ctx.ShouldBind(arg)
 
-	if errCode, err := new(validate.CloseTradeReq).Validate(closeTradeReq); err != nil {
+	if errCode, err := new(validate.CloseTradeReq).Validate(arg); err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
 	}
 
-	paymentService, errCode, err := payment.New(closeTradeReq.OrgCode)
+	paymentService, errCode, err := payment.New(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
-	closeTradeRsp, errCode, err := paymentService.CloseTrade(*closeTradeReq)
+	closeTradeRsp, errCode, err := paymentService.CloseTrade(*arg)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return
@@ -192,10 +192,10 @@ func (p *Payment) closeTrade(ctx *gin.Context) {
 }
 
 func (p *Payment) uploadLogistics(ctx *gin.Context) {
-	uploadLogisticsReq := new(request.UploadLogisticsReq)
-	ctx.ShouldBind(uploadLogisticsReq)
+	arg := new(request.UploadLogisticsArg)
+	ctx.ShouldBind(arg)
 
-	logisticsRsp, errCode, err := new(payment.Payment).UploadLogistics(*uploadLogisticsReq)
+	logisticsRsp, errCode, err := new(payment.Payment).UploadLogistics(*arg)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return

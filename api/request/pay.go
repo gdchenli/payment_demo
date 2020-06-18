@@ -1,6 +1,6 @@
 package request
 
-type Order struct {
+type OrderArg struct {
 	OrderId       string  `form:"order_id" json:"order_id"`               //订单编号
 	TotalFee      float64 `form:"total_fee" json:"total_fee"`             //金额
 	Currency      string  `form:"currency" json:"currency"`               //币种
