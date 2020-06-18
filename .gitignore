@@ -1,7 +1,3 @@
-.DS_Store
 .idea
-cmd/jd_private_key.pem
-cmd/jd_public_key.pem
-cmd/config.toml
-cmd
-cmd.exe
+.DS_Store
+!.gitignore

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/api/validate"
+	"payment_demo/api/request"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 	"time"
@@ -32,27 +32,6 @@ const (
 	PayEncryptErrMessage         = "发起支付，数据加密错误"
 )
 
-type Payment struct{}
-
-type PayArg struct {
-	Merchant      string      `json:"merchant"`      //商户号
-	TradeNum      string      `json:"tradeNum"`      //订单编号
-	TradeName     string      `json:"tradeName"`     //交易名称
-	Amount        int64       `json:"amount"`        //交易金额，单位分，大于0
-	Currency      string      `json:"currency"`      //货币种类
-	CallbackUrl   string      `json:"callbackUrl"`   //支付成功后跳转路径
-	NotifyUrl     string      `json:"notifyUrl"`     //异步通知页面地址
-	UserId        string      `json:"userId"`        //用户账号
-	ExpireTime    string      `json:"expireTime"`    //订单失效时长，单位：秒，失效后则不能再支付，默认失效时间为604800秒(7天)，最大失效时间为7776000秒（90天），超过则按90天计算
-	GoodsInfo     []GoodsInfo `json:"goodsInfo"`     //商品信息
-	KjInfo        KjInfo      `json:"kInfo"`         //业务信息
-	BizTp         string      `json:"bizTp"`         //通道业务类型
-	PrivateKey    string      `json:"privateKey"`    //商户私钥
-	DesKey        string      `json:"desKey"`        //des key
-	TransCurrency string      `json:"transCurrency"` //结算币种
-	PayWay        string      `json:"pay_way"`
-}
-
 type GoodsInfo struct {
 	Id    string `json:"id"`    //商品编号
 	Name  string `json:"name"`  //商品名称
@@ -65,7 +44,7 @@ type KjInfo struct {
 	GoodsUnderBonded      string `json:"goodsUnderBonded"`      //是否保税货物项下付款Y/N
 }
 
-func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.Order) (form string, errCode int, err error) {
+func (jd *Jd) CreatePayUrl(paramMap map[string]string, order request.Order) (form string, errCode int, err error) {
 	marshal, _ := json.Marshal(order)
 	reqParamMap := make(map[string]interface{})
 	json.Unmarshal(marshal, &reqParamMap)
@@ -76,7 +55,7 @@ func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.
 	return "/payment/form?" + values.Encode(), 0, nil
 }
 
-func (payment *Payment) CreatePayForm(paramMap map[string]string, order validate.Order) (form string, errCode int, err error) {
+func (jd *Jd) CreatePayForm(paramMap map[string]string, order request.Order) (form string, errCode int, err error) {
 	privateKey := paramMap["private_key"]
 	delete(paramMap, "private_key")
 	desKey := paramMap["des_key"]
@@ -117,26 +96,26 @@ func (payment *Payment) CreatePayForm(paramMap map[string]string, order validate
 	paramMap["bizTp"] = BusinessServiceConsumeCode
 
 	//签名
-	paramMap["sign"], err = payment.getSign(paramMap, privateKey)
+	paramMap["sign"], err = getPaySign(paramMap, privateKey)
 	if err != nil {
 		logrus.Errorf("org:jd,"+PaySignErrMessage+",order id %v,errCode:%v,err:%v", order.OrderId, PaySignErrCode, err.Error())
 		return form, PaySignErrCode, errors.New(PaySignErrMessage)
 	}
 
 	//加密
-	paramMap, err = payment.encrypt3DES(paramMap, desKey)
+	paramMap, err = encrypt3DES(paramMap, desKey)
 	if err != nil {
 		logrus.Errorf("org:jd,"+PayEncryptErrMessage+",order id %v,errCode:%v,err:%v", order.OrderId, PayEncryptErrCode, err.Error())
 		return form, PayEncryptErrCode, errors.New(PayEncryptErrMessage)
 	}
 
 	//生成form表单
-	form = payment.buildPayForm(paramMap, payWay)
+	form = buildPayForm(paramMap, payWay)
 
 	return form, 0, nil
 }
 
-func (payment *Payment) buildPayForm(paramMap map[string]string, gateWay string) (payUrl string) {
+func buildPayForm(paramMap map[string]string, gateWay string) (payUrl string) {
 	payUrl = "<form action='" + gateWay + "' method='post' id='pay_form'>"
 	for k, v := range paramMap {
 		payUrl += "<input value='" + v + "' name='" + k + "' type='hidden'/>"
@@ -146,7 +125,7 @@ func (payment *Payment) buildPayForm(paramMap map[string]string, gateWay string)
 	return payUrl
 }
 
-func (payment *Payment) encrypt3DES(paramMap map[string]string, desKey string) (map[string]string, error) {
+func encrypt3DES(paramMap map[string]string, desKey string) (map[string]string, error) {
 	desKey = BASE64DecodeStr(desKey)
 	for k, v := range paramMap {
 		if k == "sign" || k == "merchant" || k == "version" {
@@ -161,7 +140,7 @@ func (payment *Payment) encrypt3DES(paramMap map[string]string, desKey string) (
 	return paramMap, nil
 }
 
-func (payment *Payment) getSign(paramMap map[string]string, privateKey string) (string, error) {
+func getPaySign(paramMap map[string]string, privateKey string) (string, error) {
 	payString := GetSortString(paramMap)
 	sha256 := HaSha256(payString)
 	sign, err := SignPKCS1v15([]byte(sha256), []byte(privateKey), crypto.Hash(0))
@@ -173,7 +152,7 @@ func (payment *Payment) getSign(paramMap map[string]string, privateKey string) (
 	return base64String, nil
 }
 
-func (payment *Payment) GetConfigCode() []string {
+func (jd *Jd) GetPayConfigCode() []string {
 	return []string{
 		"merchant", "callbackUrl", "notifyUrl", "settleCurrency", "expireTime",
 		"des_key", "pc_pay_way", "h5_pay_way", "private_key",

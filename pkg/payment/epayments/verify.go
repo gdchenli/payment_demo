@@ -15,15 +15,13 @@ const (
 	VerifySignErrMessage        = "同步通知，签名校验失败"
 )
 
-type Verify struct{}
-
 type CallbackRsp struct {
 	OrderId string `json:"order_id"` //订单号
 	Status  bool   `json:"status"`   //交易状态，true交易成功 false交易失败
 	Rsp     string `json:"rsp"`      //返回的数据
 }
 
-func (verify *Verify) Validate(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+func (epayments *Epayments) Verify(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
 	//解析参数
 	queryMap, err := ParseQueryString(query)
 	if err != nil {
@@ -42,7 +40,7 @@ func (verify *Verify) Validate(configParamMap map[string]string, query, methodCo
 		delete(queryMap, "sign_type")
 	}
 
-	if !verify.checkSign(queryMap, configParamMap["md5_key"], sign) {
+	if !checkVerifySign(queryMap, configParamMap["md5_key"], sign) {
 		logrus.Errorf("org:epayments,"+VerifySignErrMessage+",query:%v,errCode:%v", query, VerifySignErrCode)
 		return verifyRsp, VerifySignErrCode, errors.New(VerifySignErrMessage)
 	}
@@ -55,14 +53,14 @@ func (verify *Verify) Validate(configParamMap map[string]string, query, methodCo
 	return verifyRsp, 0, nil
 }
 
-func (verify *Verify) checkSign(queryMap map[string]string, signKey, sign string) bool {
+func checkVerifySign(queryMap map[string]string, signKey, sign string) bool {
 	sortString := GetSortString(queryMap)
 	fmt.Println("sortString", sortString)
 	calculateSign := Md5(sortString + signKey)
 	return calculateSign == sign
 }
 
-func (verify *Verify) GetConfigCode() []string {
+func (epayments *Epayments) GetVerifyConfigCode() []string {
 	return []string{
 		"md5_key",
 	}

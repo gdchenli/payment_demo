@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"payment_demo/api/request"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
 	"payment_demo/pkg/curl"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
@@ -40,20 +40,6 @@ const (
 	SearchTradeRateFormatErrMessage         = "查询交易流水,汇率查询结果格式错误"
 )
 
-type Trade struct{}
-
-type TradeArg struct {
-	OrderNum      string  `json:"orderNum"`
-	PaymentSchema string  `json:"paymentSchema"` //渠道代码
-	MerId         string  `json:"merID"`         //商户号ID ，由 GoAllPay 分配
-	AcqId         string  `json:"acqID"`         //收单行ID "99020344"
-	Md5Key        string  `json:"md5Key"`        //安全code
-	TradeGateWay  string  `json:"tradeGgateWay"` //查询交易网关地址
-	SapiGateWay   string  `json:"sapiGateWay"`   //查询汇率网关地址
-	Currency      string  `json:"currency"`      //币种
-	TotalFee      float64 `json:"total_fee"`     //金额
-}
-
 type TradeResult struct {
 	RespCode string `json:"RespCode"`
 	RespMsg  string `json:"RespMsg"`
@@ -71,10 +57,10 @@ type TradeRsp struct {
 	Rsp     string  `json:"rsp"`
 }
 
-func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (allpay *Allpay) SearchTrade(paramMap map[string]string, req request.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
 	md5Key := paramMap["md5_key"]
 	delete(paramMap, "md5_key")
-	gateWay := trade.getGateWay(paramMap["gate_way"])
+	gateWay := getSearchTradeGateWay(paramMap["gate_way"])
 	delete(paramMap, "gate_way")
 	sapiWay := paramMap["sapi_way"]
 	delete(paramMap, "sapi_way")
@@ -84,10 +70,10 @@ func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeR
 	paramMap["charSet"] = CharsetUTF8
 	paramMap["transType"] = SearchTradeTransType
 	paramMap["orderNum"] = req.OrderId
-	paramMap["paymentSchema"] = trade.getPaymentSchema(req.MethodCode)
+	paramMap["paymentSchema"] = getSearchTradePaymentSchema(req.MethodCode)
 	paramMap["transTime"] = transTime
 	paramMap["signType"] = MD5SignType
-	paramMap["signature"] = trade.getSign(paramMap, md5Key)
+	paramMap["signature"] = getSearchTradeSign(paramMap, md5Key)
 	values := url.Values{}
 	for k, v := range paramMap {
 		values.Add(k, v)
@@ -109,7 +95,7 @@ func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeR
 	//校验签名
 	sign := rspMap["signature"]
 	delete(rspMap, "signature")
-	if !trade.checkSign(rspMap, md5Key, sign) {
+	if !checkSearchTradeSign(rspMap, md5Key, sign) {
 		logrus.Errorf("org:allpay,"+SearchTradeResponseDataFormatErrMessage+",order id %v,errCode:%v", req.OrderId, SearchTradeResponseDataFormatErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
@@ -133,7 +119,7 @@ func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeR
 		PaymentSchema:          rspMap["paymentSchema"],
 		GateWay:                sapiWay,
 	}
-	tradeRsp.Rate, errCode, err = new(Rate).Search(rateArg)
+	tradeRsp.Rate, errCode, err = allpay.SearchRate(rateArg)
 	if err != nil {
 		logrus.Errorf("org:allpay,"+SearchTradeRateFormatErrMessage+",errCode:%v,err:%v", SearchTradeRateFormatErrCode, err.Error())
 		return tradeRsp, SearchTradeRateFormatErrCode, errors.New(SearchTradeRateFormatErrMessage)
@@ -149,22 +135,22 @@ func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeR
 	return tradeRsp, 0, nil
 }
 
-func (trade *Trade) getSign(paramMap map[string]string, signKey string) string {
+func getSearchTradeSign(paramMap map[string]string, signKey string) string {
 	sortString := GetSortString(paramMap)
 	return Md5(sortString + signKey)
 }
 
-func (trade *Trade) checkSign(rspMap map[string]string, md5Key, sign string) bool {
+func checkSearchTradeSign(rspMap map[string]string, md5Key, sign string) bool {
 	sortString := GetSortString(rspMap)
 	calculateSign := Md5(sortString + md5Key)
 	return calculateSign == sign
 }
 
-func (trade *Trade) getGateWay(gateWay string) string {
+func getSearchTradeGateWay(gateWay string) string {
 	return gateWay + TradeRoute
 }
 
-func (trade *Trade) getPaymentSchema(methodCode string) string {
+func getSearchTradePaymentSchema(methodCode string) string {
 	switch methodCode {
 	case consts.AlipayMethod:
 		return ApSchema
@@ -175,7 +161,7 @@ func (trade *Trade) getPaymentSchema(methodCode string) string {
 	}
 }
 
-func (trade *Trade) GetConfigCode() []string {
+func (allpay *Allpay) GetSearchTradeConfigCode() []string {
 	return []string{
 		"merID", "acqID", "md5_key", "gate_way", "sapi_way",
 	}

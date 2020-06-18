@@ -3,8 +3,8 @@ package alipay
 import (
 	"errors"
 	"fmt"
+	"payment_demo/api/request"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
 	"strconv"
 
 	"github.com/sirupsen/logrus"
@@ -19,9 +19,7 @@ const (
 	NotifySignErrMessage          = "异步通知，签名校验失败"
 )
 
-type Notify struct{}
-
-func (notify *Notify) Validate(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (alipay *Alipay) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	//解析参数
 	queryMap, err := ParseQueryString(query)
 	if err != nil {
@@ -39,7 +37,7 @@ func (notify *Notify) Validate(configParamMap map[string]string, query, methodCo
 		delete(queryMap, "sign_type")
 	}
 
-	if !notify.checkSign(queryMap, configParamMap["md5_key"], sign) {
+	if !checkNotifySign(queryMap, configParamMap["md5_key"], sign) {
 		logrus.Errorf(NotifySignErrMessage+",order id %v,errCode:%v", notifyRsp.OrderId, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
@@ -58,12 +56,12 @@ func (notify *Notify) Validate(configParamMap map[string]string, query, methodCo
 		return notifyRsp, NotifyDecryptFormatErrCode, errors.New(NotifyDecryptFormatErrMessage)
 	}
 
-	tradeArg := validate.SearchTradeReq{
+	tradeArg := request.SearchTradeReq{
 		OrderId:    queryMap["out_trade_no"],
 		MethodCode: methodCode,
 		OrgCode:    "alipay", TotalFee: totalFee,
 		Currency: queryMap["currency"]}
-	alipayTradeRsp, errCode, err := new(Trade).Search(configParamMap, tradeArg)
+	alipayTradeRsp, errCode, err := alipay.SearchTrade(configParamMap, tradeArg)
 	if err != nil {
 		return notifyRsp, errCode, err
 	}
@@ -87,14 +85,14 @@ func (notify *Notify) Validate(configParamMap map[string]string, query, methodCo
 	return notifyRsp, 0, nil
 }
 
-func (notify *Notify) checkSign(queryMap map[string]string, md5Key, sign string) bool {
+func checkNotifySign(queryMap map[string]string, md5Key, sign string) bool {
 	sortString := GetSortString(queryMap)
 	calculateSign := Md5(sortString + md5Key)
 
 	return calculateSign == sign
 }
 
-func (notify *Notify) GetConfigCode() []string {
+func (alipay *Alipay) GetNotifyConfigCode() []string {
 	return []string{
 		"md5_key", "gate_way", "partner",
 	}

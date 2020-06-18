@@ -1,6 +1,9 @@
 package validate
 
-import "errors"
+import (
+	"errors"
+	"payment_demo/api/request"
+)
 
 const (
 	RequiredSearchTradeOrderIdErrCode    = 10550
@@ -15,15 +18,22 @@ const (
 	RequiredTradeCurrencyErrMessage      = "请输入查询交易的订单币种"
 )
 
-type SearchTradeReq struct {
-	OrderId    string  `form:"order_id" json:"order_id"`       //订单号
-	MethodCode string  `form:"method_code" json:"method_code"` //支付方式
-	OrgCode    string  `form:"org_code" json:"org_code"`       //支付机构
-	Currency   string  `form:"currency" json:"currency"`       //币种
-	TotalFee   float64 `form:"total_fee" json:"total_fee"`     //金额
-}
+const (
+	RequiredCloseTradeOrderIdErrCode     = 10450
+	RequiredCloseTradeOrderIdErrMessage  = "请输入需要关闭交易的订单编号"
+	RequiredCloseTradeTotalFeeErrCode    = 10451
+	RequiredCloseTradeTotalFeeErrMessage = "请输入需要关闭交易的订单金额"
+	RequiredCloseTradeCurrencyErrCode    = 10453
+	RequiredCloseTradeCurrencyErrMessage = "请输入需要关闭交易的订单币种"
+	RequiredCloseTradeMethodErrCode      = 10453
+	RequiredCloseTradeMethodErrMessage   = "请选择需要关闭交易的支付方式"
+	RequiredCloseTradeOrgErrCode         = 10454
+	RequiredCloseTradeOrgErrMessage      = "请选择需要关闭交易的支付机构"
+)
 
-func (searchTradeReq *SearchTradeReq) Validate() (errCode int, err error) {
+type SearchTradeReq struct{}
+
+func (t *SearchTradeReq) Validate(searchTradeReq *request.SearchTradeReq) (errCode int, err error) {
 	if searchTradeReq.OrderId == "" {
 		return RequiredSearchTradeOrderIdErrCode, errors.New(RequiredSearchTradeOrderIdErrMessage)
 	}
@@ -47,28 +57,9 @@ func (searchTradeReq *SearchTradeReq) Validate() (errCode int, err error) {
 	return 0, nil
 }
 
-type CloseTradeReq struct {
-	OrderId    string  `form:"order_id" json:"order_id"`       //订单号
-	TotalFee   float64 `form:"total_fee" json:"total_fee"`     //订单金额
-	Currency   string  `form:"currency" json:"currency"`       //订单币种
-	MethodCode string  `form:"method_code" json:"method_code"` //支付方式
-	OrgCode    string  `form:"org_code" json:"org_code"`       //支付机构
-}
+type CloseTradeReq struct{}
 
-const (
-	RequiredCloseTradeOrderIdErrCode     = 10450
-	RequiredCloseTradeOrderIdErrMessage  = "请输入需要关闭交易的订单编号"
-	RequiredCloseTradeTotalFeeErrCode    = 10451
-	RequiredCloseTradeTotalFeeErrMessage = "请输入需要关闭交易的订单金额"
-	RequiredCloseTradeCurrencyErrCode    = 10453
-	RequiredCloseTradeCurrencyErrMessage = "请输入需要关闭交易的订单币种"
-	RequiredCloseTradeMethodErrCode      = 10453
-	RequiredCloseTradeMethodErrMessage   = "请选择需要关闭交易的支付方式"
-	RequiredCloseTradeOrgErrCode         = 10454
-	RequiredCloseTradeOrgErrMessage      = "请选择需要关闭交易的支付机构"
-)
-
-func (closeTradeReq *CloseTradeReq) Validate() (errCode int, err error) {
+func (t *CloseTradeReq) Validate(closeTradeReq *request.CloseTradeReq) (errCode int, err error) {
 	if closeTradeReq.OrderId == "" {
 		return RequiredCloseTradeOrderIdErrCode, errors.New(RequiredCloseTradeOrderIdErrMessage)
 	}

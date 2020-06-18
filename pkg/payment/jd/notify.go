@@ -30,8 +30,6 @@ const (
 	NotifySignErrMessage          = "异步通知，签名校验失败"
 )
 
-type Notify struct{}
-
 type NotifyQuery struct {
 	XMLName  xml.Name     `xml:"jdpay" json:"-"`
 	Version  string       `xml:"version" json:"version"`   //版本号
@@ -80,7 +78,7 @@ type NotifyRsp struct {
 	DecryptRsp string  `json:"decrypt_rsp"` //返回的解密数据
 }
 
-func (notify *Notify) Validate(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (jd *Jd) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
 	//notifyRsp.EncryptRsp = query
 
 	//解析加密的支付机构参数为结构体
@@ -92,7 +90,7 @@ func (notify *Notify) Validate(configParamMap map[string]string, query, methodCo
 	}
 
 	//解密支付机构参数
-	decryptBytes, err := notify.decryptArg(notifyQuery, configParamMap["des_key"])
+	decryptBytes, err := decryptNotifyArg(notifyQuery, configParamMap["des_key"])
 	if err != nil {
 		logrus.Errorf("org:jd,"+NotifyDecryptFailedErrMessage+",query:%v,errCode:%v,err:%v", query, NotifyDecryptFailedErrCode, err.Error())
 		return notifyRsp, NotifyDecryptFailedErrCode, errors.New(NotifyDecryptFailedErrMessage)
@@ -116,7 +114,7 @@ func (notify *Notify) Validate(configParamMap map[string]string, query, methodCo
 	notifyRsp.OrderId = notifyDecrypt.TradeNum
 
 	//校验签名
-	if !notify.checkSign(decryptBytes, notifyDecrypt.Sign, configParamMap["public_key"]) {
+	if !checkNotifySign(decryptBytes, notifyDecrypt.Sign, configParamMap["public_key"]) {
 		logrus.Errorf("org:jd,"+NotifySignErrMessage+",query:%v,errCode:%v", query, NotifySignErrCode)
 		return notifyRsp, NotifySignErrCode, errors.New(NotifySignErrMessage)
 	}
@@ -144,7 +142,7 @@ func (notify *Notify) Validate(configParamMap map[string]string, query, methodCo
 	return notifyRsp, 0, nil
 }
 
-func (notify *Notify) decryptArg(notifyQuery NotifyQuery, desKey string) (decryptBytes []byte, err error) {
+func decryptNotifyArg(notifyQuery NotifyQuery, desKey string) (decryptBytes []byte, err error) {
 	desKeyBytes, err := base64.StdEncoding.DecodeString(desKey)
 	if err != nil {
 		return nil, err
@@ -165,7 +163,7 @@ func (notify *Notify) decryptArg(notifyQuery NotifyQuery, desKey string) (decryp
 	return decryptBytes, nil
 }
 
-func (notify *Notify) checkSign(decryptBytes []byte, sign, publicKey string) bool {
+func checkNotifySign(decryptBytes []byte, sign, publicKey string) bool {
 	decrypt := string(decryptBytes)
 	clipStartIndex := strings.Index(decrypt, "<sign>")
 	clipEndIndex := strings.Index(decrypt, "</sign>")
@@ -187,7 +185,7 @@ func (notify *Notify) checkSign(decryptBytes []byte, sign, publicKey string) boo
 	return VerifyPKCS1v15([]byte(sha256), signByte, []byte(publicKey), crypto.Hash(0))
 }
 
-func (notify *Notify) GetConfigCode() []string {
+func (jd *Jd) GetNotifyConfigCode() []string {
 	return []string{
 		"merchant",
 		"des_key", "public_key",

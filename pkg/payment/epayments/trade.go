@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"payment_demo/api/request"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
 	"payment_demo/pkg/curl"
 	"strconv"
 	"time"
@@ -36,9 +36,7 @@ const (
 	SearchTradeResponseDataSignErrMessage   = "查询交易流水,返回数据签名校验错误"
 )
 
-type Trade struct{}
-
-func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (epayments *Epayments) SearchTrade(paramMap map[string]string, req request.SearchTradeReq) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
 	md5Key := paramMap["md5_key"]
 	delete(paramMap, "md5_key")
 	gateWay := paramMap["gate_way"]
@@ -78,7 +76,7 @@ func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeR
 		}
 		tradeRspMap[k] = fmt.Sprintf("%v", v)
 	}
-	if !trade.checkSign(tradeRspMap, md5Key, sign) {
+	if !checkSearchTradeSign(tradeRspMap, md5Key, sign) {
 		logrus.Errorf("org:epayments,"+SearchTradeResponseDataSignErrMessage+",orderId:%v,query:%v,errCode:%v", req.OrderId, sortString, SearchTradeResponseDataSignErrCode)
 		return tradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
@@ -101,6 +99,9 @@ func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeR
 		tradeRsp.Status = SearchTradeRevoked
 	case TradeRefund:
 		tradeRsp.Status = SearchTradeRefund
+	}
+	if tradeRsp.Status != TradeSuccess {
+		return tradeRsp, 0, nil
 	}
 
 	//支付时间
@@ -135,13 +136,13 @@ func (trade *Trade) Search(paramMap map[string]string, req validate.SearchTradeR
 	return tradeRsp, 0, nil
 }
 
-func (trade *Trade) checkSign(rspMap map[string]string, md5Key, sign string) bool {
+func checkSearchTradeSign(rspMap map[string]string, md5Key, sign string) bool {
 	sortString := GetSortString(rspMap)
 	calculateSign := Md5(sortString + md5Key)
 	return calculateSign == sign
 }
 
-func (trade *Trade) GetConfigCode() []string {
+func (epayments *Epayments) GetSearchTradeConfigCode() []string {
 	return []string{
 		"merchant_id",
 		"md5_key", "gate_way",

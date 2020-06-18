@@ -6,8 +6,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"payment_demo/api/request"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
 	"payment_demo/pkg/curl"
 	"regexp"
 	"strings"
@@ -36,8 +36,6 @@ const (
 	LogisticsUploadResponseDataSignErrCode             = 10608
 	LogisticsUploadResponseDataSignErrMessage          = "回传物流信息,返回数据签名校验错误"
 )
-
-type Logistics struct{}
 
 type LogisticsArg struct {
 	OrderId          string `json:"order_id"`          //订单编号
@@ -109,7 +107,7 @@ type LogisticsRsp struct {
 	DecryptRes string `json:"decrypt_res"` //请求的未加密数据
 }
 
-func (l *Logistics) Upload(configParamMap map[string]string, req validate.UploadLogisticsReq) (logisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (jd *Jd) UploadLogistics(configParamMap map[string]string, req request.UploadLogisticsReq) (logisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
 	logisticsRsp.OrderId = req.OrderId
 
 	logisticsWithoutSignRequest := LogisticsWithoutSignRequest{
@@ -212,7 +210,7 @@ func (l *Logistics) Upload(configParamMap map[string]string, req validate.Upload
 	}
 
 	//签名校验
-	if !l.checkSignature(logisticsDecryptRsp.Sign, string(rspDecryptBytes), configParamMap["public_key"]) {
+	if !checkUploadLogisticsSignature(logisticsDecryptRsp.Sign, string(rspDecryptBytes), configParamMap["public_key"]) {
 		logrus.Errorf(LogisticsUploadResponseDataSignErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", req, logisticsRsp, LogisticsUploadResponseDataSignErrCode)
 		return logisticsRsp, LogisticsUploadResponseDataSignErrCode, errors.New(LogisticsUploadResponseDataSignErrMessage)
 	}
@@ -226,7 +224,7 @@ func (l *Logistics) Upload(configParamMap map[string]string, req validate.Upload
 }
 
 //验证结果
-func (l *Logistics) checkSignature(sign, decryptRsp, publicKey string) bool {
+func checkUploadLogisticsSignature(sign, decryptRsp, publicKey string) bool {
 	//签名字符串截取
 	clipStartIndex := strings.Index(decryptRsp, "<sign>")
 	clipEndIndex := strings.Index(decryptRsp, "</sign>")
@@ -251,7 +249,7 @@ func (l *Logistics) checkSignature(sign, decryptRsp, publicKey string) bool {
 	return verifySign
 }
 
-func (l *Logistics) GetConfigCode() []string {
+func (jd *Jd) GetUploadLogisticsConfigCode() []string {
 	return []string{
 		"merchant", "merchantName",
 		"des_key", "private_key", "public_key", "logistics_way",

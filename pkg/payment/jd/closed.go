@@ -6,8 +6,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"payment_demo/api/request"
 	"payment_demo/api/response"
-	"payment_demo/api/validate"
 	"payment_demo/pkg/curl"
 	"regexp"
 	"strconv"
@@ -38,8 +38,6 @@ const (
 	CloseTradeResponseDataSignErrCode             = 10408
 	CloseTradeResponseDataSignErrMessage          = "关闭交易流水,返回数据签名校验错误"
 )
-
-type Close struct{}
 
 type CloseWithoutSignRequest struct {
 	XMLName   xml.Name `xml:"jdpay" json:"-"`
@@ -101,7 +99,7 @@ type CloseResultRsp struct {
 	Desc string `xml:"desc" json:"desc"` //返回码信息
 }
 
-func (close *Close) Trade(configParamMap map[string]string, req validate.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (jd *Jd) CloseTrade(configParamMap map[string]string, req request.CloseTradeReq) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
 	totalFeeStr := fmt.Sprintf("%.f", req.TotalFee*100)
 	totalFee, _ := strconv.ParseInt(totalFeeStr, 10, 64)
 	closedWithoutSignRequest := CloseWithoutSignRequest{
@@ -206,7 +204,7 @@ func (close *Close) Trade(configParamMap map[string]string, req validate.CloseTr
 	closeTradeRsp.OrderId = closeDecryptRsp.TradeNum
 
 	//签名校验
-	if !close.checkSignature(closeDecryptRsp.Sign, string(rspDecryptBytes), configParamMap["public_key"]) {
+	if !checkCloseTradeSignature(closeDecryptRsp.Sign, string(rspDecryptBytes), configParamMap["public_key"]) {
 		logrus.Errorf(CloseTradeResponseDataSignErrMessage+",request:%+v,response:%v,errCode:%v,err:%v", req, closeResult, CloseTradeResponseDataSignErrCode)
 		return closeTradeRsp, CloseTradeResponseDataSignErrCode, errors.New(CloseTradeResponseDataSignErrMessage)
 	}
@@ -219,7 +217,7 @@ func (close *Close) Trade(configParamMap map[string]string, req validate.CloseTr
 }
 
 //验证查询交易结果
-func (close *Close) checkSignature(sign, decryptRsp, publicKey string) bool {
+func checkCloseTradeSignature(sign, decryptRsp, publicKey string) bool {
 	//签名字符串截取
 	clipStartIndex := strings.Index(decryptRsp, "<sign>")
 	clipEndIndex := strings.Index(decryptRsp, "</sign>")
@@ -244,7 +242,7 @@ func (close *Close) checkSignature(sign, decryptRsp, publicKey string) bool {
 	return verifySign
 }
 
-func (close *Close) GetConfigCode() []string {
+func (jd *Jd) GetCloseTradeConfigCode() []string {
 	return []string{
 		"merchant",
 		"des_key", "private_key", "public_key", "close_way",

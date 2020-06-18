@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/api/validate"
+	"payment_demo/api/request"
 	"payment_demo/pkg/curl"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
@@ -27,23 +27,7 @@ const (
 	PayNetErrMessage = "发起支付,网络错误"
 )
 
-type Payment struct{}
-
-type PayArg struct {
-	MerchantId      string  `json:"merchant_id"`    //商户ID
-	NotifyUrl       string  `json:"notify_url"`     //支付结果异步通知到该地址
-	ReturnUrl       string  `json:"return_url"`     //支付结果异步通知到该地址
-	ValidMins       string  `json:"valid_mins"`     //创建交易有效期，单位为分钟，超过时间，订单失效，不传入，默认1小时。
-	IncrementId     string  `json:"increment_id"`   //订单号
-	GrandTotal      float64 `json:"grandtotal"`     //订单金额
-	Currency        string  `json:"currency"`       //订单币种
-	GateWay         string  `json:"gate_way"`       //网关地址
-	Md5Key          string  `json:"md5_key"`        //密钥
-	TransCurrency   string  `json:"trans_currency"` //结算币种
-	PaymentChannels string  `json:"payment_channels"`
-}
-
-func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.Order) (payUrl string, errCode int, err error) {
+func (epayments *Epayments) CreatePayUrl(paramMap map[string]string, order request.Order) (payUrl string, errCode int, err error) {
 	if order.UserAgentType == consts.WebUserAgentType {
 		marshal, _ := json.Marshal(order)
 		reqParamMap := make(map[string]interface{})
@@ -73,19 +57,19 @@ func (payment *Payment) CreatePayUrl(paramMap map[string]string, order validate.
 	paramMap["subject"] = order.OrderId
 	paramMap["grandtotal"] = grandTotal
 	paramMap["increment_id"] = order.OrderId
-	paramMap["payment_channels"] = payment.getPaymentChannels(order.MethodCode)
+	paramMap["payment_channels"] = getPayPaymentChannels(order.MethodCode)
 	paramMap["describe"] = order.OrderId
 	paramMap["nonce_str"] = GetRandomString(20)
 	sortString := GetSortString(paramMap)
 	paramMap["signature"] = Md5(sortString + md5Key)
 	paramMap["sign_type"] = SignTypeMD5
 
-	payUrl = payment.buildPayUrl(paramMap, gateWay)
+	payUrl = buildPayUrl(paramMap, gateWay)
 
 	return payUrl, 0, nil
 }
 
-func (payment *Payment) buildPayUrl(paramMap map[string]string, gateWay string) (payUrl string) {
+func buildPayUrl(paramMap map[string]string, gateWay string) (payUrl string) {
 	values := url.Values{}
 	for k, v := range paramMap {
 		values.Add(k, v)
@@ -105,7 +89,7 @@ type QrCodeResult struct {
 	SignType    string `json:"sign_type"`    //签名类型
 }
 
-func (payment *Payment) CreateQrCode(paramMap map[string]string, order validate.Order) (qrCodeUrl string, errCode int, err error) {
+func (epayments *Epayments) CreateQrCode(paramMap map[string]string, order request.Order) (qrCodeUrl string, errCode int, err error) {
 	gateWay := paramMap["gate_way"]
 	delete(paramMap, "gate_way")
 
@@ -126,7 +110,7 @@ func (payment *Payment) CreateQrCode(paramMap map[string]string, order validate.
 	paramMap["subject"] = order.OrderId
 	paramMap["grandtotal"] = grandTotal
 	paramMap["increment_id"] = order.OrderId
-	paramMap["payment_channels"] = payment.getPaymentChannels(order.MethodCode)
+	paramMap["payment_channels"] = getPayPaymentChannels(order.MethodCode)
 	paramMap["describe"] = order.OrderId
 	paramMap["nonce_str"] = GetRandomString(20)
 	sortString := GetSortString(paramMap)
@@ -162,7 +146,7 @@ func (payment *Payment) CreateQrCode(paramMap map[string]string, order validate.
 }
 
 //获取支付通道
-func (payment *Payment) getPaymentChannels(methodCode string) (paymentChannels string) {
+func getPayPaymentChannels(methodCode string) (paymentChannels string) {
 	if methodCode == consts.WechatMethod {
 		paymentChannels = ChannelWechat
 	} else if methodCode == consts.AlipayMethod {
@@ -171,7 +155,7 @@ func (payment *Payment) getPaymentChannels(methodCode string) (paymentChannels s
 	return paymentChannels
 }
 
-func (payment *Payment) GetConfigCode() []string {
+func (epayments *Epayments) GetPayConfigCode() []string {
 	return []string{
 		"merchant_id", "notify_url", "return_url", "currency", "valid_mins",
 		"md5_key", "gate_way",

@@ -11,6 +11,12 @@ import (
 	"time"
 )
 
+type Epayments struct{}
+
+func New() *Epayments {
+	return new(Epayments)
+}
+
 //生成随机字符串
 func GetRandomString(length int) string {
 	str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
