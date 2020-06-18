@@ -2,7 +2,7 @@
 
 ### 支付方式
 |支付机构|支付方式|版本|支付机构文档|
-|---|---|---|
+|---|---|---|---|
 |京东|京东支付|2.0||
 |allpay|支付宝支付、银联支付|5.0|[文档](https://git.allpayx.com/OpenAPI/common/src/master/AllPay_Integration_Specification_CH.md)|
 |epayments|微信支付|[文档](https://www.kiwifast.com/doc/)|
