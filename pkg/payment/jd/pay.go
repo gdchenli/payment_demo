@@ -65,7 +65,7 @@ type KjInfo struct {
 	GoodsUnderBonded      string `json:"goodsUnderBonded"`      //是否保税货物项下付款Y/N
 }
 
-func (payment *Payment) CreatePayUrl(paramMap map[string]string, order request.Order) (form string, errCode int, err error) {
+func (jd *Jd) CreatePayUrl(paramMap map[string]string, order request.Order) (form string, errCode int, err error) {
 	marshal, _ := json.Marshal(order)
 	reqParamMap := make(map[string]interface{})
 	json.Unmarshal(marshal, &reqParamMap)
@@ -76,7 +76,7 @@ func (payment *Payment) CreatePayUrl(paramMap map[string]string, order request.O
 	return "/payment/form?" + values.Encode(), 0, nil
 }
 
-func (payment *Payment) CreatePayForm(paramMap map[string]string, order request.Order) (form string, errCode int, err error) {
+func (jd *Jd) CreatePayForm(paramMap map[string]string, order request.Order) (form string, errCode int, err error) {
 	privateKey := paramMap["private_key"]
 	delete(paramMap, "private_key")
 	desKey := paramMap["des_key"]
@@ -117,26 +117,26 @@ func (payment *Payment) CreatePayForm(paramMap map[string]string, order request.
 	paramMap["bizTp"] = BusinessServiceConsumeCode
 
 	//签名
-	paramMap["sign"], err = payment.getSign(paramMap, privateKey)
+	paramMap["sign"], err = getPaySign(paramMap, privateKey)
 	if err != nil {
 		logrus.Errorf("org:jd,"+PaySignErrMessage+",order id %v,errCode:%v,err:%v", order.OrderId, PaySignErrCode, err.Error())
 		return form, PaySignErrCode, errors.New(PaySignErrMessage)
 	}
 
 	//加密
-	paramMap, err = payment.encrypt3DES(paramMap, desKey)
+	paramMap, err = encrypt3DES(paramMap, desKey)
 	if err != nil {
 		logrus.Errorf("org:jd,"+PayEncryptErrMessage+",order id %v,errCode:%v,err:%v", order.OrderId, PayEncryptErrCode, err.Error())
 		return form, PayEncryptErrCode, errors.New(PayEncryptErrMessage)
 	}
 
 	//生成form表单
-	form = payment.buildPayForm(paramMap, payWay)
+	form = buildPayForm(paramMap, payWay)
 
 	return form, 0, nil
 }
 
-func (payment *Payment) buildPayForm(paramMap map[string]string, gateWay string) (payUrl string) {
+func buildPayForm(paramMap map[string]string, gateWay string) (payUrl string) {
 	payUrl = "<form action='" + gateWay + "' method='post' id='pay_form'>"
 	for k, v := range paramMap {
 		payUrl += "<input value='" + v + "' name='" + k + "' type='hidden'/>"
@@ -146,7 +146,7 @@ func (payment *Payment) buildPayForm(paramMap map[string]string, gateWay string)
 	return payUrl
 }
 
-func (payment *Payment) encrypt3DES(paramMap map[string]string, desKey string) (map[string]string, error) {
+func encrypt3DES(paramMap map[string]string, desKey string) (map[string]string, error) {
 	desKey = BASE64DecodeStr(desKey)
 	for k, v := range paramMap {
 		if k == "sign" || k == "merchant" || k == "version" {
@@ -161,7 +161,7 @@ func (payment *Payment) encrypt3DES(paramMap map[string]string, desKey string) (
 	return paramMap, nil
 }
 
-func (payment *Payment) getSign(paramMap map[string]string, privateKey string) (string, error) {
+func getPaySign(paramMap map[string]string, privateKey string) (string, error) {
 	payString := GetSortString(paramMap)
 	sha256 := HaSha256(payString)
 	sign, err := SignPKCS1v15([]byte(sha256), []byte(privateKey), crypto.Hash(0))
@@ -173,7 +173,7 @@ func (payment *Payment) getSign(paramMap map[string]string, privateKey string) (
 	return base64String, nil
 }
 
-func (payment *Payment) GetConfigCode() []string {
+func (jd *Jd) GetPayConfigCode() []string {
 	return []string{
 		"merchant", "callbackUrl", "notifyUrl", "settleCurrency", "expireTime",
 		"des_key", "pc_pay_way", "h5_pay_way", "private_key",

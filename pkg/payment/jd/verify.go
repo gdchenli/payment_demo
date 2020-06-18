@@ -40,7 +40,7 @@ type VerifyQuery struct {
 	Sign      string `json:"sign"`      //签名
 }
 
-func (verify *Verify) Validate(configParamMap map[string]string, query, methodCode string) (verifykRsp response.VerifyRsp, errCode int, err error) {
+func (jd *Jd) Verify(configParamMap map[string]string, query, methodCode string) (verifykRsp response.VerifyRsp, errCode int, err error) {
 	//verifykRsp.EncryptRsp = query
 
 	//解析参数
@@ -55,7 +55,7 @@ func (verify *Verify) Validate(configParamMap map[string]string, query, methodCo
 	}
 
 	//解密
-	decryptMap, err := verify.decryptArg(queryMap, configParamMap["des_key"])
+	decryptMap, err := decryptVerifyArg(queryMap, configParamMap["des_key"])
 	if err != nil {
 		logrus.Errorf("org:jd,"+CallbackDecryptFailedErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackDecryptFailedErrCode, err.Error())
 		return verifykRsp, CallbackDecryptFailedErrCode, errors.New(CallbackDecryptFailedErrMessage)
@@ -78,7 +78,7 @@ func (verify *Verify) Validate(configParamMap map[string]string, query, methodCo
 	verifykRsp.OrderId = verifyQuery.TradeNum
 
 	//校验签名
-	if !verify.checkSign(decryptMap, configParamMap["public_key"]) {
+	if !checkVerifySign(decryptMap, configParamMap["public_key"]) {
 		logrus.Errorf("org:jd,"+CallbackSignErrMessage+",query:%v,errCode:%v,err:%v", query, CallbackSignErrCode)
 		return verifykRsp, CallbackSignErrCode, errors.New(CallbackSignErrMessage)
 	}
@@ -94,7 +94,7 @@ func (verify *Verify) Validate(configParamMap map[string]string, query, methodCo
 }
 
 //解密
-func (verify *Verify) decryptArg(encryptMap map[string]string, desKey string) (decryptMap map[string]string, err error) {
+func decryptVerifyArg(encryptMap map[string]string, desKey string) (decryptMap map[string]string, err error) {
 	//解密
 	desKeyBytes, err := base64.StdEncoding.DecodeString(desKey)
 	if err != nil {
@@ -120,7 +120,7 @@ func (verify *Verify) decryptArg(encryptMap map[string]string, desKey string) (d
 }
 
 //校验签名
-func (verify *Verify) checkSign(urlValuesMap map[string]string, publicKey string) bool {
+func checkVerifySign(urlValuesMap map[string]string, publicKey string) bool {
 	sign, ok := urlValuesMap["sign"]
 	if !ok {
 		return false
@@ -141,7 +141,7 @@ func (verify *Verify) checkSign(urlValuesMap map[string]string, publicKey string
 	return VerifyPKCS1v15([]byte(sha256), signBytes, []byte(publicKey), crypto.Hash(0))
 }
 
-func (verify *Verify) GetConfigCode() []string {
+func (jd *Jd) GetVerifyConfigCode() []string {
 	return []string{
 		"merchant",
 		"des_key", "public_key",

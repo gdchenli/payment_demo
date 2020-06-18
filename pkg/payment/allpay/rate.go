@@ -32,10 +32,10 @@ type RateArg struct {
 	GateWay                string `json:"gate_way"`
 }
 
-func (rate *Rate) Search(arg RateArg) (float64, int, error) {
+func (allpay *Allpay) SearchRate(arg RateArg) (float64, int, error) {
 	paramMap := map[string]string{
 		"pid":                 arg.MerId,
-		"issuer":              rate.getIssuer(arg.PaymentSchema),
+		"issuer":              getRateIssuer(arg.PaymentSchema),
 		"original_currency":   arg.OriginalCurrencyCode,
 		"conversion_currency": arg.ConversionCurrencyCode,
 		"sign_type":           SignTypeSHA256,
@@ -48,8 +48,8 @@ func (rate *Rate) Search(arg RateArg) (float64, int, error) {
 		values.Add(k, v)
 	}
 
-	fmt.Println(rate.getGateWay(arg.GateWay) + "?" + values.Encode())
-	returnBytes, err := curl.GetJSONReturnByte(rate.getGateWay(arg.GateWay) + "?" + values.Encode())
+	fmt.Println(getRateGateWay(arg.GateWay) + "?" + values.Encode())
+	returnBytes, err := curl.GetJSONReturnByte(getRateGateWay(arg.GateWay) + "?" + values.Encode())
 	if err != nil {
 		return 0, RateSearchNetErrCode, errors.New(RateSearchNetErrMessage)
 	}
@@ -70,7 +70,7 @@ func (rate *Rate) Search(arg RateArg) (float64, int, error) {
 	return val, 0, nil
 }
 
-func (rate *Rate) getIssuer(paymentSchema string) string {
+func getRateIssuer(paymentSchema string) string {
 	switch paymentSchema {
 	case UpSchema:
 		return UpIssuer
@@ -83,6 +83,6 @@ func (rate *Rate) getIssuer(paymentSchema string) string {
 	}
 }
 
-func (rate *Rate) getGateWay(gateWay string) string {
+func getRateGateWay(gateWay string) string {
 	return gateWay + RateRoute
 }

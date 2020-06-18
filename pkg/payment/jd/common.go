@@ -20,6 +20,8 @@ import (
 	"time"
 )
 
+type Jd struct{}
+
 //生成随机字符串
 func GetRandomString(length int) string {
 	str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

@@ -113,7 +113,7 @@ type SearchPayRsp struct {
 	TradeTime string `xml:"tradeTime" json:"tradeTime"` //交易时间
 }
 
-func (trade *Trade) Search(paramMap map[string]string, req request.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (jd *Jd) SearchTrade(paramMap map[string]string, req request.SearchTradeReq) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
 	searchWithoutSignRequest := SearchWithoutSignRequest{
 		Version:   Version,
 		Merchant:  paramMap["merchant"],
@@ -213,7 +213,7 @@ func (trade *Trade) Search(paramMap map[string]string, req request.SearchTradeRe
 	searchTradeRsp.OrderId = searchDecryptRsp.TradeNum
 
 	//签名校验
-	if !trade.checkSignature(searchDecryptRsp.Sign, string(rspDecryptBytes), paramMap["public_key"]) {
+	if !checkSearchTradeSignature(searchDecryptRsp.Sign, string(rspDecryptBytes), paramMap["public_key"]) {
 		logrus.Errorf("org:jd,"+SearchTradeResponseDataSignErrMessage+",request:%+v,response:%+v,errCode:%v,err:%v", req, searchResult, SearchTradeResponseDataSignErrCode)
 		return searchTradeRsp, SearchTradeResponseDataSignErrCode, errors.New(SearchTradeResponseDataSignErrMessage)
 	}
@@ -230,6 +230,10 @@ func (trade *Trade) Search(paramMap map[string]string, req request.SearchTradeRe
 		searchTradeRsp.Status = SearchTradeError
 	}
 
+	if searchTradeRsp.Status != TradeProcess {
+		return searchTradeRsp, 0, nil
+	}
+
 	searchTradeRsp.TradeNo = searchDecryptRsp.TradeNum //该接口不会返回交易流水号，使用请求交易时的订单号
 	searchTradeRsp.PaidAt = time.Now().UTC().Format(DateTimeFormatLayout)
 	searchTradeRsp.RmbFee = float64(searchDecryptRsp.Amount) / 100
@@ -238,7 +242,7 @@ func (trade *Trade) Search(paramMap map[string]string, req request.SearchTradeRe
 }
 
 //验证查询交易结果
-func (trade *Trade) checkSignature(sign, decryptRsp, publicKey string) bool {
+func checkSearchTradeSignature(sign, decryptRsp, publicKey string) bool {
 	//签名字符串截取
 	clipStartIndex := strings.Index(decryptRsp, "<sign>")
 	clipEndIndex := strings.Index(decryptRsp, "</sign>")
@@ -263,7 +267,7 @@ func (trade *Trade) checkSignature(sign, decryptRsp, publicKey string) bool {
 	return verifySign
 }
 
-func (trade *Trade) GetConfigCode() []string {
+func (jd *Jd) GetSearchTradeConfigCode() []string {
 	return []string{
 		"merchant",
 		"des_key", "trade_way", "private_key", "public_key",
