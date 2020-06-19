@@ -2,7 +2,7 @@ package allpay
 
 import (
 	"errors"
-	"payment_demo/api/response"
+	"payment_demo/api/payment/response"
 
 	"github.com/sirupsen/logrus"
 )

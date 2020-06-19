@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
-	"payment_demo/api/response"
+	"payment_demo/api/payment/response"
 	"strings"
 	"time"
 

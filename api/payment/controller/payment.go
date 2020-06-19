@@ -3,7 +3,7 @@ package controller
 import (
 	"io/ioutil"
 	"net/http"
-	"payment_demo/api/request"
+	"payment_demo/api/payment/request"
 	"payment_demo/internal/service/payment"
 
 	"github.com/gin-gonic/gin"

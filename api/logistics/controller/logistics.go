@@ -2,7 +2,7 @@ package controller
 
 import (
 	"net/http"
-	"payment_demo/api/request"
+	"payment_demo/api/logistics/request"
 	"payment_demo/internal/service/logistics"
 
 	"github.com/gin-gonic/gin"

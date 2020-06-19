@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/api/request"
+	"payment_demo/api/payment/request"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 	"time"
