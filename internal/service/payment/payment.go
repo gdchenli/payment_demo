@@ -191,23 +191,3 @@ func (payment *Payment) CloseTrade(req request.CloseTradeArg) (closeTradeRsp res
 
 	return closeTradeRsp, 0, nil
 }
-
-func (payment *Payment) UploadLogistics(req request.UploadLogisticsArg) (uploadLogisticsTradeRsp response.UploadLogisticsRsp, errCode int, err error) {
-	//获取配置项code
-	jdPayment := jd.New()
-	configCode := jdPayment.GetUploadLogisticsConfigCode()
-
-	//读取配置项值
-	configParamMap, errCode, err := payment.getConfigValue(configCode, req.OrgCode)
-	if err != nil {
-		return uploadLogisticsTradeRsp, errCode, err
-	}
-
-	//上传物流信息处理
-	uploadLogisticsTradeRsp, errCode, err = jdPayment.UploadLogistics(configParamMap, req)
-	if err != nil {
-		return uploadLogisticsTradeRsp, errCode, err
-	}
-
-	return uploadLogisticsTradeRsp, 0, nil
-}
