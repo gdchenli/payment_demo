@@ -3,7 +3,7 @@ package epayments
 import (
 	"errors"
 	"fmt"
-	"payment_demo/api/response"
+	"payment_demo/api/payment/response"
 	"strconv"
 	"time"
 

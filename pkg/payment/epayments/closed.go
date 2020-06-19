@@ -1,8 +1,8 @@
 package epayments
 
 import (
-	"payment_demo/api/request"
-	"payment_demo/api/response"
+	"payment_demo/api/payment/request"
+	"payment_demo/api/payment/response"
 )
 
 func (epayments *Epayments) CloseTrade(configParamMap map[string]string, req request.CloseTradeArg) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
