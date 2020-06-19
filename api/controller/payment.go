@@ -14,15 +14,14 @@ type Payment struct{}
 func (p *Payment) Router(router *gin.Engine) {
 	r := router.Group("/payment")
 	{
-		r.POST("/pay", p.pay)                          //h5 、pc发起支付
-		r.POST("/alipayminiprogram/pay", p.pay)        //支付宝小程序发起支付
-		r.GET("/qrcodeimg", p.qrcode)                  //二维码支付
-		r.GET("/form", p.form)                         //发起支付
-		r.POST("/notify/:org/:method", p.notify)       //异步通知
-		r.POST("/verify/:org/:method", p.verify)       //同步通知
-		r.GET("/trade/search", p.searchTrade)          //交易查询
-		r.GET("/trade/close", p.closeTrade)            //关闭交易
-		r.POST("/logistics/upload", p.uploadLogistics) //上传物流信息
+		r.POST("/pay", p.pay)                    //h5 、pc发起支付
+		r.POST("/alipayminiprogram/pay", p.pay)  //支付宝小程序发起支付
+		r.GET("/qrcodeimg", p.qrcode)            //二维码支付
+		r.GET("/form", p.form)                   //发起支付
+		r.POST("/notify/:org/:method", p.notify) //异步通知
+		r.POST("/verify/:org/:method", p.verify) //同步通知
+		r.GET("/trade/search", p.searchTrade)    //交易查询
+		r.GET("/trade/close", p.closeTrade)      //关闭交易
 	}
 }
 
@@ -188,17 +187,4 @@ func (p *Payment) closeTrade(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, closeTradeRsp)
-}
-
-func (p *Payment) uploadLogistics(ctx *gin.Context) {
-	arg := new(request.UploadLogisticsArg)
-	ctx.ShouldBind(arg)
-
-	logisticsRsp, errCode, err := new(payment.Payment).UploadLogistics(*arg)
-	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"code": 0, "message": "success", "data": logisticsRsp})
 }
