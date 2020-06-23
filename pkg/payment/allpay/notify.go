@@ -3,8 +3,8 @@ package allpay
 import (
 	"errors"
 	"fmt"
-	"payment_demo/api/payment/request"
-	"payment_demo/api/payment/response"
+	"payment_demo/api/notice/response"
+	"payment_demo/api/trade/request"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 	"time"

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/api/payment/response"
+	"payment_demo/api/notice/response"
 
 	"github.com/sirupsen/logrus"
 )

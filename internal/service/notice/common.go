@@ -1,7 +1,7 @@
-package payment
+package notice
 
 import (
-	"payment_demo/api/payment/request"
+	"payment_demo/api/notice/response"
 	"payment_demo/pkg/payment/alipay"
 	"payment_demo/pkg/payment/allpay"
 	"payment_demo/pkg/payment/consts"
@@ -10,13 +10,13 @@ import (
 )
 
 type Handler interface {
-	//发起支付
-	CreatePayUrl(configParamMap map[string]string, order request.OrderArg) (url string, errCode int, err error) //pc、h5、支付宝小程序
-	/*WmpSumbit(configParamMap map[string]string, order request.Order) (wmRsp response.WmpRsp, errCode int, err error)  //微信小程序
-	AppSumbit(configParamMap map[string]string, order request.Order) (appRsp response.AppRsp, errCode int, err error) //App*/
+	//支付通知
+	Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) //异步通知
+	Verify(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) //同步通知
 
 	//配置
-	GetPayConfigCode() []string
+	GetNotifyConfigCode() []string
+	GetVerifyConfigCode() []string
 }
 
 func getHandler(orgCode string) Handler {

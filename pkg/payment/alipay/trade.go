@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/api/payment/request"
-	"payment_demo/api/payment/response"
+	request2 "payment_demo/api/trade/request"
+	response2 "payment_demo/api/trade/response"
 	"payment_demo/pkg/curl"
 	"strconv"
 	"time"
@@ -83,7 +83,7 @@ type TradeXml struct {
 	UseCoupon           string `xml:"use_coupon" json:"use_coupon"`                         //读取use_coupon
 }
 
-func (alipay *Alipay) SearchTrade(configParamMap map[string]string, req request.SearchTradeArg) (tradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (alipay *Alipay) SearchTrade(configParamMap map[string]string, req request2.SearchTradeArg) (tradeRsp response2.SearchTradeRsp, errCode int, err error) {
 	tradeRsp.OrderId = req.OrderId
 	paramMap := map[string]string{
 		"service":        SearchServiceType,         //交易查询服务

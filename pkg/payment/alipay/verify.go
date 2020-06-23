@@ -2,7 +2,7 @@ package alipay
 
 import (
 	"errors"
-	"payment_demo/api/payment/response"
+	"payment_demo/api/notice/response"
 
 	"github.com/sirupsen/logrus"
 )
