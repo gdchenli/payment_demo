@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"payment_demo/api/payment/request"
-	"payment_demo/api/payment/response"
 	"payment_demo/internal/common/code"
 	"payment_demo/pkg/config"
 	"payment_demo/pkg/payment/epayments"
@@ -15,14 +14,14 @@ import (
 )
 
 type Payment struct {
-	OrgHandler OrgHandler
+	Handler Handler
 }
 
 func New(orgCode string) (*Payment, int, error) {
 	payment := new(Payment)
 
-	payment.OrgHandler = getOrgHandler(orgCode)
-	if payment.OrgHandler == nil {
+	payment.Handler = getHandler(orgCode)
+	if payment.Handler == nil {
 		return payment, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
 	return payment, 0, nil
@@ -60,7 +59,7 @@ func (payment *Payment) getConfigValue(configCodes []string, orgCode string) (pa
 
 func (payment *Payment) Pay(order request.OrderArg) (pay string, errCode int, err error) {
 	//获取配置项code
-	configCode := payment.OrgHandler.GetPayConfigCode()
+	configCode := payment.Handler.GetPayConfigCode()
 
 	//读取配置项值
 	configParamMap, errCode, err := payment.getConfigValue(configCode, order.OrgCode)
@@ -71,7 +70,7 @@ func (payment *Payment) Pay(order request.OrderArg) (pay string, errCode int, er
 	//处理配置映射
 
 	//支付处理
-	pay, errCode, err = payment.OrgHandler.CreatePayUrl(configParamMap, order)
+	pay, errCode, err = payment.Handler.CreatePayUrl(configParamMap, order)
 	if err != nil {
 		return pay, errCode, err
 	}
@@ -121,87 +120,4 @@ func (payment *Payment) PayForm(order request.OrderArg) (pay string, errCode int
 	}
 
 	return pay, 0, nil
-}
-
-func (payment *Payment) Notify(query, orgCode, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
-	//获取配置项code
-	configCode := payment.OrgHandler.GetNotifyConfigCode()
-
-	//读取配置项值
-	configParamMap, errCode, err := payment.getConfigValue(configCode, orgCode)
-	if err != nil {
-		return notifyRsp, errCode, err
-	}
-
-	//处理配置映射
-
-	//异步通知处理
-	notifyRsp, errCode, err = payment.OrgHandler.Notify(configParamMap, query, methodCode)
-	if err != nil {
-		return notifyRsp, errCode, err
-	}
-
-	return notifyRsp, 0, nil
-}
-
-func (payment *Payment) Verify(query, orgCode, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
-	//获取配置项code
-	configCode := payment.OrgHandler.GetVerifyConfigCode()
-
-	//读取配置项值
-	configParamMap, errCode, err := payment.getConfigValue(configCode, orgCode)
-	if err != nil {
-		return verifyRsp, errCode, err
-	}
-
-	//处理配置code映射
-
-	//同步通知处理
-	verifyRsp, errCode, err = payment.OrgHandler.Verify(configParamMap, query, methodCode)
-	if err != nil {
-		return verifyRsp, errCode, err
-	}
-
-	return verifyRsp, 0, nil
-}
-
-func (payment *Payment) SearchTrade(req request.SearchTradeArg) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
-	//获取配置项code
-	configCode := payment.OrgHandler.GetVerifyConfigCode()
-
-	//读取配置项值
-	configParamMap, errCode, err := payment.getConfigValue(configCode, req.OrgCode)
-	if err != nil {
-		return searchTradeRsp, errCode, err
-	}
-
-	//处理配置code映射
-
-	searchTradeRsp, errCode, err = payment.OrgHandler.SearchTrade(configParamMap, req)
-	if err != nil {
-		return searchTradeRsp, errCode, err
-	}
-
-	return searchTradeRsp, 0, nil
-}
-
-func (payment *Payment) CloseTrade(req request.CloseTradeArg) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
-	//获取配置项code
-	configCode := payment.OrgHandler.GetCloseTradeConfigCode()
-
-	//读取配置项值
-	configParamMap, errCode, err := payment.getConfigValue(configCode, req.OrgCode)
-	if err != nil {
-		return closeTradeRsp, errCode, err
-	}
-
-	//处理配置code映射
-
-	//关闭支付交易处理
-	closeTradeRsp, errCode, err = payment.OrgHandler.CloseTrade(configParamMap, req)
-	if err != nil {
-		return closeTradeRsp, errCode, err
-	}
-
-	return closeTradeRsp, 0, nil
 }

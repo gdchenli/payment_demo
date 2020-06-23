@@ -1,11 +1,11 @@
 package allpay
 
 import (
-	"payment_demo/api/payment/request"
-	"payment_demo/api/payment/response"
+	request2 "payment_demo/api/trade/request"
+	response2 "payment_demo/api/trade/response"
 )
 
-func (allpay *Allpay) CloseTrade(configParamMap map[string]string, req request.CloseTradeArg) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (allpay *Allpay) CloseTrade(configParamMap map[string]string, req request2.CloseTradeArg) (closeTradeRsp response2.CloseTradeRsp, errCode int, err error) {
 	return closeTradeRsp, 0, nil
 }
 

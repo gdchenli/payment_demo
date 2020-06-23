@@ -3,7 +3,7 @@ package epayments
 import (
 	"errors"
 	"fmt"
-	"payment_demo/api/payment/response"
+	"payment_demo/api/notice/response"
 
 	"github.com/sirupsen/logrus"
 )

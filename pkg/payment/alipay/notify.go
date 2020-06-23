@@ -3,8 +3,8 @@ package alipay
 import (
 	"errors"
 	"fmt"
-	"payment_demo/api/payment/request"
-	"payment_demo/api/payment/response"
+	"payment_demo/api/notice/response"
+	"payment_demo/api/trade/request"
 	"strconv"
 
 	"github.com/sirupsen/logrus"
