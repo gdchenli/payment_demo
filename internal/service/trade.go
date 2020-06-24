@@ -6,7 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"payment_demo/api/validate"
+	"payment_demo/app/request"
+	"payment_demo/app/response"
 	"payment_demo/internal/common/code"
 	"payment_demo/pkg/config"
 	"payment_demo/pkg/payment"
@@ -56,7 +57,7 @@ func (t *Trade) getConfigValue(configCodes []string, orgCode string) (payParamMa
 
 	return payParamMap, 0, nil
 }
-func (t *Trade) SearchTrade(req validate.SearchTradeArg) (rsp validate.SearchTradeRsp, errCode int, err error) {
+func (t *Trade) SearchTrade(req request.SearchTradeArg) (rsp response.SearchTradeRsp, errCode int, err error) {
 	//获取配置项code
 	configCode := t.Handler.GetSearchTradeConfigCode()
 
@@ -87,7 +88,7 @@ func (t *Trade) SearchTrade(req validate.SearchTradeArg) (rsp validate.SearchTra
 	return rsp, 0, nil
 }
 
-func (t *Trade) CloseTrade(req validate.CloseTradeArg) (rsp validate.CloseTradeRsp, errCode int, err error) {
+func (t *Trade) CloseTrade(req request.CloseTradeArg) (rsp response.CloseTradeRsp, errCode int, err error) {
 	//获取配置项code
 	configCode := t.Handler.GetCloseTradeConfigCode()
 

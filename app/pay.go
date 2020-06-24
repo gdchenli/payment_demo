@@ -1,8 +1,8 @@
-package api
+package app
 
 import (
 	"net/http"
-	"payment_demo/api/validate"
+	"payment_demo/app/request"
 	"payment_demo/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -31,7 +31,7 @@ type OrderArg struct {
 }
 
 func (p *Payment) pay(ctx *gin.Context) {
-	arg := new(validate.OrderArg)
+	arg := new(request.OrderArg)
 	ctx.ShouldBind(arg)
 
 	if errCode, err := arg.Validate(); err != nil {
@@ -55,7 +55,7 @@ func (p *Payment) pay(ctx *gin.Context) {
 }
 
 func (p *Payment) qrcode(ctx *gin.Context) {
-	arg := new(validate.OrderArg)
+	arg := new(request.OrderArg)
 	ctx.ShouldBind(arg)
 
 	if errCode, err := arg.Validate(); err != nil {
@@ -78,7 +78,7 @@ func (p *Payment) qrcode(ctx *gin.Context) {
 }
 
 func (p *Payment) form(ctx *gin.Context) {
-	arg := new(validate.OrderArg)
+	arg := new(request.OrderArg)
 	ctx.ShouldBind(arg)
 
 	if errCode, err := arg.Validate(); err != nil {

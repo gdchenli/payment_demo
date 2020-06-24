@@ -16,7 +16,7 @@ import (
 
 const (
 	SearchTradeTransType = "INQY"
-	TradeRoute           = "/api/orderquery"
+	TradeRoute           = "/app/orderquery"
 )
 const (
 	SearchTradeWait    = "1" //等待支付
