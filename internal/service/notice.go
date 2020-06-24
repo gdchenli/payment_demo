@@ -8,18 +8,18 @@ import (
 	"path"
 	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
-	"payment_demo/internal/common/interfaces"
 	"payment_demo/pkg/config"
+	"payment_demo/pkg/payment"
 )
 
 type Notice struct {
-	Handler interfaces.NotificeHandler
+	Handler payment.NotificeHandler
 }
 
 func NewNotice(orgCode string) (*Notice, int, error) {
 	notice := new(Notice)
 
-	notice.Handler = interfaces.GetNoticeHandler(orgCode)
+	notice.Handler = payment.GetNoticeHandler(orgCode)
 	if notice.Handler == nil {
 		return notice, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
