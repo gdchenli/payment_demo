@@ -3,7 +3,7 @@ package epayments
 import (
 	"errors"
 	"fmt"
-	"payment_demo/api/notice/response"
+	"payment_demo/pkg/payment/common"
 	"strconv"
 	"time"
 
@@ -27,7 +27,7 @@ type NotifyRsp struct {
 	Rsp     string  `json:"rsp"`      //返回的数据
 }
 
-func (epayments *Epayments) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (epayments *Epayments) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp common.NotifyRsp, errCode int, err error) {
 	//解析参数
 	queryMap, err := ParseQueryString(query)
 	if err != nil {

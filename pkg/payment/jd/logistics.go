@@ -6,9 +6,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"payment_demo/api/logistics/request"
-	"payment_demo/api/logistics/response"
 	"payment_demo/pkg/curl"
+	"payment_demo/pkg/payment/common"
 	"regexp"
 	"strings"
 
@@ -107,7 +106,7 @@ type LogisticsRsp struct {
 	DecryptRes string `json:"decrypt_res"` //请求的未加密数据
 }
 
-func (jd *Jd) UploadLogistics(configParamMap map[string]string, req request.UploadLogisticsArg) (logisticsRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (jd *Jd) UploadLogistics(configParamMap map[string]string, req common.UploadLogisticsArg) (logisticsRsp common.UploadLogisticsRsp, errCode int, err error) {
 	logisticsRsp.OrderId = req.OrderId
 
 	logisticsWithoutSignRequest := LogisticsWithoutSignRequest{

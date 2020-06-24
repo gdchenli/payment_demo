@@ -2,7 +2,7 @@ package alipay
 
 import (
 	"errors"
-	"payment_demo/api/notice/response"
+	"payment_demo/pkg/payment/common"
 
 	"github.com/sirupsen/logrus"
 )
@@ -14,7 +14,7 @@ const (
 	VerifySignErrMessage        = "同步通知，签名校验失败"
 )
 
-func (alipay *Alipay) Verify(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+func (alipay *Alipay) Verify(configParamMap map[string]string, query, methodCode string) (verifyRsp common.VerifyRsp, errCode int, err error) {
 	//callbackRsp.Rsp = query
 
 	//解析参数

@@ -3,8 +3,7 @@ package alipay
 import (
 	"errors"
 	"fmt"
-	"payment_demo/api/notice/response"
-	"payment_demo/api/trade/request"
+	"payment_demo/pkg/payment/common"
 	"strconv"
 
 	"github.com/sirupsen/logrus"
@@ -19,7 +18,7 @@ const (
 	NotifySignErrMessage          = "异步通知，签名校验失败"
 )
 
-func (alipay *Alipay) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (alipay *Alipay) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp common.NotifyRsp, errCode int, err error) {
 	//解析参数
 	queryMap, err := ParseQueryString(query)
 	if err != nil {
@@ -56,7 +55,7 @@ func (alipay *Alipay) Notify(configParamMap map[string]string, query, methodCode
 		return notifyRsp, NotifyDecryptFormatErrCode, errors.New(NotifyDecryptFormatErrMessage)
 	}
 
-	tradeArg := request.SearchTradeArg{
+	tradeArg := common.SearchTradeArg{
 		OrderId:    queryMap["out_trade_no"],
 		MethodCode: methodCode,
 		OrgCode:    "alipay", TotalFee: totalFee,

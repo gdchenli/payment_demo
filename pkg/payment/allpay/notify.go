@@ -3,8 +3,7 @@ package allpay
 import (
 	"errors"
 	"fmt"
-	"payment_demo/api/notice/response"
-	"payment_demo/api/trade/request"
+	"payment_demo/pkg/payment/common"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 	"time"
@@ -21,7 +20,7 @@ const (
 	NotifyQueryRateErrMessage   = "异步通知，汇率查询失败"
 )
 
-func (allpay *Allpay) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (allpay *Allpay) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp common.NotifyRsp, errCode int, err error) {
 	//解析参数
 	queryMap, err := JsonToMap(query)
 	if err != nil {
@@ -66,7 +65,7 @@ func (allpay *Allpay) Notify(configParamMap map[string]string, query, methodCode
 	}
 
 	//汇率
-	tradeArg := request.SearchTradeArg{
+	tradeArg := common.SearchTradeArg{
 		OrderId:    queryMap["orderNum"],
 		MethodCode: methodCode,
 		OrgCode:    consts.AllpayOrg,

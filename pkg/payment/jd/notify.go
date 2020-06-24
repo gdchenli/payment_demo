@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
-	"payment_demo/api/notice/response"
+	"payment_demo/pkg/payment/common"
 	"strings"
 	"time"
 
@@ -78,7 +78,7 @@ type NotifyRsp struct {
 	DecryptRsp string  `json:"decrypt_rsp"` //返回的解密数据
 }
 
-func (jd *Jd) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (jd *Jd) Notify(configParamMap map[string]string, query, methodCode string) (notifyRsp common.NotifyRsp, errCode int, err error) {
 	//notifyRsp.EncryptRsp = query
 
 	//解析加密的支付机构参数为结构体

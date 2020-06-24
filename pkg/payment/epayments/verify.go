@@ -3,7 +3,7 @@ package epayments
 import (
 	"errors"
 	"fmt"
-	"payment_demo/api/notice/response"
+	"payment_demo/pkg/payment/common"
 
 	"github.com/sirupsen/logrus"
 )
@@ -21,7 +21,7 @@ type CallbackRsp struct {
 	Rsp     string `json:"rsp"`      //返回的数据
 }
 
-func (epayments *Epayments) Verify(configParamMap map[string]string, query, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+func (epayments *Epayments) Verify(configParamMap map[string]string, query, methodCode string) (verifyRsp common.VerifyRsp, errCode int, err error) {
 	//解析参数
 	queryMap, err := ParseQueryString(query)
 	if err != nil {

@@ -3,8 +3,7 @@ package alipay
 import (
 	"encoding/json"
 	"net/url"
-	"payment_demo/api/payment/request"
-	"payment_demo/api/payment/response"
+	"payment_demo/pkg/payment/common"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 )
@@ -28,7 +27,7 @@ type TradeInformation struct {
 	TotalQuantity int    `json:"total_quantity"`
 }
 
-func getParamMap(paramMap map[string]string, order request.OrderArg) map[string]string {
+func getParamMap(paramMap map[string]string, order common.OrderArg) map[string]string {
 	paramMap["service"] = getServiceType(order.UserAgentType)
 	paramMap["_input_charset"] = CharsetUTF8
 	paramMap["subject"] = order.OrderId
@@ -64,7 +63,7 @@ func getParamMap(paramMap map[string]string, order request.OrderArg) map[string]
 	return paramMap
 }
 
-func (alipay *Alipay) CreateAmpPayStr(configParamMap map[string]string, order request.OrderArg) (payString string, errCode int, err error) {
+func (alipay *Alipay) CreateAmpPayStr(configParamMap map[string]string, order common.OrderArg) (payString string, errCode int, err error) {
 	delete(configParamMap, "gate_way")
 
 	paramMap := getParamMap(configParamMap, order)
@@ -72,7 +71,7 @@ func (alipay *Alipay) CreateAmpPayStr(configParamMap map[string]string, order re
 	return GetSortString(paramMap), 0, nil
 }
 
-func (alipay *Alipay) CreatePayUrl(configParamMap map[string]string, order request.OrderArg) (url string, errCode int, err error) {
+func (alipay *Alipay) CreatePayUrl(configParamMap map[string]string, order common.OrderArg) (url string, errCode int, err error) {
 	geteWay := configParamMap["gate_way"]
 	delete(configParamMap, "gate_way")
 
@@ -81,7 +80,7 @@ func (alipay *Alipay) CreatePayUrl(configParamMap map[string]string, order reque
 	return buildPayUrl(paramMap, geteWay), 0, nil
 }
 
-func (alipay *Alipay) CreateAppPayStr(paramMap map[string]string, order request.OrderArg) (appRsp response.AppRsp, errCode int, err error) {
+func (alipay *Alipay) CreateAppPayStr(paramMap map[string]string, order common.OrderArg) (appRsp common.AppPayRsp, errCode int, err error) {
 	return appRsp, 0, nil
 }
 
