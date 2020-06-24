@@ -8,19 +8,19 @@ import (
 	"path"
 	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
-	"payment_demo/internal/common/interfaces"
 	"payment_demo/pkg/config"
+	"payment_demo/pkg/payment"
 	"payment_demo/pkg/payment/common"
 )
 
 type Trade struct {
-	Handler interfaces.TradeHandler
+	Handler payment.TradeHandler
 }
 
 func NewTrade(orgCode string) (*Trade, int, error) {
 	trade := new(Trade)
 
-	trade.Handler = interfaces.GetTradeHandler(orgCode)
+	trade.Handler = payment.GetTradeHandler(orgCode)
 	if trade.Handler == nil {
 		return trade, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}

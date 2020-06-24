@@ -39,13 +39,13 @@ func (p *Payment) pay(ctx *gin.Context) {
 		return
 	}
 
-	paymentService, errCode, err := service.NewPay(arg.OrgCode)
+	payService, errCode, err := service.NewPay(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
 
-	payRsp, errCode, err := paymentService.Pay(*arg)
+	payRsp, errCode, err := payService.Pay(*arg)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -63,12 +63,12 @@ func (p *Payment) qrcode(ctx *gin.Context) {
 		return
 	}
 
-	paymentService, errCode, err := service.NewPay(arg.OrgCode)
+	payService, errCode, err := service.NewPay(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
-	submitRsp, errCode, err := paymentService.PayQrCode(*arg)
+	submitRsp, errCode, err := payService.PayQrCode(*arg)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -86,12 +86,12 @@ func (p *Payment) form(ctx *gin.Context) {
 		return
 	}
 
-	paymentService, errCode, err := service.NewPay(arg.OrgCode)
+	payService, errCode, err := service.NewPay(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
 	}
-	submitRsp, errCode, err := paymentService.PayForm(*arg)
+	submitRsp, errCode, err := payService.PayForm(*arg)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
