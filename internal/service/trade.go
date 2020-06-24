@@ -1,4 +1,4 @@
-package trade
+package service
 
 import (
 	"errors"
@@ -6,18 +6,21 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"payment_demo/api/trade/request"
-	"payment_demo/api/trade/response"
+	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
+	"payment_demo/internal/common/interfaces"
 	"payment_demo/pkg/config"
+	"payment_demo/pkg/payment/common"
 )
 
-type Trade struct{ Handler Handler }
+type Trade struct {
+	Handler interfaces.TradeHandler
+}
 
-func New(orgCode string) (*Trade, int, error) {
+func NewTrade(orgCode string) (*Trade, int, error) {
 	trade := new(Trade)
 
-	trade.Handler = getHandler(orgCode)
+	trade.Handler = interfaces.GetTradeHandler(orgCode)
 	if trade.Handler == nil {
 		return trade, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
@@ -53,39 +56,61 @@ func (t *Trade) getConfigValue(configCodes []string, orgCode string) (payParamMa
 
 	return payParamMap, 0, nil
 }
-func (t *Trade) SearchTrade(req request.SearchTradeArg) (searchTradeRsp response.SearchTradeRsp, errCode int, err error) {
+func (t *Trade) SearchTrade(req validate.SearchTradeArg) (rsp validate.SearchTradeRsp, errCode int, err error) {
 	//获取配置项code
 	configCode := t.Handler.GetSearchTradeConfigCode()
 
 	//读取配置项值
 	configParamMap, errCode, err := t.getConfigValue(configCode, req.OrgCode)
 	if err != nil {
-		return searchTradeRsp, errCode, err
+		return rsp, errCode, err
 	}
 
-	searchTradeRsp, errCode, err = t.Handler.SearchTrade(configParamMap, req)
+	searchTradeArg := common.SearchTradeArg{
+		OrderId:    req.OrderId,
+		MethodCode: req.MethodCode,
+		OrgCode:    req.OrgCode,
+		Currency:   req.Currency,
+		TotalFee:   req.TotalFee,
+	}
+	searchTradeRsp, errCode, err := t.Handler.SearchTrade(configParamMap, searchTradeArg)
 	if err != nil {
-		return searchTradeRsp, errCode, err
+		return rsp, errCode, err
 	}
+	rsp.OrderId = searchTradeRsp.OrderId
+	rsp.PaidAt = searchTradeRsp.PaidAt
+	rsp.RmbFee = searchTradeRsp.RmbFee
+	rsp.Rate = searchTradeRsp.Rate
+	rsp.Status = searchTradeRsp.Status
+	rsp.TradeNo = searchTradeRsp.TradeNo
 
-	return searchTradeRsp, 0, nil
+	return rsp, 0, nil
 }
 
-func (t *Trade) CloseTrade(req request.CloseTradeArg) (closeTradeRsp response.CloseTradeRsp, errCode int, err error) {
+func (t *Trade) CloseTrade(req validate.CloseTradeArg) (rsp validate.CloseTradeRsp, errCode int, err error) {
 	//获取配置项code
 	configCode := t.Handler.GetCloseTradeConfigCode()
 
 	//读取配置项值
 	configParamMap, errCode, err := t.getConfigValue(configCode, req.OrgCode)
 	if err != nil {
-		return closeTradeRsp, errCode, err
+		return rsp, errCode, err
 	}
 
+	closeTradeArg := common.CloseTradeArg{
+		OrderId:    req.OrderId,
+		MethodCode: req.MethodCode,
+		OrgCode:    req.OrgCode,
+		Currency:   req.Currency,
+		TotalFee:   req.TotalFee,
+	}
 	//关闭支付交易处理
-	closeTradeRsp, errCode, err = t.Handler.CloseTrade(configParamMap, req)
+	closeTradeRsp, errCode, err := t.Handler.CloseTrade(configParamMap, closeTradeArg)
 	if err != nil {
-		return closeTradeRsp, errCode, err
+		return rsp, errCode, err
 	}
+	rsp.OrderId = closeTradeRsp.OrderId
+	rsp.Status = closeTradeRsp.Status
 
-	return closeTradeRsp, 0, nil
+	return rsp, 0, nil
 }

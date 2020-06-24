@@ -1,4 +1,4 @@
-package payment
+package service
 
 import (
 	"errors"
@@ -6,21 +6,23 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"payment_demo/api/payment/request"
+	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
+	"payment_demo/internal/common/interfaces"
 	"payment_demo/pkg/config"
+	"payment_demo/pkg/payment/common"
 	"payment_demo/pkg/payment/epayments"
 	"payment_demo/pkg/payment/jd"
 )
 
 type Payment struct {
-	Handler Handler
+	Handler interfaces.PayHandler
 }
 
-func New(orgCode string) (*Payment, int, error) {
+func NewPay(orgCode string) (*Payment, int, error) {
 	payment := new(Payment)
 
-	payment.Handler = getHandler(orgCode)
+	payment.Handler = interfaces.GetPayHandler(orgCode)
 	if payment.Handler == nil {
 		return payment, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
@@ -57,7 +59,7 @@ func (payment *Payment) getConfigValue(configCodes []string, orgCode string) (pa
 	return payParamMap, 0, nil
 }
 
-func (payment *Payment) Pay(order request.OrderArg) (pay string, errCode int, err error) {
+func (payment *Payment) Pay(order validate.OrderArg) (pay string, errCode int, err error) {
 	//获取配置项code
 	configCode := payment.Handler.GetPayConfigCode()
 
@@ -68,7 +70,7 @@ func (payment *Payment) Pay(order request.OrderArg) (pay string, errCode int, er
 	}
 
 	//支付处理
-	pay, errCode, err = payment.Handler.CreatePayUrl(configParamMap, order)
+	pay, errCode, err = payment.Handler.CreatePayUrl(configParamMap, payment.getOrderArg(order))
 	if err != nil {
 		return pay, errCode, err
 	}
@@ -76,7 +78,17 @@ func (payment *Payment) Pay(order request.OrderArg) (pay string, errCode int, er
 	return pay, 0, nil
 }
 
-func (payment *Payment) PayQrCode(order request.OrderArg) (pay string, errCode int, err error) {
+func (payment *Payment) getOrderArg(arg validate.OrderArg) common.OrderArg {
+	return common.OrderArg{
+		OrderId:       arg.OrderId,
+		Currency:      arg.Currency,
+		MethodCode:    arg.MethodCode,
+		OrgCode:       arg.OrgCode,
+		UserId:        arg.UserId,
+		UserAgentType: arg.UserAgentType}
+}
+
+func (payment *Payment) PayQrCode(order validate.OrderArg) (pay string, errCode int, err error) {
 	//获取配置项code
 	epaymentsPayment := epayments.New()
 	configCode := epaymentsPayment.GetPayConfigCode()
@@ -88,7 +100,7 @@ func (payment *Payment) PayQrCode(order request.OrderArg) (pay string, errCode i
 	}
 
 	//支付处理
-	pay, errCode, err = epaymentsPayment.CreateQrCode(configParamMap, order)
+	pay, errCode, err = epaymentsPayment.CreateQrCode(configParamMap, payment.getOrderArg(order))
 	if err != nil {
 		return pay, errCode, err
 	}
@@ -96,7 +108,7 @@ func (payment *Payment) PayQrCode(order request.OrderArg) (pay string, errCode i
 	return pay, 0, nil
 }
 
-func (payment *Payment) PayForm(order request.OrderArg) (pay string, errCode int, err error) {
+func (payment *Payment) PayForm(order validate.OrderArg) (pay string, errCode int, err error) {
 	//获取配置项code
 	jdPayment := jd.New()
 	configCode := jdPayment.GetPayConfigCode()
@@ -108,7 +120,7 @@ func (payment *Payment) PayForm(order request.OrderArg) (pay string, errCode int
 	}
 
 	//支付处理
-	pay, errCode, err = jdPayment.CreatePayForm(configParamMap, order)
+	pay, errCode, err = jdPayment.CreatePayForm(configParamMap, payment.getOrderArg(order))
 	if err != nil {
 		return pay, errCode, err
 	}

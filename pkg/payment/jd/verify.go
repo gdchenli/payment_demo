@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/api/notice/response"
+	"payment_demo/pkg/payment/common"
 
 	"github.com/sirupsen/logrus"
 )
@@ -38,7 +38,7 @@ type VerifyQuery struct {
 	Sign      string `json:"sign"`      //签名
 }
 
-func (jd *Jd) Verify(configParamMap map[string]string, query, methodCode string) (verifykRsp response.VerifyRsp, errCode int, err error) {
+func (jd *Jd) Verify(configParamMap map[string]string, query, methodCode string) (verifykRsp common.VerifyRsp, errCode int, err error) {
 	//verifykRsp.EncryptRsp = query
 
 	//解析参数

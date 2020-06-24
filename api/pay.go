@@ -1,9 +1,9 @@
-package controller
+package api
 
 import (
 	"net/http"
-	"payment_demo/api/payment/request"
-	"payment_demo/internal/service/payment"
+	"payment_demo/api/validate"
+	"payment_demo/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,8 +20,18 @@ func (p *Payment) Router(router *gin.Engine) {
 	}
 }
 
+type OrderArg struct {
+	OrderId       string  `form:"order_id" json:"order_id"`               //订单编号
+	TotalFee      float64 `form:"total_fee" json:"total_fee"`             //金额
+	Currency      string  `form:"currency" json:"currency"`               //币种
+	MethodCode    string  `form:"method_code" json:"method_code"`         //支付方式
+	OrgCode       string  `form:"org_code" json:"org_code"`               //支付机构
+	UserId        string  `form:"user_id" json:"user_id"`                 //用户Id
+	UserAgentType int     `form:"user_agent_type" json:"user_agent_type"` //环境
+}
+
 func (p *Payment) pay(ctx *gin.Context) {
-	arg := new(request.OrderArg)
+	arg := new(validate.OrderArg)
 	ctx.ShouldBind(arg)
 
 	if errCode, err := arg.Validate(); err != nil {
@@ -29,7 +39,7 @@ func (p *Payment) pay(ctx *gin.Context) {
 		return
 	}
 
-	paymentService, errCode, err := payment.New(arg.OrgCode)
+	paymentService, errCode, err := service.NewPay(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -45,7 +55,7 @@ func (p *Payment) pay(ctx *gin.Context) {
 }
 
 func (p *Payment) qrcode(ctx *gin.Context) {
-	arg := new(request.OrderArg)
+	arg := new(validate.OrderArg)
 	ctx.ShouldBind(arg)
 
 	if errCode, err := arg.Validate(); err != nil {
@@ -53,7 +63,7 @@ func (p *Payment) qrcode(ctx *gin.Context) {
 		return
 	}
 
-	paymentService, errCode, err := payment.New(arg.OrgCode)
+	paymentService, errCode, err := service.NewPay(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -68,7 +78,7 @@ func (p *Payment) qrcode(ctx *gin.Context) {
 }
 
 func (p *Payment) form(ctx *gin.Context) {
-	arg := new(request.OrderArg)
+	arg := new(validate.OrderArg)
 	ctx.ShouldBind(arg)
 
 	if errCode, err := arg.Validate(); err != nil {
@@ -76,7 +86,7 @@ func (p *Payment) form(ctx *gin.Context) {
 		return
 	}
 
-	paymentService, errCode, err := payment.New(arg.OrgCode)
+	paymentService, errCode, err := service.NewPay(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return

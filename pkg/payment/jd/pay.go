@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/api/payment/request"
+	"payment_demo/pkg/payment/common"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 	"time"
@@ -44,7 +44,7 @@ type KjInfo struct {
 	GoodsUnderBonded      string `json:"goodsUnderBonded"`      //是否保税货物项下付款Y/N
 }
 
-func (jd *Jd) CreatePayUrl(paramMap map[string]string, order request.OrderArg) (form string, errCode int, err error) {
+func (jd *Jd) CreatePayUrl(paramMap map[string]string, order common.OrderArg) (form string, errCode int, err error) {
 	marshal, _ := json.Marshal(order)
 	reqParamMap := make(map[string]interface{})
 	json.Unmarshal(marshal, &reqParamMap)
@@ -55,7 +55,7 @@ func (jd *Jd) CreatePayUrl(paramMap map[string]string, order request.OrderArg) (
 	return "/payment/form?" + values.Encode(), 0, nil
 }
 
-func (jd *Jd) CreatePayForm(paramMap map[string]string, order request.OrderArg) (form string, errCode int, err error) {
+func (jd *Jd) CreatePayForm(paramMap map[string]string, order common.OrderArg) (form string, errCode int, err error) {
 	privateKey := paramMap["private_key"]
 	delete(paramMap, "private_key")
 	desKey := paramMap["des_key"]

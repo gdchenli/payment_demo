@@ -1,4 +1,4 @@
-package logistics
+package service
 
 import (
 	"errors"
@@ -6,16 +6,16 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"payment_demo/api/logistics/request"
-	"payment_demo/api/logistics/response"
+	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
 	"payment_demo/pkg/config"
+	"payment_demo/pkg/payment/common"
 	"payment_demo/pkg/payment/jd"
 )
 
 type Logistics struct{}
 
-func New() (*Logistics, int, error) {
+func NewLogictics() (*Logistics, int, error) {
 	payment := new(Logistics)
 
 	return payment, 0, nil
@@ -51,7 +51,7 @@ func (logistics *Logistics) getConfigValue(configCodes []string, orgCode string)
 	return payParamMap, 0, nil
 }
 
-func (logistics *Logistics) Upload(req request.UploadLogisticsArg) (uploadLogisticsTradeRsp response.UploadLogisticsRsp, errCode int, err error) {
+func (logistics *Logistics) Upload(req validate.UploadLogisticsArg) (rsp validate.UploadLogisticsRsp, errCode int, err error) {
 	//获取配置项code
 	jdPayment := jd.New()
 	configCode := jdPayment.GetUploadLogisticsConfigCode()
@@ -59,14 +59,21 @@ func (logistics *Logistics) Upload(req request.UploadLogisticsArg) (uploadLogist
 	//读取配置项值
 	configParamMap, errCode, err := logistics.getConfigValue(configCode, req.OrgCode)
 	if err != nil {
-		return uploadLogisticsTradeRsp, errCode, err
+		return rsp, errCode, err
 	}
 
 	//上传物流信息处理
-	uploadLogisticsTradeRsp, errCode, err = jdPayment.UploadLogistics(configParamMap, req)
-	if err != nil {
-		return uploadLogisticsTradeRsp, errCode, err
+	uploadLogisticsArg := common.UploadLogisticsArg{
+		OrderId:          req.OrderId,
+		LogisticsCompany: req.LogisticsCompany,
+		LogisticsNo:      req.LogisticsNo,
 	}
+	uploadLogisticsTradeRsp, errCode, err := jdPayment.UploadLogistics(configParamMap, uploadLogisticsArg)
+	if err != nil {
+		return rsp, errCode, err
+	}
+	rsp.Status = uploadLogisticsTradeRsp.Status
+	rsp.OrderId = uploadLogisticsTradeRsp.OrderId
 
-	return uploadLogisticsTradeRsp, 0, nil
+	return rsp, 0, nil
 }

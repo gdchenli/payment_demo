@@ -1,9 +1,9 @@
-package controller
+package api
 
 import (
 	"io/ioutil"
 	"net/http"
-	"payment_demo/internal/service/notice"
+	"payment_demo/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +30,7 @@ func (n *Notice) notify(ctx *gin.Context) {
 	query := string(notifyBytes)
 
 	orgCode := ctx.Param("org")
-	noticeService, errCode, err := notice.New(orgCode)
+	noticeService, errCode, err := service.NewNotice(orgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -52,7 +52,7 @@ func (n *Notice) verify(ctx *gin.Context) {
 	}
 
 	orgCode := ctx.Param("org")
-	noticeService, errCode, err := notice.New(orgCode)
+	noticeService, errCode, err := service.NewNotice(orgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"payment_demo/api/payment/request"
 	"payment_demo/pkg/curl"
+	"payment_demo/pkg/payment/common"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 
@@ -27,7 +27,7 @@ const (
 	PayNetErrMessage = "发起支付,网络错误"
 )
 
-func (epayments *Epayments) CreatePayUrl(paramMap map[string]string, order request.OrderArg) (payUrl string, errCode int, err error) {
+func (epayments *Epayments) CreatePayUrl(paramMap map[string]string, order common.OrderArg) (payUrl string, errCode int, err error) {
 	if order.UserAgentType == consts.WebUserAgentType {
 		marshal, _ := json.Marshal(order)
 		reqParamMap := make(map[string]interface{})
@@ -89,7 +89,7 @@ type QrCodeResult struct {
 	SignType    string `json:"sign_type"`    //签名类型
 }
 
-func (epayments *Epayments) CreateQrCode(paramMap map[string]string, order request.OrderArg) (qrCodeUrl string, errCode int, err error) {
+func (epayments *Epayments) CreateQrCode(paramMap map[string]string, order common.OrderArg) (qrCodeUrl string, errCode int, err error) {
 	gateWay := paramMap["gate_way"]
 	delete(paramMap, "gate_way")
 

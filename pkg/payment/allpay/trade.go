@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	request2 "payment_demo/api/trade/request"
-	response2 "payment_demo/api/trade/response"
 	"payment_demo/pkg/curl"
+	"payment_demo/pkg/payment/common"
 	"payment_demo/pkg/payment/consts"
 	"strconv"
 	"time"
@@ -57,7 +56,7 @@ type TradeRsp struct {
 	Rsp     string  `json:"rsp"`
 }
 
-func (allpay *Allpay) SearchTrade(paramMap map[string]string, req request2.SearchTradeArg) (tradeRsp response2.SearchTradeRsp, errCode int, err error) {
+func (allpay *Allpay) SearchTrade(paramMap map[string]string, req common.SearchTradeArg) (tradeRsp common.SearchTradeRsp, errCode int, err error) {
 	md5Key := paramMap["md5_key"]
 	delete(paramMap, "md5_key")
 	gateWay := getSearchTradeGateWay(paramMap["gate_way"])

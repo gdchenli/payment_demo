@@ -1,9 +1,9 @@
-package controller
+package api
 
 import (
 	"net/http"
-	"payment_demo/api/logistics/request"
-	"payment_demo/internal/service/logistics"
+	"payment_demo/api/validate"
+	"payment_demo/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,10 +18,10 @@ func (l *Logistics) Router(router *gin.Engine) {
 }
 
 func (l *Logistics) uploadLogistics(ctx *gin.Context) {
-	arg := new(request.UploadLogisticsArg)
+	arg := new(validate.UploadLogisticsArg)
 	ctx.ShouldBind(arg)
 
-	logisticsUpload, errCode, err := logistics.New()
+	logisticsUpload, errCode, err := service.NewLogictics()
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"message": err.Error(), "code": errCode})
 		return

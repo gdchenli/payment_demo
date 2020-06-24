@@ -1,9 +1,9 @@
-package controller
+package api
 
 import (
 	"net/http"
-	request2 "payment_demo/api/trade/request"
-	"payment_demo/internal/service/trade"
+	"payment_demo/api/validate"
+	"payment_demo/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +18,7 @@ func (t *Trade) Router(router *gin.Engine) {
 	}
 }
 func (t *Trade) searchTrade(ctx *gin.Context) {
-	arg := new(request2.SearchTradeArg)
+	arg := new(validate.SearchTradeArg)
 	ctx.ShouldBind(arg)
 
 	if errCode, err := arg.Validate(); err != nil {
@@ -26,7 +26,7 @@ func (t *Trade) searchTrade(ctx *gin.Context) {
 		return
 	}
 
-	tradeService, errCode, err := trade.New(arg.OrgCode)
+	tradeService, errCode, err := service.NewTrade(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return
@@ -41,7 +41,7 @@ func (t *Trade) searchTrade(ctx *gin.Context) {
 }
 
 func (t *Trade) closeTrade(ctx *gin.Context) {
-	arg := new(request2.CloseTradeArg)
+	arg := new(validate.CloseTradeArg)
 	ctx.ShouldBind(arg)
 
 	if errCode, err := arg.Validate(); err != nil {
@@ -49,7 +49,7 @@ func (t *Trade) closeTrade(ctx *gin.Context) {
 		return
 	}
 
-	tradeService, errCode, err := trade.New(arg.OrgCode)
+	tradeService, errCode, err := service.NewTrade(arg.OrgCode)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": errCode, "message": err.Error()})
 		return

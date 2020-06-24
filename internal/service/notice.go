@@ -1,4 +1,4 @@
-package notice
+package service
 
 import (
 	"errors"
@@ -6,19 +6,20 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"payment_demo/api/notice/response"
+	"payment_demo/api/validate"
 	"payment_demo/internal/common/code"
+	"payment_demo/internal/common/interfaces"
 	"payment_demo/pkg/config"
 )
 
 type Notice struct {
-	Handler Handler
+	Handler interfaces.NotificeHandler
 }
 
-func New(orgCode string) (*Notice, int, error) {
+func NewNotice(orgCode string) (*Notice, int, error) {
 	notice := new(Notice)
 
-	notice.Handler = getHandler(orgCode)
+	notice.Handler = interfaces.GetNoticeHandler(orgCode)
 	if notice.Handler == nil {
 		return notice, code.NotSupportOrgErrCode, errors.New(code.NotSupportOrgErrMessage)
 	}
@@ -55,40 +56,50 @@ func (n *Notice) getConfigValue(configCodes []string, orgCode string) (payParamM
 	return payParamMap, 0, nil
 }
 
-func (n *Notice) Notify(query, orgCode, methodCode string) (notifyRsp response.NotifyRsp, errCode int, err error) {
+func (n *Notice) Notify(query, orgCode, methodCode string) (rsp validate.NotifyRsp, errCode int, err error) {
 	//获取配置项code
 	configCode := n.Handler.GetNotifyConfigCode()
 
 	//读取配置项值
 	configParamMap, errCode, err := n.getConfigValue(configCode, orgCode)
 	if err != nil {
-		return notifyRsp, errCode, err
+		return rsp, errCode, err
 	}
 
 	//异步通知处理
-	notifyRsp, errCode, err = n.Handler.Notify(configParamMap, query, methodCode)
+	notifyRsp, errCode, err := n.Handler.Notify(configParamMap, query, methodCode)
 	if err != nil {
-		return notifyRsp, errCode, err
+		return rsp, errCode, err
 	}
 
-	return notifyRsp, 0, nil
+	rsp.OrderId = notifyRsp.OrderId
+	rsp.Status = notifyRsp.Status
+	rsp.TradeNo = notifyRsp.TradeNo
+	rsp.Message = notifyRsp.Message
+	rsp.Rate = notifyRsp.Rate
+	rsp.RmbFee = notifyRsp.RmbFee
+	rsp.PaidAt = notifyRsp.PaidAt
+
+	return rsp, 0, nil
 }
 
-func (n *Notice) Verify(query, orgCode, methodCode string) (verifyRsp response.VerifyRsp, errCode int, err error) {
+func (n *Notice) Verify(query, orgCode, methodCode string) (rsp validate.VerifyRsp, errCode int, err error) {
 	//获取配置项code
 	configCode := n.Handler.GetVerifyConfigCode()
 
 	//读取配置项值
 	configParamMap, errCode, err := n.getConfigValue(configCode, orgCode)
 	if err != nil {
-		return verifyRsp, errCode, err
+		return rsp, errCode, err
 	}
 
 	//同步通知处理
-	verifyRsp, errCode, err = n.Handler.Verify(configParamMap, query, methodCode)
+	verifyRsp, errCode, err := n.Handler.Verify(configParamMap, query, methodCode)
 	if err != nil {
-		return verifyRsp, errCode, err
+		return rsp, errCode, err
 	}
+	rsp.Status = verifyRsp.Status
+	rsp.OrderId = verifyRsp.OrderId
 
-	return verifyRsp, 0, nil
+	return rsp, 0, nil
 }
