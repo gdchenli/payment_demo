@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"payment_demo/api/validate"
+	"payment_demo/app/request"
 	"payment_demo/internal/common/code"
 	"payment_demo/pkg/config"
 	"payment_demo/pkg/payment"
@@ -59,7 +59,7 @@ func (pay *Pay) getConfigValue(configCodes []string, orgCode string) (payParamMa
 	return payParamMap, 0, nil
 }
 
-func (pay *Pay) Pay(order validate.OrderArg) (payStr string, errCode int, err error) {
+func (pay *Pay) Pay(order request.OrderArg) (payStr string, errCode int, err error) {
 	//获取配置项code
 	configCode := pay.Handler.GetPayConfigCode()
 
@@ -78,7 +78,7 @@ func (pay *Pay) Pay(order validate.OrderArg) (payStr string, errCode int, err er
 	return payStr, 0, nil
 }
 
-func (pay *Pay) getOrderArg(arg validate.OrderArg) common.OrderArg {
+func (pay *Pay) getOrderArg(arg request.OrderArg) common.OrderArg {
 	return common.OrderArg{
 		OrderId:       arg.OrderId,
 		Currency:      arg.Currency,
@@ -88,7 +88,7 @@ func (pay *Pay) getOrderArg(arg validate.OrderArg) common.OrderArg {
 		UserAgentType: arg.UserAgentType}
 }
 
-func (pay *Pay) PayQrCode(order validate.OrderArg) (payStr string, errCode int, err error) {
+func (pay *Pay) PayQrCode(order request.OrderArg) (payStr string, errCode int, err error) {
 	//获取配置项code
 	epaymentsPayment := epayments.New()
 	configCode := epaymentsPayment.GetPayConfigCode()
@@ -108,7 +108,7 @@ func (pay *Pay) PayQrCode(order validate.OrderArg) (payStr string, errCode int, 
 	return payStr, 0, nil
 }
 
-func (pay *Pay) PayForm(order validate.OrderArg) (payStr string, errCode int, err error) {
+func (pay *Pay) PayForm(order request.OrderArg) (payStr string, errCode int, err error) {
 	//获取配置项code
 	jdPayment := jd.New()
 	configCode := jdPayment.GetPayConfigCode()

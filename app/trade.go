@@ -1,8 +1,8 @@
-package api
+package app
 
 import (
 	"net/http"
-	"payment_demo/api/validate"
+	"payment_demo/app/request"
 	"payment_demo/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +18,7 @@ func (t *Trade) Router(router *gin.Engine) {
 	}
 }
 func (t *Trade) searchTrade(ctx *gin.Context) {
-	arg := new(validate.SearchTradeArg)
+	arg := new(request.SearchTradeArg)
 	ctx.ShouldBind(arg)
 
 	if errCode, err := arg.Validate(); err != nil {
@@ -41,7 +41,7 @@ func (t *Trade) searchTrade(ctx *gin.Context) {
 }
 
 func (t *Trade) closeTrade(ctx *gin.Context) {
-	arg := new(validate.CloseTradeArg)
+	arg := new(request.CloseTradeArg)
 	ctx.ShouldBind(arg)
 
 	if errCode, err := arg.Validate(); err != nil {

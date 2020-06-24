@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"payment_demo/api/validate"
+	"payment_demo/app/response"
 	"payment_demo/internal/common/code"
 	"payment_demo/pkg/config"
 	"payment_demo/pkg/payment"
@@ -56,7 +56,7 @@ func (n *Notice) getConfigValue(configCodes []string, orgCode string) (payParamM
 	return payParamMap, 0, nil
 }
 
-func (n *Notice) Notify(query, orgCode, methodCode string) (rsp validate.NotifyRsp, errCode int, err error) {
+func (n *Notice) Notify(query, orgCode, methodCode string) (rsp response.NotifyRsp, errCode int, err error) {
 	//获取配置项code
 	configCode := n.Handler.GetNotifyConfigCode()
 
@@ -83,7 +83,7 @@ func (n *Notice) Notify(query, orgCode, methodCode string) (rsp validate.NotifyR
 	return rsp, 0, nil
 }
 
-func (n *Notice) Verify(query, orgCode, methodCode string) (rsp validate.VerifyRsp, errCode int, err error) {
+func (n *Notice) Verify(query, orgCode, methodCode string) (rsp response.VerifyRsp, errCode int, err error) {
 	//获取配置项code
 	configCode := n.Handler.GetVerifyConfigCode()
 

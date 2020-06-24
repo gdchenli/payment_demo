@@ -16,7 +16,7 @@ import (
 
 const (
 	PayTransType = "PURC"
-	PayRoute     = "/api/unifiedorder"
+	PayRoute     = "/app/unifiedorder"
 )
 
 const (

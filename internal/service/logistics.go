@@ -6,7 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"payment_demo/api/validate"
+	"payment_demo/app/request"
+	"payment_demo/app/response"
 	"payment_demo/internal/common/code"
 	"payment_demo/pkg/config"
 	"payment_demo/pkg/payment/common"
@@ -51,7 +52,7 @@ func (logistics *Logistics) getConfigValue(configCodes []string, orgCode string)
 	return payParamMap, 0, nil
 }
 
-func (logistics *Logistics) Upload(req validate.UploadLogisticsArg) (rsp validate.UploadLogisticsRsp, errCode int, err error) {
+func (logistics *Logistics) Upload(req request.UploadLogisticsArg) (rsp response.UploadLogisticsRsp, errCode int, err error) {
 	//获取配置项code
 	jdPayment := jd.New()
 	configCode := jdPayment.GetUploadLogisticsConfigCode()
